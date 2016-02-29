@@ -30,7 +30,8 @@ public:
     Cacheline** cachelines;
     message load(int address);
     message store(int address, int value);
-    void evict(int blockNumber);
+    message store(int address, int* block);
+    Cacheline* evict(int blockNumber);
     Cacheline* inCache(int address);
 private:
     int cachesize;
