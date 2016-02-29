@@ -6,7 +6,7 @@ _cacheOn(co) {
 }
 
 int MemSys::load(int add, int* val) {
-    if(add > _size - 1 || add < 0) {
+    if(add > _memSize - 1 || add < 0) {
       return -1;
     }
     if (_cacheOn) {
@@ -17,7 +17,7 @@ int MemSys::load(int add, int* val) {
 }
 
 int MemSys::store(int add, int val) {
-    if(add > _size - 1 || add < 0) {
+    if(add > _memSize - 1 || add < 0) {
       return -1;
     }
     if(_cacheOn) {
