@@ -34,8 +34,8 @@ Simulator::Simulator(QWidget *parent) : QMainWindow(parent) {
     memLayout->addWidget(loadPB, 0, 1);
     memLayout->addWidget(valLE, 0, 2);
     memLayout->addWidget(storePB, 0, 3);
-    memLayout->addWidget(cacheTW, 1, 0, 5, 2);
-    memLayout->addWidget(memTW, 1, 1, 5, 2);
+    memLayout->addWidget(cacheTW, 1, 0);
+    memLayout->addWidget(memTW, 1, 1);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;
