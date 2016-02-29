@@ -35,6 +35,11 @@ Cache::Cache(int cachesize, int blocksize, int ways, Memcache *nextLevel_, int c
     for(int i = 0; i < _numberOfBlocks; i++) {
       cachelines[i] = new Cacheline[ways];
     }
+    for(int i = 0; i < _numberOfBlocks; i++) {
+        for(int j = 0; j < ways; j++){
+            cachelines[i][j].data = new int[blocksize];
+        }
+    }
 }
 
 Cache::~Cache() {
@@ -115,6 +120,7 @@ message Cache::load(int address) {
             return msg;
         }
     } else {// there is a hit
+        hit++;
         if(countdown == 0) {
             countdown = circle;
             msg.ok = true;
@@ -158,7 +164,7 @@ Cacheline* Cache:: evict(int blockNumber) {
 Cacheline* Cache:: inCache(int address) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
     // calculate the block number
   //  int numberOfBlocks = cachesize / blocksize;
-    int offset = address % _blocksize;
+  //  int offset = address % _blocksize;
     int blockNumber = (address / _blocksize)% _numberOfBlocks;
     int tag = address / (_blocksize*_numberOfBlocks);
     bool cacheHit = false;
@@ -166,7 +172,6 @@ Cacheline* Cache:: inCache(int address) {// if the address is valid and exists i
         if(cachelines[blockNumber][i].valid == 0) continue;
         if(cachelines[blockNumber][i].tag == tag) {
             cacheHit = true;
-            hit++;
             return &cachelines[blockNumber][i];
         }
     }
