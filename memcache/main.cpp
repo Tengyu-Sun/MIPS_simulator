@@ -26,14 +26,15 @@ int main() {
        // cout<< memory_data[i] <<endl;
     }
     
-
+    
  // initialize cache and test
     Cache cache(cache_size, block_size, ways, &memory, cache_cycle);
+    cout<< (cache.inCache(10)==nullptr) << endl;
     cache.load(10);
     cout<< (cache.inCache(10)==nullptr) << endl;
     cout<<"miss: " << cache.miss << " hit: " << cache.hit<<endl;
     cache.load(10);
-    cout<< (cache.inCache(10)==nullptr) << endl;
+    
     cout<<"miss: " << cache.miss << " hit: " << cache.hit<<endl;
     return 0;
 }

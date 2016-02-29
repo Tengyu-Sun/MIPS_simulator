@@ -12,6 +12,8 @@
 #include <random>
 //#include <stdlib.h>
 //#include <time.h>
+#include <iostream>
+using namespace std;
 
 int genRandomNumber(int ways) {
     // srand(time(NULL));
@@ -32,6 +34,8 @@ Cache::Cache(int cachesize, int blocksize, int ways, Memcache *nextLevel_, int c
     nextLevel = nextLevel_; // next level of cache or memory
     _numberOfBlocks = cachesize / ways;
     cachelines = new Cacheline*[_numberOfBlocks]; //2-dimensional array to include all cachelines, e.g. Cacheline[numberOfBlocks][ways]
+    hit = 0;
+    miss = 0;
     for(int i = 0; i < _numberOfBlocks; i++) {
       cachelines[i] = new Cacheline[ways];
     }
@@ -110,11 +114,14 @@ message Cache::load(int address) {
             // find if any slots is empty or evict one line in this blockNumber
             //int numberOfBlocks = cachesize / blocksize;
             int blockNumber = (address / _blocksize)% _numberOfBlocks;
+            int tag = address / (_blocksize*_numberOfBlocks);
             Cacheline* cacheline = evict(blockNumber);
             // copy data into the current cacheline
             for(int i = 0; i < _blocksize; i++) {
                 cacheline->data[i] = data[i];
             }
+            cacheline->valid = 1;
+            cacheline->tag = tag;
             msg.ok = true;
             msg.data = cacheline->data;
             return msg;
@@ -169,10 +176,12 @@ Cacheline* Cache:: inCache(int address) {// if the address is valid and exists i
     int tag = address / (_blocksize*_numberOfBlocks);
     bool cacheHit = false;
     for(int i = 0; i < _ways; i++) {
+      //  cout<< tag << " " << cachelines[blockNumber][i].valid << " " << cachelines[blockNumber][i].tag<< endl;
+        
         if(cachelines[blockNumber][i].valid == 0) continue;
         if(cachelines[blockNumber][i].tag == tag) {
-            cacheHit = true;
-            return &cachelines[blockNumber][i];
+           cacheHit = true;
+           return &cachelines[blockNumber][i];
         }
     }
 
