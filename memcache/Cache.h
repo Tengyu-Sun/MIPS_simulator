@@ -15,8 +15,8 @@ typedef struct
 {
 public:
     int valid;
+    int dirty;
     int tag;
-    int address;
     int* data;
     //Cacheline(int valid, int tag, int address, int* data);
 }Cacheline;
@@ -28,27 +28,10 @@ public:
     int hit;
     int miss;
     Cacheline** cachelines;
-    message store(int address, int value)
-    {
-        message msg;
-        return msg;
-    }
-    
-    message load(int address)
-    {
-        message msg;
-        return msg;
-    }
-    
-    void evict() {
-        
-    }
-    
-    void inCache() {
-        
-    }
-    
-    
+    message load(int address);
+    message store(int address, int value);
+    void evict(int blockNumber);
+    bool inCache(int address);
 private:
     int cachesize;
     int blocksize;
