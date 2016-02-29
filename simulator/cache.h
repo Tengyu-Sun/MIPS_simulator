@@ -17,6 +17,8 @@ struct Cacheline {
     int tag;
     int *data;
     Cacheline() {
+      valid = false;
+      dirty = false;
       data = nullptr;
     }
     ~Cacheline() {
@@ -36,7 +38,7 @@ class Cache : public Memcache {
     int load(int address, int *val);
     int store(int address, int value);
 
-    Cacheline* evict(int blockNumber);
+    Cacheline* evict(int add);
     Cacheline* inCache(int address);
  private:
     int _cachesize;
