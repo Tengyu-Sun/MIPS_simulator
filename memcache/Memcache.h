@@ -10,21 +10,19 @@
 #define __MIPS_Simulator__Memcache__
 
 
-#include <stdio.h>
+//#include <stdio.h>
 typedef struct {
     int value;
     bool ok;
-}message;
+} message;
 
 
-class Memcache
-{
-public:
-    int countdown;
-    Memcache *nextLevel;
-    message  load(int address);
-    message  store(int address, int value);
-    
+class Memcache {
+ public:
+  int countdown;  // circle
+  Memcache *nextLevel;
+  message  load(int address);
+  message  store(int address, int value);
 };
 
 #endif /* defined(__MIPS_Simulator__Memcache__) */

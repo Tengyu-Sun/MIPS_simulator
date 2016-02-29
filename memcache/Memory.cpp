@@ -13,7 +13,7 @@ Memory::Memory(int size, Memcache* nextLevel)
     this->countdown = 100;
     this->size = size;
     this->data = new int[size];
-    this->nextLevel = NULL;
+    this->nextLevel = nullptr;
 }
 
 message Memory:: load(int address)
@@ -68,12 +68,12 @@ message Memory:: store(int address, int value)
 
 int* Memory::getData()
 {
-    if(this->data == NULL)
+    if(this->data == nullptr)
     {
-        return NULL;
+        return nullptr;
     }
     return this->data;
-    
+
 }
 
 int Memory::getSize()
