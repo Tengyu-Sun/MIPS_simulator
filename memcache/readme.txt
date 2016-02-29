@@ -5,10 +5,17 @@ Main functionalities:
 
 load(int address)
 
-load a block from this address. If this address exists in current level of storage, after countdown is reduced to zero, return it (wrapped by a message class). If the countdown is not zero, reduce it by 1 each call. If this address doesn't exist in current level, call the load function from the lower level storage.
+load a block from this address. If this address exists in current level of storage, after countdown is reduced to zero, return it (wrapped by a message class).
+ If the countdown is not zero, reduce it by 1 each call. If this address doesn't exist in current level, call the load function from the lower level storage.
 
 store(int address, int* block)
 
-write a block into this address. If this address exists in current level of storage, after countdown if reduced to zero, label the dirty flag to 1. if it doesn't exist in current level of storage, evict a line (or find an empty line corresponding to this address), write the content into this line and label the dirty flag to 1. (it should be done aftter the countdown is reduced to 0)
+write a block into this address. If this address exists in current level of storage, after countdown if reduced to zero, label the dirty flag to 1.
+ if it doesn't exist in current level of storage, evict a line (or find an empty line corresponding to this address), write the content into this line and label the dirty flag to 1.
+ (it should be done aftter the countdown is reduced to 0)
 
+inCache(address)
+check if this address exists in the cache by comparing the tag and block number.
 
+evict(address)
+evict one line from all ways that associated this address or return an empty one.
