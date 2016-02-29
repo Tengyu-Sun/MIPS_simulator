@@ -9,23 +9,26 @@ using namespace std;
 int main() 
 {
  // initialize memory and test
- Memory memory(100,NULL);
- cout << memory.countdown <<endl;
+
+ Memory memory(100,2,NULL);
+ //cout << memory.countdown <<endl;
  int* data = memory.getData();
  cout << data[10] <<endl;
- message write_msg = memory.store(10,2222);
+ int block[2] = {222,333};
+ message write_msg = memory.store(10,block);
  while(!write_msg.ok) {
-	write_msg = memory.store(10,2222);
+	write_msg = memory.store(10,block);
  } 
  message msg = memory.load(10); 
  while(!msg.ok) {
 	msg = memory.load(10);
  }
- cout << msg.value << endl;
+ for(int i = 0; i < 2; i++) {
+    cout << *msg.data++ << endl;
+ }
+
     
  // initialize cache and test
-  
-    
     
  return 0;
 }

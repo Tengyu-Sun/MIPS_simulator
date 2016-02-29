@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 typedef struct {
-    int value;
+    int* data;
     bool ok;
 }message;
 
@@ -22,9 +22,10 @@ class Memcache
 public:
     int countdown;
     Memcache *nextLevel;
-    message  load(int address);
-    message  store(int address, int value);
-    
+    message msg;
+    virtual message load(int address){return msg;}
+    virtual message store(int address, int value){return msg;}
+    virtual message store(int address, int* block){return msg;}
 };
 
 #endif /* defined(__MIPS_Simulator__Memcache__) */

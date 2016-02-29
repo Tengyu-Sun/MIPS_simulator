@@ -15,16 +15,18 @@
 class Memory: public Memcache
 {
 public:
-    Memory(int size, Memcache *nextLevel);
+    Memory(int size, int blocksize, Memcache *nextLevel);
     int* getData();
     int getSize();
     int countdown;
     Memcache *nextLevel;
     message load(int address);
+    message store(int address, int* block);
     message store(int address, int value);
     
   private:
     int size;
+    int blocksize;
     int* data;
     
 };
