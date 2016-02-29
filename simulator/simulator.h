@@ -3,17 +3,20 @@
 
 #include <QMainWindow>
 #include <QtWidgets>
+#include "memsys.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit Simulator(QWidget *parent = 0);
+    Simulator(MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
 
 private slots:
     void memOpen();
     void memSave();
+    void memLoad();
+    void memStore();
 private:
     QMenu *memMenu;
     QAction *openAct;
@@ -28,6 +31,8 @@ private:
     QPushButton *storePB;
     QTableWidget *cacheTW;
     QTableWidget *memTW;
+
+    MemSys *_memsys;
 
 };
 

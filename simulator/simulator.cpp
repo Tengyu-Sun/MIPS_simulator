@@ -1,8 +1,8 @@
 #include "simulator.h"
 #include <string>
 
-Simulator::Simulator(QWidget *parent) : QMainWindow(parent) {
-    //memsys = mem;
+Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
+    _memsys = memsys;
     clk = 0;
 
     openAct = new QAction(tr("open"), this);
@@ -25,7 +25,9 @@ Simulator::Simulator(QWidget *parent) : QMainWindow(parent) {
     addLE = new QLineEdit;
     valLE = new QLineEdit;
     loadPB = new QPushButton(tr("Load"));
+    connect(loadPB, SIGNAL(clicked()), this, SLOT(memLoad()));
     storePB = new QPushButton(tr("Store"));
+    connect(storePB, SIGNAL(clicked()), this, SLOT(memStore()));
     memTW = new QTableWidget(5,2);
     cacheTW = new QTableWidget(5,2);
 
@@ -56,6 +58,23 @@ void Simulator::memOpen() {
 void Simulator::memSave() {
     clk--;
     clkLb->setText(std::to_string(clk).c_str());
+}
+
+void Simulator::memLoad() {
+    int val;
+    do {
+        clk++;
+        clkLb->setText(std::to_string(clk).c_str());
+    } while(_memsys->load(0, &val) == 0);
+}
+
+void Simulator::memStore() {
+    int val = 10;
+    do {
+        clk++;
+        clkLb->setText(std::to_string(clk).c_str());
+    } while(_memsys->store(0, val) == 0);
+
 }
 
 Simulator::~Simulator() {
