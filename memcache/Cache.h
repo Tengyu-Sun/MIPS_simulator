@@ -17,8 +17,13 @@ struct Cacheline {
     int dirty;
     int tag;
     int* data;
-    Cacheline(){
-
+    Cacheline() {
+      data = nullptr;
+    }
+    ~Cacheline() {
+      if (!data) {
+        delete[] data;
+      }
     }
 };
 
