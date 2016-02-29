@@ -17,4 +17,6 @@ SOURCES += main.cpp\
 
 HEADERS  += simulator.h
 
+CONFIG += c++11
+
 #FORMS    += simulator.ui

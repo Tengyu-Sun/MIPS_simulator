@@ -4,27 +4,31 @@
 #include <QMainWindow>
 #include <QtWidgets>
 
-
-
-class Simulator : public QMainWindow
-{
+class Simulator : public QMainWindow {
     Q_OBJECT
 
 public:
-    explicit Simulator(char* mem, QWidget *parent = 0);
+    explicit Simulator(QWidget *parent = 0);
     ~Simulator();
 
 private slots:
-
+    void memOpen();
+    void memSave();
 private:
-    QMenu *test;
-    QToolBar *too;
+    QMenu *memMenu;
+    QAction *openAct;
+    QAction *saveAct;
+
+    QLabel *clkLb;
+    unsigned long clk;
+
     QLineEdit *addLE;
     QLineEdit *valLE;
     QPushButton *loadPB;
     QPushButton *storePB;
+    QTableWidget *cacheTW;
     QTableWidget *memTW;
-    char *memsys;
+
 };
 
 #endif // SIMULATOR_H
