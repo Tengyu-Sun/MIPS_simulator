@@ -11,6 +11,7 @@
 #include "Cache.h"
 #include <stdlib.h>
 #include <time.h>
+
 int genRandomNumber(int ways) {
     srand(time(NULL));
     int ran = rand()*ways;
@@ -42,6 +43,15 @@ message Cache:: store(int address, int value) // use write-back policy
 message Cache::load(int address)
 {
     message msg;
+    Cacheline* candidate = inCache(address);
+    if(candidate == NULL) {// there is a miss
+        miss++;
+        // fetch block from the lower level
+        //nextLevel->load(address);
+    } else {
+        
+    }
+    
     return msg;
 }
 
@@ -59,11 +69,10 @@ void Cache:: evict(int blockNumber) {
         }
         cachelines[blockNumber][evictedWay].valid = 0;
         cachelines[blockNumber][evictedWay].dirty = 0;
-        
     }
 }
 
-bool Cache:: inCache(int address) {
+Cacheline* Cache:: inCache(int address) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
     // calculate the block number
     int numberOfBlocks = cachesize / blocksize;
     int offset = address % blocksize;
@@ -74,15 +83,11 @@ bool Cache:: inCache(int address) {
         if(cachelines[blockNumber][i].valid == 0) continue;
         if(cachelines[blockNumber][i].tag == tag) {
             cacheHit = true;
+            hit++;
+            return &cachelines[blockNumber][i];
             break;
         }
     }
-    if(cacheHit) {
-        hit++;
-        // should return the data using the offset.
-        return true;
-    } else {
-        miss++;
-        return false;
-    }
+    miss++;
+    return NULL;
 }

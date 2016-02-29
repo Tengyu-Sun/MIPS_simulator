@@ -31,7 +31,7 @@ public:
     message load(int address);
     message store(int address, int value);
     void evict(int blockNumber);
-    bool inCache(int address);
+    Cacheline* inCache(int address);
 private:
     int cachesize;
     int blocksize;

@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 typedef struct {
-    int value;
+    int* data;
     bool ok;
 }message;
 
