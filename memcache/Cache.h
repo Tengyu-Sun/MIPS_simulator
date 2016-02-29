@@ -9,45 +9,34 @@
 #ifndef __MIPS_Simulator__Cache__
 #define __MIPS_Simulator__Cache__
 
-//#include <stdio.h>
+#include <stdio.h>
 #include "Memcache.h"
-typedef struct {
- //public:
-  int valid;
-  int tag;
-  int address;
-  int* data;
+typedef struct
+{
+public:
+    int valid;
+    int dirty;
+    int tag;
+    int* data;
     //Cacheline(int valid, int tag, int address, int* data);
-} Cacheline;
+}Cacheline;
 
-class Cache: public Memcache {
- public:
-  Cache(int cachesize, int blocksize, int ways, Memcache *nextLevel);
-  int hit;
-  int miss;
-  Cacheline** cachelines;
-  message store(int address, int value) {
-        message msg;
-        return msg;
-  }
-
-  message load(int address) {
-    message msg;
-    return msg;
-  }
-
-  void evict() {
-
-  }
-
-  void inCache() {
-
-  }
-
- private:
-  int cachesize;
-  int blocksize;
-  int ways;
+class Cache: public Memcache
+{
+public:
+    Cache(int cachesize, int blocksize, int ways, Memcache *nextLevel);
+    int hit;
+    int miss;
+    Cacheline** cachelines;
+    message load(int address);
+    message store(int address, int value);
+    message store(int address, int* block);
+    Cacheline* evict(int blockNumber);
+    Cacheline* inCache(int address);
+private:
+    int cachesize;
+    int blocksize;
+    int ways;
 };
 
 
