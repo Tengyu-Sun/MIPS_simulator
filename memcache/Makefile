@@ -5,7 +5,7 @@ all: main.o Memory.o Memcache.o Cache.o
 main.o: main.cpp
 	$(CC) $(FLAG) main.cpp
 Memory.o: Memory.cpp
-	$(CC) $(FLAG) main.cpp
+	$(CC) $(FLAG) Memory.cpp
 Memcache.o: Memcache.cpp
 	$(CC) $(FLAG) Memcache.cpp
 Cache.o: Cache.cpp
