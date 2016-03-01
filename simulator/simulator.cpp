@@ -70,8 +70,8 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
 }
 
 void Simulator::memOpen() {
-    std::string filename = QFileDialog::getOpenFileName(this,tr("Open Text Case"),
-               "/Users/blade/workspace/cs535/").toStdString();
+    std::string filename = QFileDialog::getOpenFileName(this,tr("Open Test Case"),
+               "/Users/blade/workspace/cs535/MIPS_simulator").toStdString();
     std::fstream input(filename);
     std::string line;
     while(input){
