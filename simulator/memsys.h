@@ -8,10 +8,10 @@ class MemSys {
   int load(int add, int *val);
   int store(int add, int val);
   void dump(std::string fn);
-  void setCacheOn(bool flag);
+  bool _cacheOn;
+
  private:
   Cache *_cache;
   Memory *_mainMemory;
   int _memSize;
-  bool _cacheOn;
 };

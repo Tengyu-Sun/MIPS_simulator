@@ -17,6 +17,8 @@ private slots:
     void memSave();
     void memLoad();
     void memStore();
+    void clkReset();
+    void cacheOn();
 
 private:
     QMenu *memMenu;
@@ -25,11 +27,14 @@ private:
 
     QLabel *clkLb;
     unsigned long clk;
+    QPushButton *clkResetPB;
 
     QLineEdit *addLE;
     QLineEdit *valLE;
     QPushButton *loadPB;
     QPushButton *storePB;
+    QPushButton *cacheOnPB;
+
     QTableWidget *cacheTW;
     QTableWidget *memTW;
 

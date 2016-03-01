@@ -18,9 +18,12 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
     QLabel *ccLb = new QLabel(tr("clock circle:"));
     clkLb = new QLabel(tr("0"));
+    clkResetPB = new QPushButton(tr("Reset"));
+    connect(clkResetPB, SIGNAL(clicked()), this, SLOT(clkReset()));
     QGridLayout *cpuLayout = new QGridLayout;
     cpuLayout->addWidget(ccLb, 0, 0);
     cpuLayout->addWidget(clkLb, 0, 1);
+    cpuLayout->addWidget(clkResetPB, 1, 0);
     cpuGroup->setLayout(cpuLayout);
 
     QGroupBox *memGroup = new QGroupBox(tr("Memory"));
@@ -30,6 +33,12 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     connect(loadPB, SIGNAL(clicked()), this, SLOT(memLoad()));
     storePB = new QPushButton(tr("Store"));
     connect(storePB, SIGNAL(clicked()), this, SLOT(memStore()));
+    cacheOnPB = new QPushButton(tr("ON"));
+    if (!_memsys->_cacheOn){
+      cacheOnPB->setText(tr("OFF"));
+    }
+    connect(cacheOnPB, SIGNAL(clicked()), this, SLOT(cacheOn()));
+
     memTW = new QTableWidget(5,2);
     cacheTW = new QTableWidget(5,2);
 
@@ -38,6 +47,7 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     memLayout->addWidget(valLE, 0, 1);
     memLayout->addWidget(loadPB, 0, 2);
     memLayout->addWidget(storePB, 0, 3);
+    memLayout->addWidget(cacheOnPB, 1, 0);
     //memLayout->addWidget(cacheTW, 1, 0);
     //memLayout->addWidget(memTW, 1, 1);
     memGroup->setLayout(memLayout);
@@ -119,7 +129,19 @@ void Simulator::memStore() {
     std::cout<<"store "<<add<<" "<<val<<std::endl;
 }
 
+void Simulator::clkReset() {
+    clk = 0;
+    clkLb->setText(std::to_string(clk).c_str());
+}
 
+void Simulator::cacheOn() {
+    _memsys->_cacheOn = !_memsys->_cacheOn;
+    if (_memsys->_cacheOn){
+        cacheOnPB->setText(tr("ON"));
+    } else {
+        cacheOnPB->setText(tr("OFF"));
+    }
+}
 
 Simulator::~Simulator() {
 
