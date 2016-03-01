@@ -34,7 +34,7 @@ class Cache : public Memcache {
     ~Cache();
     int hit;
     int miss;
-
+    bool misshit;
     int load(int add, int *blk, int len);
     int store(int address, int* blk, int len);
     int load(int address, int *val);

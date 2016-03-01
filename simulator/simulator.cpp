@@ -37,8 +37,11 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     if (!_memsys->_cacheOn){
       cacheOnPB->setText(tr("OFF"));
     }
-    connect(cacheOnPB, SIGNAL(clicked()), this, SLOT(cacheOn()));
-
+    connect(cacheOnPB, SIGNAL(clicked()), this, SLOT(cacheOnOFF()));
+    QLabel *hLb = new QLabel(tr("hit: "));
+    hitLb = new QLabel(tr("0"));
+    QLabel *mLb = new QLabel(tr("miss: "));
+    missLb = new QLabel(tr("0"));
     memTW = new QTableWidget(5,2);
     cacheTW = new QTableWidget(5,2);
 
@@ -48,6 +51,10 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     memLayout->addWidget(loadPB, 0, 2);
     memLayout->addWidget(storePB, 0, 3);
     memLayout->addWidget(cacheOnPB, 1, 0);
+    memLayout->addWidget(hLb, 1, 1);
+    memLayout->addWidget(hitLb, 1, 2);
+    memLayout->addWidget(mLb, 1, 3);
+    memLayout->addWidget(missLb, 1, 4);
     //memLayout->addWidget(cacheTW, 1, 0);
     //memLayout->addWidget(memTW, 1, 1);
     memGroup->setLayout(memLayout);
@@ -80,6 +87,13 @@ void Simulator::memOpen() {
             } while(_memsys->load(add, &val) == 0);
            // std::cout<<std::endl;
             std::cout<<"load "<<add<<": "<<val<<std::endl;
+            if(_memsys->_cacheOn) {
+                int h = _memsys->getHit();
+                int m = _memsys->getMiss();
+                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+                hitLb->setText(std::to_string(h).c_str());
+                missLb->setText(std::to_string(m).c_str());
+            }
         } else if (line[0] == 'S') {
             int p = 2;
             int nl = line.size();
@@ -95,6 +109,13 @@ void Simulator::memOpen() {
             } while(_memsys->store(add, val) == 0);
 
             std::cout<<"store "<<add<<" "<<val<<std::endl;
+            if(_memsys->_cacheOn) {
+                int h = _memsys->getHit();
+                int m = _memsys->getMiss();
+                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+                hitLb->setText(std::to_string(h).c_str());
+                missLb->setText(std::to_string(m).c_str());
+            }
         } else {
             return;
            // std::cout<<"unrecognized command: "<<line<<std::endl;
@@ -115,6 +136,13 @@ void Simulator::memLoad() {
        std::cout<<clk<<std::endl;
     } while(_memsys->load(add, &val) == 0);
     std::cout<<"load "<<add<<": "<<val<<std::endl;
+    if(_memsys->_cacheOn) {
+        int h = _memsys->getHit();
+        int m = _memsys->getMiss();
+        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+        hitLb->setText(std::to_string(h).c_str());
+        missLb->setText(std::to_string(m).c_str());
+    }
 }
 
 void Simulator::memStore() {
@@ -127,6 +155,13 @@ void Simulator::memStore() {
       std::cout<<clk<<std::endl;
     } while(_memsys->store(add, val) == 0);
     std::cout<<"store "<<add<<" "<<val<<std::endl;
+    if(_memsys->_cacheOn) {
+        int h = _memsys->getHit();
+        int m = _memsys->getMiss();
+        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+        hitLb->setText(std::to_string(h).c_str());
+        missLb->setText(std::to_string(m).c_str());
+    }
 }
 
 void Simulator::clkReset() {
@@ -134,12 +169,20 @@ void Simulator::clkReset() {
     clkLb->setText(std::to_string(clk).c_str());
 }
 
-void Simulator::cacheOn() {
+void Simulator::cacheOnOFF() {
     _memsys->_cacheOn = !_memsys->_cacheOn;
     if (_memsys->_cacheOn){
         cacheOnPB->setText(tr("ON"));
+        _memsys->resetHit();
+        _memsys->resetMiss();
+        hitLb->setText(tr("0"));
+        missLb->setText(tr("0"));
     } else {
         cacheOnPB->setText(tr("OFF"));
+        _memsys->resetHit();
+        _memsys->resetMiss();
+        hitLb->setText(tr("0"));
+        missLb->setText(tr("0"));
     }
 }
 

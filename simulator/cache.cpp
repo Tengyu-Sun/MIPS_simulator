@@ -63,6 +63,7 @@ int Cache::load(int add, int *block, int len) {
         cacheline->valid = true;
         cacheline->tag = (add/_linesize)/_cachesize;
         delete[] blk;
+        misshit = true;
         return 0;//increase one hit
       } else {
         countdown = circle;
@@ -70,6 +71,10 @@ int Cache::load(int add, int *block, int len) {
       }
     } else {// there is a hit
       ++hit;
+      if (misshit){
+        --hit;
+        misshit = false;
+      }
       for(int i=0; i<len; ++i) {
         block[i] = candidate->data[i];
       }
@@ -134,11 +139,16 @@ int Cache::store(int add, int val) {
       candidate->data[add%_linesize] = val;
     } else {
       int *blk = new int[_linesize];
-      while(load(alignedadd, blk, _linesize) == 0);
-      Cacheline* cacheline = inCache(alignedadd);
-      cacheline->data[add%_linesize] = val;
-      cacheline->dirty = true;
-      cacheline->tag = (add/_linesize)/_cachesize;
+      int tmp = 0;
+      while(load(alignedadd, blk, _linesize) == 0){
+        ++tmp;
+      };
+      countdown += tmp;
+      // Cacheline* cacheline = inCache(alignedadd);
+      // cacheline->data[add%_linesize] = val;
+      // cacheline->dirty = true;
+      // cacheline->tag = (add/_linesize)/_cachesize;
+      return 0;
     }
     countdown = circle;
     return 1;
@@ -170,7 +180,9 @@ Cacheline* Cache::evict(int add) {
   int idx = ((add/_linesize)%_cachesize)*_ways;
   for(int i = 0; i < _ways; i++) {
       // return the empty line;
-      if(_cachelines[idx+i].valid == false) return &_cachelines[idx+i];
+      if(_cachelines[idx+i].valid == false) {
+        return &_cachelines[idx+i];
+      }
   }
   // if all ways are written, evict it to lower level storage, return the cleared line;
   int evictedWay = genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
