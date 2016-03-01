@@ -35,11 +35,11 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
 
     QGridLayout *memLayout = new QGridLayout;
     memLayout->addWidget(addLE, 0, 0);
-    memLayout->addWidget(loadPB, 0, 1);
-    memLayout->addWidget(valLE, 0, 2);
+    memLayout->addWidget(valLE, 0, 1);
+    memLayout->addWidget(loadPB, 0, 2);
     memLayout->addWidget(storePB, 0, 3);
-    memLayout->addWidget(cacheTW, 1, 0);
-    memLayout->addWidget(memTW, 1, 1);
+    //memLayout->addWidget(cacheTW, 1, 0);
+    //memLayout->addWidget(memTW, 1, 1);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;
@@ -97,21 +97,26 @@ void Simulator::memSave() {
 }
 
 void Simulator::memLoad() {
-    int val;
+    int add = std::stoi(addLE->displayText().toStdString());
+    int val = 0;
     do {
        clk++;
        clkLb->setText(std::to_string(clk).c_str());
        std::cout<<clk<<std::endl;
-    } while(_memsys->load(0, &val) == 0);
+    } while(_memsys->load(add, &val) == 0);
+    std::cout<<"load "<<add<<": "<<val<<std::endl;
 }
 
 void Simulator::memStore() {
-    int val = 10;
+    int add = std::stoi(addLE->displayText().toStdString());
+    int val = 0;
+    val = std::stoi(valLE->displayText().toStdString());
     do {
       clk++;
       clkLb->setText(std::to_string(clk).c_str());
       std::cout<<clk<<std::endl;
-    } while(_memsys->store(0, val) == 0);
+    } while(_memsys->store(add, val) == 0);
+    std::cout<<"store "<<add<<" "<<val<<std::endl;
 }
 
 
