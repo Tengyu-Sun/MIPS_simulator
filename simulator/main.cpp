@@ -2,12 +2,12 @@
 #include "simulator.h"
 
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
-    //Cache *cache = new Cache();
     Memory *memory = new Memory(1024, 50);
-    MemSys *memsys = new MemSys(nullptr, memory, false);
+    Cache *cache = new Cache(8, 4, 2, 5, memory);
+
+    MemSys *memsys = new MemSys(cache, memory, true);
     Simulator w(memsys);
     w.show();
     return a.exec();

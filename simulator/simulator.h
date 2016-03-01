@@ -17,6 +17,7 @@ private slots:
     void memSave();
     void memLoad();
     void memStore();
+
 private:
     QMenu *memMenu;
     QAction *openAct;

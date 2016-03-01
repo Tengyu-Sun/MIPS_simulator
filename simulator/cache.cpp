@@ -1,5 +1,6 @@
 #include <random>
 #include "cache.h"
+#include <iostream>
 
 int genRandomNumber(int ways) {
     std::default_random_engine generator;
@@ -42,7 +43,7 @@ int Cache::load(int add, int *block, int len) {
         int* blk = new int[_linesize];
         int flag = nextLevel->load(add, blk, _linesize);
         while(flag == 0) {
-          ++countdown;
+          ++countdown;//
           flag = nextLevel->load(add, blk, _linesize);
         }
         if(flag == -1) {
@@ -60,7 +61,7 @@ int Cache::load(int add, int *block, int len) {
         cacheline->valid = true;
         cacheline->tag = (add/_linesize)/_cachesize;
         delete[] blk;
-        return 0;
+        return 0;//increase one hit
       } else {
         countdown = circle;
         return -1;
@@ -92,10 +93,12 @@ int Cache::store(int add, int *blk, int len) {
       }
     } else {
       Cacheline* cacheline = evict(add);
-      cacheline->dirty = true;
       for(int i = 0; i < len; ++i) {
           cacheline->data[i] = blk[i];
       }
+      cacheline->valid = true;
+      cacheline->dirty = true;
+      cacheline->tag = (add/_linesize)/_cachesize;
     }
     countdown = circle;
     return 1;
@@ -115,7 +118,33 @@ int Cache::load(int add, int *val) {
   return flag;
 }
 
-Cacheline* Cache:: inCache(int add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
+int Cache::store(int add, int val) {
+  int alignedadd = (add/_linesize)*_linesize;
+  countdown--;
+  if(countdown == 0) {
+    Cacheline* candidate = inCache(alignedadd);
+    if(candidate != nullptr) {
+      candidate->dirty = true;
+      candidate->data[add%_linesize] = val;
+    } else {
+      int *blk = new int[_linesize];
+
+      while(load(alignedadd, blk, _linesize) == 0){
+        std::cout<<alignedadd<<"\n";
+      }
+      Cacheline* cacheline = inCache(alignedadd);
+      cacheline->data[add%_linesize] = val;
+      cacheline->dirty = true;
+      cacheline->tag = (add/_linesize)/_cachesize;
+    }
+    countdown = circle;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+Cacheline* Cache::inCache(int add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
     // calculate the block number
     int idx = ((add/_linesize)%_cachesize)*_ways;
     int tag = (add/_linesize)/_cachesize;
@@ -134,7 +163,7 @@ Cacheline* Cache:: inCache(int add) {// if the address is valid and exists in th
 
 // evict a cacheline from the current block (referenced by blockNumber) if all ways are occupied, return the cleared line
 // if there is a line not occupied, return it
-Cacheline* Cache:: evict(int add) {
+Cacheline* Cache::evict(int add) {
   int idx = ((add/_linesize)%_cachesize)*_ways;
   for(int i = 0; i < _ways; i++) {
       // return the empty line;
@@ -143,13 +172,26 @@ Cacheline* Cache:: evict(int add) {
   // if all ways are written, evict it to lower level storage, return the cleared line;
   int evictedWay = genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
   if(_cachelines[idx+evictedWay].dirty == true) {
-      if(nextLevel != NULL) {
-          // write back to lower level of storage if the dirty flag is set to 1.
-          int *block = _cachelines[idx+evictedWay].data;
-          nextLevel->store(add, block, _linesize);
+      if(nextLevel != nullptr) {
+        // write back to lower level of storage if the dirty flag is set to 1.
+        int *block = _cachelines[idx+evictedWay].data;
+        while(nextLevel->store(add, block, _linesize) == 0);
       }
   }
   _cachelines[idx+evictedWay].valid = false;
   _cachelines[idx+evictedWay].dirty = false;
   return &_cachelines[idx+evictedWay];
+}
+
+std::string Cache::dump(){
+  std::string res;
+  int nc = _cachesize*_ways;
+  for(int i=0; i<nc; ++i) {
+    res += std::to_string((int)_cachelines[i].valid) + " " + std::to_string((int)_cachelines[i].dirty) + " " + std::to_string(_cachelines[i].tag) + " ";
+    for (int j=0; j<_linesize; ++j) {
+      res += std::to_string(_cachelines[i].data[j]) + " ";
+    }
+    res += "\n";
+  }
+  return res;
 }

@@ -10,6 +10,7 @@
 #define __MIPS_Simulator__Cache__
 
 #include "memcache.h"
+#include <string>
 
 struct Cacheline {
     bool valid;
@@ -19,6 +20,7 @@ struct Cacheline {
     Cacheline() {
       valid = false;
       dirty = false;
+      tag = 0;
       data = nullptr;
     }
     ~Cacheline() {
@@ -37,7 +39,7 @@ class Cache : public Memcache {
     int store(int address, int* blk, int len);
     int load(int address, int *val);
     int store(int address, int value);
-
+    std::string dump();
     Cacheline* evict(int add);
     Cacheline* inCache(int address);
  private:

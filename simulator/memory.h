@@ -11,6 +11,7 @@
 #define __MIPS_Simulator__Memory__
 
 #include "memcache.h"
+#include <string>
 
 class Memory : public Memcache {
  public:
@@ -22,6 +23,7 @@ class Memory : public Memcache {
     int store(int address, int *block, int len);
     int load(int address, int *val);
     int store(int address, int value);
+    std::string dump();
  private:
     int _size;
     int* _data;//byte-addressable?

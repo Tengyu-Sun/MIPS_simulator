@@ -1,5 +1,7 @@
 #include "simulator.h"
 #include <string>
+#include <iostream>
+#include <fstream>
 
 Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     _memsys = memsys;
@@ -51,31 +53,67 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
 }
 
 void Simulator::memOpen() {
-    clk++;
-    clkLb->setText(std::to_string(clk).c_str());
+    std::string filename = QFileDialog::getOpenFileName(this,tr("Open Text Case"),
+               "/Users/blade/workspace/cs535/").toStdString();
+    std::fstream input(filename);
+    std::string line;
+    while(input){
+        std::getline(input, line);
+        if (line[0] == 'L') {
+            int add = std::stoi(line.substr(2));
+            int val = 0;
+
+            do {
+               clk++;
+               clkLb->setText(std::to_string(clk).c_str());
+               std::cout<<clk<<" ";
+            } while(_memsys->load(add, &val) == 0);
+            std::cout<<std::endl;
+            std::cout<<"load "<<add<<": "<<val<<std::endl;
+        } else if (line[0] == 'S') {
+            int p = 2;
+            int nl = line.size();
+            while(p<nl && line[p] != ',') {
+                ++p;
+            }
+            int add = std::stoi(line.substr(2, p-2));
+            int val = std::stoi(line.substr(p+1));
+            do {
+              clk++;
+              clkLb->setText(std::to_string(clk).c_str());
+              std::cout<<clk<<" ";
+            } while(_memsys->store(add, val) == 0);
+            std::cout<<std::endl;
+            std::cout<<"store "<<add<<" "<<val<<std::endl;
+        } else {
+            std::cout<<"unrecognized command: "<<line<<std::endl;
+        }
+    }
 }
 
 void Simulator::memSave() {
-    clk--;
-    clkLb->setText(std::to_string(clk).c_str());
+    _memsys->dump("/Users/blade/workspace/cs535/output.txt");
 }
 
 void Simulator::memLoad() {
     int val;
     do {
-        clk++;
-        clkLb->setText(std::to_string(clk).c_str());
+       clk++;
+       clkLb->setText(std::to_string(clk).c_str());
+       std::cout<<clk<<std::endl;
     } while(_memsys->load(0, &val) == 0);
 }
 
 void Simulator::memStore() {
     int val = 10;
     do {
-        clk++;
-        clkLb->setText(std::to_string(clk).c_str());
+      clk++;
+      clkLb->setText(std::to_string(clk).c_str());
+      std::cout<<clk<<std::endl;
     } while(_memsys->store(0, val) == 0);
-
 }
+
+
 
 Simulator::~Simulator() {
 

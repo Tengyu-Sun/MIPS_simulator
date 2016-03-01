@@ -55,3 +55,11 @@ int Memory::load(int add, int *val) {
 int Memory::store(int add, int val) {
   return store(add, &val, 1);
 }
+
+std::string Memory::dump() {
+  std::string res;
+  for(int i=0; i<_size; ++i) {
+    res += std::to_string(_data[i]) + "\n";
+  }
+  return res;
+}
