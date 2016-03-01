@@ -33,7 +33,9 @@ int Cache::load(int add, int *block, int len) {
   if (add % _linesize != 0 || len != _linesize) {
     return -1;
   }
-  countdown--;
+  if(countdown>0) {
+    countdown--;
+  }
   if(countdown == 0) {
     Cacheline* candidate = inCache(add);
     if(candidate == nullptr) {// there is a miss
@@ -83,7 +85,9 @@ int Cache::store(int add, int *blk, int len) {
   if (add % _linesize != 0 || len != _linesize) {
     return -1;
   }
-  countdown--;
+  if(countdown>0) {
+    countdown--;
+  }
   if(countdown == 0) {
     Cacheline* candidate = inCache(add);
     if(candidate != nullptr) {
@@ -119,19 +123,18 @@ int Cache::load(int add, int *val) {
 }
 
 int Cache::store(int add, int val) {
-  int alignedadd = (add/_linesize)*_linesize;
-  countdown--;
+  if(countdown>0) {
+    countdown--;
+  }
   if(countdown == 0) {
+    int alignedadd = (add/_linesize)*_linesize;
     Cacheline* candidate = inCache(alignedadd);
     if(candidate != nullptr) {
       candidate->dirty = true;
       candidate->data[add%_linesize] = val;
     } else {
       int *blk = new int[_linesize];
-
-      while(load(alignedadd, blk, _linesize) == 0){
-        std::cout<<alignedadd<<"\n";
-      }
+      while(load(alignedadd, blk, _linesize) == 0);
       Cacheline* cacheline = inCache(alignedadd);
       cacheline->data[add%_linesize] = val;
       cacheline->dirty = true;

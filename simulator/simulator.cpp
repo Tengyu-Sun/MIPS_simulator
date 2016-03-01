@@ -66,9 +66,9 @@ void Simulator::memOpen() {
             do {
                clk++;
                clkLb->setText(std::to_string(clk).c_str());
-               std::cout<<clk<<" ";
+               //std::cout<<clk<<" ";
             } while(_memsys->load(add, &val) == 0);
-            std::cout<<std::endl;
+           // std::cout<<std::endl;
             std::cout<<"load "<<add<<": "<<val<<std::endl;
         } else if (line[0] == 'S') {
             int p = 2;
@@ -81,12 +81,13 @@ void Simulator::memOpen() {
             do {
               clk++;
               clkLb->setText(std::to_string(clk).c_str());
-              std::cout<<clk<<" ";
+              //std::cout<<clk<<" ";
             } while(_memsys->store(add, val) == 0);
-            std::cout<<std::endl;
+
             std::cout<<"store "<<add<<" "<<val<<std::endl;
         } else {
-            std::cout<<"unrecognized command: "<<line<<std::endl;
+            return;
+           // std::cout<<"unrecognized command: "<<line<<std::endl;
         }
     }
 }
