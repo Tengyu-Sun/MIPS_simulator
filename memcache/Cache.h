@@ -11,6 +11,8 @@
 
 //#include <stdio.h>
 #include "Memcache.h"
+
+
 struct Cacheline {
 //public:
     int valid;

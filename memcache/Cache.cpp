@@ -24,7 +24,6 @@ int genRandomNumber(int ways) {
     return distribution(generator);
 }
 
-
 Cache::Cache(int cachesize, int blocksize, int ways, Memcache *nextLevel_, int circle_) {
     circle = circle_;
     countdown = circle_;
@@ -144,11 +143,6 @@ message Cache::load(int address) {
 // evict a cacheline from the current block (referenced by blockNumber) if all ways are occupied, return the cleared line
 // if there is a line not occupied, return it
 Cacheline* Cache:: evict(int blockNumber) {
-    if(_ways == 1) {
-        cachelines[blockNumber][0].valid = 0;
-        cachelines[blockNumber][0].dirty = 0;
-        return &cachelines[blockNumber][0];
-    } else {
         for(int i = 0; i < _ways; i++) {
             // return the empty line;
             if(cachelines[blockNumber][i].valid == 0) return &cachelines[blockNumber][i];
@@ -165,7 +159,6 @@ Cacheline* Cache:: evict(int blockNumber) {
         cachelines[blockNumber][evictedWay].valid = 0;
         cachelines[blockNumber][evictedWay].dirty = 0;
         return &cachelines[blockNumber][evictedWay];
-    }
 }
 
 Cacheline* Cache:: inCache(int address) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
@@ -176,8 +169,7 @@ Cacheline* Cache:: inCache(int address) {// if the address is valid and exists i
     int tag = address / (_blocksize*_numberOfBlocks);
     bool cacheHit = false;
     for(int i = 0; i < _ways; i++) {
-      //  cout<< tag << " " << cachelines[blockNumber][i].valid << " " << cachelines[blockNumber][i].tag<< endl;
-        
+        cout<< tag << " " << cachelines[blockNumber][i].valid << " " << cachelines[blockNumber][i].tag<< endl;
         if(cachelines[blockNumber][i].valid == 0) continue;
         if(cachelines[blockNumber][i].tag == tag) {
            cacheHit = true;
