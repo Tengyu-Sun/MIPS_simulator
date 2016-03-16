@@ -96,11 +96,13 @@ int Cache::store(int add, int *blk, int len) {
   if(countdown == 0) {
     Cacheline* candidate = inCache(add);
     if(candidate != nullptr) {
+      ++hit;
       candidate->dirty = true;
       for(int i = 0; i < len; ++i) {
           candidate->data[i] = blk[i];
       }
     } else {
+      ++miss;
       Cacheline* cacheline = evict(add);
       for(int i = 0; i < len; ++i) {
           cacheline->data[i] = blk[i];
@@ -135,6 +137,11 @@ int Cache::store(int add, int val) {
     int alignedadd = (add/_linesize)*_linesize;
     Cacheline* candidate = inCache(alignedadd);
     if(candidate != nullptr) {
+      ++hit;
+      if(misshit){
+          --hit;
+          misshit = false;
+      }
       candidate->dirty = true;
       candidate->data[add%_linesize] = val;
     } else {
@@ -144,6 +151,7 @@ int Cache::store(int add, int val) {
         ++tmp;
       };
       countdown += tmp;
+      misshit = true;
       // Cacheline* cacheline = inCache(alignedadd);
       // cacheline->data[add%_linesize] = val;
       // cacheline->dirty = true;
