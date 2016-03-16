@@ -6,7 +6,18 @@ _cacheOn(co) {
   _memSize = _mainMemory->getSize();
 }
 
-int MemSys::load(int add, int* val) {
+int MemSys::load(int add, uint8_t* val, int len) {
+    if(add > _memSize - 1 || add < 0) {
+      return -1;
+    }
+    if (_cacheOn) {
+        return _cache->load(add, val, len);
+    } else {
+        return _mainMemory->load(add, val, len);
+    }
+}
+
+int MemSys::load(int add, uint8_t* val) {
     if(add > _memSize - 1 || add < 0) {
       return -1;
     }
@@ -17,7 +28,18 @@ int MemSys::load(int add, int* val) {
     }
 }
 
-int MemSys::store(int add, int val) {
+int MemSys::store(int add, uint8_t *val, int len) {
+    if(add > _memSize - 1 || add < 0) {
+      return -1;
+    }
+    if(_cacheOn) {
+        return _cache->store(add, val, len);
+    } else {
+        return _mainMemory->store(add, val, len);
+    }
+}
+
+int MemSys::store(int add, uint8_t val) {
     if(add > _memSize - 1 || add < 0) {
       return -1;
     }

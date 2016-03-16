@@ -8,20 +8,20 @@ int genRandomNumber(int ways) {
     return distribution(generator);
 }
 
-Cache::Cache(int cachesize, int linesize, int ways, int circle_, Memcache* nextLevel_) {
-  _cachesize = cachesize;
+Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_) {
+  _indexsize = indexsize;
   _linesize = linesize;
   _ways = ways;
-  circle = circle_;
-  countdown = circle_;
+  _cachesize = indexsize*ways;
+  cycle = cycle_;
+  countdown = cycle_;
   nextLevel = nextLevel_;
   hit = 0;
   miss = 0;
 
-  int nc = _cachesize*_ways;
-  _cachelines = new Cacheline[nc];
-  for (int i = 0; i < nc; ++i) {
-    _cachelines[i].data = new int[_linesize];
+  _cachelines = new Cacheline[_cachesize];
+  for (int i = 0; i < _cachesize; ++i) {
+    _cachelines[i].data = new uint8_t[_linesize];
   }
 }
 
@@ -29,7 +29,7 @@ Cache::~Cache() {
   delete[] _cachelines;
 }
 
-int Cache::load(int add, int *block, int len) {
+int Cache::load(int add, uint8_t *block, int len) {
   if (add % _linesize != 0 || len != _linesize) {
     return -1;
   }
@@ -42,14 +42,14 @@ int Cache::load(int add, int *block, int len) {
       ++miss;
       if(nextLevel != nullptr) {
         ++countdown;
-        int* blk = new int[_linesize];
+        uint8_t* blk = new uint8_t[_linesize];
         int flag = nextLevel->load(add, blk, _linesize);
         while(flag == 0) {
           ++countdown;//
           flag = nextLevel->load(add, blk, _linesize);
         }
         if(flag == -1) {
-          countdown = circle;
+          countdown = cycle;
           delete[] blk;
           return -1;
         }
@@ -61,12 +61,12 @@ int Cache::load(int add, int *block, int len) {
             cacheline->data[i] = blk[i];
         }
         cacheline->valid = true;
-        cacheline->tag = (add/_linesize)/_cachesize;
+        cacheline->tag = (add/_linesize)/_indexsize;
         delete[] blk;
         misshit = true;
         return 0;//increase one hit
       } else {
-        countdown = circle;
+        countdown = cycle;
         return -1;
       }
     } else {// there is a hit
@@ -78,7 +78,7 @@ int Cache::load(int add, int *block, int len) {
       for(int i=0; i<len; ++i) {
         block[i] = candidate->data[i];
       }
-      countdown = circle;
+      countdown = cycle;
       return 1;
     }
   } else {
@@ -86,7 +86,7 @@ int Cache::load(int add, int *block, int len) {
   }
 }
 
-int Cache::store(int add, int *blk, int len) {
+int Cache::store(int add, uint8_t *blk, int len) {
   if (add % _linesize != 0 || len != _linesize) {
     return -1;
   }
@@ -109,18 +109,18 @@ int Cache::store(int add, int *blk, int len) {
       }
       cacheline->valid = true;
       cacheline->dirty = true;
-      cacheline->tag = (add/_linesize)/_cachesize;
+      cacheline->tag = (add/_linesize)/_indexsize;
     }
-    countdown = circle;
+    countdown = cycle;
     return 1;
   } else {
     return 0;
   }
 }
 
-int Cache::load(int add, int *val) {
+int Cache::load(int add, uint8_t *val) {
   int alignedadd = (add/_linesize)*_linesize;
-  int *blk = new int[_linesize];
+  uint8_t *blk = new uint8_t[_linesize];
   int flag = load(alignedadd, blk, _linesize);
   if (flag == 1) {
     *val = blk[add%_linesize];
@@ -129,7 +129,7 @@ int Cache::load(int add, int *val) {
   return flag;
 }
 
-int Cache::store(int add, int val) {
+int Cache::store(int add, uint8_t val) {
   if(countdown>0) {
     countdown--;
   }
@@ -145,20 +145,16 @@ int Cache::store(int add, int val) {
       candidate->dirty = true;
       candidate->data[add%_linesize] = val;
     } else {
-      int *blk = new int[_linesize];
+      uint8_t *blk = new uint8_t[_linesize];
       int tmp = 0;
       while(load(alignedadd, blk, _linesize) == 0){
         ++tmp;
       };
       countdown += tmp;
       misshit = true;
-      // Cacheline* cacheline = inCache(alignedadd);
-      // cacheline->data[add%_linesize] = val;
-      // cacheline->dirty = true;
-      // cacheline->tag = (add/_linesize)/_cachesize;
       return 0;
     }
-    countdown = circle;
+    countdown = cycle;
     return 1;
   } else {
     return 0;
@@ -167,8 +163,8 @@ int Cache::store(int add, int val) {
 
 Cacheline* Cache::inCache(int add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
     // calculate the block number
-    int idx = ((add/_linesize)%_cachesize)*_ways;
-    int tag = (add/_linesize)/_cachesize;
+    int idx = ((add/_linesize)%_indexsize)*_ways;
+    int tag = (add/_linesize)/_indexsize;
     //bool cacheHit = false;
     for(int i = 0; i < _ways; i++) {
         if(_cachelines[idx+i].valid == false){
@@ -185,7 +181,7 @@ Cacheline* Cache::inCache(int add) {// if the address is valid and exists in the
 // evict a cacheline from the current block (referenced by blockNumber) if all ways are occupied, return the cleared line
 // if there is a line not occupied, return it
 Cacheline* Cache::evict(int add) {
-  int idx = ((add/_linesize)%_cachesize)*_ways;
+  int idx = ((add/_linesize)%_indexsize)*_ways;
   for(int i = 0; i < _ways; i++) {
       // return the empty line;
       if(_cachelines[idx+i].valid == false) {
@@ -193,11 +189,12 @@ Cacheline* Cache::evict(int add) {
       }
   }
   // if all ways are written, evict it to lower level storage, return the cleared line;
+  //TODO:getLRU
   int evictedWay = genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
   if(_cachelines[idx+evictedWay].dirty == true) {
       if(nextLevel != nullptr) {
         // write back to lower level of storage if the dirty flag is set to 1.
-        int *block = _cachelines[idx+evictedWay].data;
+        uint8_t *block = _cachelines[idx+evictedWay].data;
         while(nextLevel->store(add, block, _linesize) == 0);
       }
   }
@@ -208,8 +205,7 @@ Cacheline* Cache::evict(int add) {
 
 std::string Cache::dump(){
   std::string res;
-  int nc = _cachesize*_ways;
-  for(int i=0; i<nc; ++i) {
+  for(int i=0; i<_cachesize; ++i) {
     res += std::to_string((int)_cachelines[i].valid) + " " + std::to_string((int)_cachelines[i].dirty) + " " + std::to_string(_cachelines[i].tag) + " ";
     for (int j=0; j<_linesize; ++j) {
       res += std::to_string(_cachelines[i].data[j]) + " ";

@@ -78,7 +78,7 @@ void Simulator::memOpen() {
         std::getline(input, line);
         if (line[0] == 'L') {
             int add = std::stoi(line.substr(2));
-            int val = 0;
+            uint8_t val = 0;
 
             do {
                clk++;
@@ -129,7 +129,7 @@ void Simulator::memSave() {
 
 void Simulator::memLoad() {
     int add = std::stoi(addLE->displayText().toStdString());
-    int val = 0;
+    uint8_t val = 0;
     do {
        clk++;
        clkLb->setText(std::to_string(clk).c_str());

@@ -5,8 +5,10 @@
 class MemSys {
  public:
   MemSys(Cache *cache, Memory *mainMemory, bool cacheOn);
-  int load(int add, int *val);
-  int store(int add, int val);
+  int load(int add, uint8_t *val, int len);
+  int store(int add, uint8_t *val, int len);
+  int load(int add, uint8_t *val);
+  int store(int add, uint8_t val);
   void dump(std::string fn);
   bool _cacheOn;
   int getHit() { return _cache->hit; };

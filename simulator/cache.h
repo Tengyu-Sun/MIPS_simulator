@@ -16,7 +16,7 @@ struct Cacheline {
     bool valid;
     bool dirty;
     int tag;
-    int *data;
+    uint8_t *data;
     Cacheline() {
       valid = false;
       dirty = false;
@@ -30,20 +30,21 @@ struct Cacheline {
 
 class Cache : public Memcache {
  public:
-    Cache(int cachesize, int linesize, int ways, int circle, Memcache* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_);
     ~Cache();
     int hit;
     int miss;
     bool misshit;
-    int load(int add, int *blk, int len);
-    int store(int address, int* blk, int len);
-    int load(int address, int *val);
-    int store(int address, int value);
+    int load(int add, uint8_t *blk, int len);
+    int store(int address, uint8_t* blk, int len);
+    int load(int address, uint8_t *val);
+    int store(int address, uint8_t val);
     std::string dump();
     Cacheline* evict(int add);
     Cacheline* inCache(int address);
  private:
     int _cachesize;
+    int _indexsize;
     int _linesize;
     int _ways;
     Cacheline* _cachelines;

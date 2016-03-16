@@ -26,7 +26,7 @@ private:
     QAction *saveAct;
 
     QLabel *clkLb;
-    unsigned long clk;
+    uint64_t clk;
     QPushButton *clkResetPB;
 
     QLineEdit *addLE;

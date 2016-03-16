@@ -15,18 +15,17 @@
 
 class Memory : public Memcache {
  public:
-    Memory(int size, int circle);
+    Memory(int size, int cycle);
     ~Memory();
-    // int* getData();
     int getSize() { return _size; }
-    int load(int add, int *blk, int len);
-    int store(int address, int *block, int len);
-    int load(int address, int *val);
-    int store(int address, int value);
+    int load(int add, uint8_t *blk, int len);
+    int store(int address, uint8_t *block, int len);
+    int load(int address, uint8_t *val);
+    int store(int address, uint8_t val);
     std::string dump();
  private:
     int _size;
-    int* _data;//byte-addressable?
+    uint8_t* _data;  //byte-addressable
 };
 
 #endif /* defined(__MIPS_Simulator__Memory__) */
