@@ -147,8 +147,9 @@ void Simulator::memLoad() {
 
 void Simulator::memStore() {
     int add = std::stoi(addLE->displayText().toStdString());
-    int val = 0;
-    val = std::stoi(valLE->displayText().toStdString());
+    uint8_t val = 0;
+    val = (uint8_t)std::stoi(valLE->displayText().toStdString());
+    std::cout<<"test "<<(int)val<<std::endl;
     do {
       clk++;
       clkLb->setText(std::to_string(clk).c_str());

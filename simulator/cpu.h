@@ -4,9 +4,20 @@
 #include <cstdint>
 #include "memsys.h"
 
+struct Instruction {
+  int type;
+  int opcode;
+  int rd1;
+  int rd2;
+  int rd3;
+  int imd;
+};
+
 class CPU {
 public:
   CPU(MemSys* memsys);
+  void run();
+  void step();
 
 private:
   uint32_t gpr[16];  //general purpose register
@@ -15,8 +26,10 @@ private:
   uint32_t pc;
   uint32_t ins;
   uint64_t clk;
+  int stage;
+  bool err;
   MemSys* _memsys;
-  
+
   void ifc();
   void idc();
   void exc();

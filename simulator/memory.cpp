@@ -5,6 +5,7 @@ Memory::Memory(int size, int cycle_) {
   cycle = cycle_;
   countdown = cycle_;
   nextLevel = nullptr;
+  _add = -1;
   _data = new uint8_t[size];
 }
 
@@ -14,15 +15,20 @@ Memory::~Memory() {
 
 int Memory::load(int add, uint8_t *blk, int len) {
   if(add > _size - 1 || add < 0) {
-      return -1; //throw exceptions?
+      return -1;
   } else {
-    //TODO: check if it is the same add as last call
+    if(_add == -1) {
+      _add = add;
+    } else if(_add != add) {
+      return -1;  //
+    }
     countdown--;
     if(countdown == 0) {
       for (int i=0; i<len; ++i){
         blk[i] = _data[add+i];
       }
       countdown = cycle;
+      _add = -1;
       return 1;
     } else {
       return 0;
