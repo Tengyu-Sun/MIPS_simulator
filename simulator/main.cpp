@@ -8,7 +8,8 @@ int main(int argc, char *argv[]) {
     Cache *cache = new Cache(8, 4, 2, 5, memory);
 
     MemSys *memsys = new MemSys(cache, memory, true);
-    Simulator w(memsys);
+    CPU *cpu = new CPU(memsys);
+    Simulator w(cpu, memsys);
     w.show();
     return a.exec();
 }

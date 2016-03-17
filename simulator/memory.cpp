@@ -54,14 +54,6 @@ int Memory::store(int add, uint8_t *blk, int len) {
     }
 }
 
-int Memory::load(int add, uint8_t *val) {
-  return load(add, val, 1);
-}
-
-int Memory::store(int add, uint8_t val) {
-  return store(add, &val, 1);
-}
-
 std::string Memory::dump() {
   std::string res;
   for(int i=0; i<_size; ++i) {

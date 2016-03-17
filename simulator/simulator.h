@@ -4,12 +4,13 @@
 #include <QMainWindow>
 #include <QtWidgets>
 #include "memsys.h"
+#include "cpu.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
 
 public:
-    Simulator(MemSys *memsys, QWidget *parent = 0);
+    Simulator(CPU* cpu, MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
 
 private slots:
@@ -19,6 +20,8 @@ private slots:
     void memStore();
     void clkReset();
     void cacheOnOFF();
+    void cpuRun();
+    void cpuStep();
 
 private:
     QMenu *memMenu;
@@ -28,6 +31,8 @@ private:
     QLabel *clkLb;
     uint64_t clk;
     QPushButton *clkResetPB;
+    QPushButton *runPB;
+    QPushButton *stepPB;
 
     QLineEdit *addLE;
     QLineEdit *valLE;
@@ -41,7 +46,7 @@ private:
     QTableWidget *memTW;
 
     MemSys *_memsys;
-
+    CPU *_cpu;
 };
 
 #endif // SIMULATOR_H

@@ -3,7 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
+Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
+    _cpu = cpu;
     _memsys = memsys;
     clk = 0;
 
@@ -19,11 +20,17 @@ Simulator::Simulator(MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     QLabel *ccLb = new QLabel(tr("clock circle:"));
     clkLb = new QLabel(tr("0"));
     clkResetPB = new QPushButton(tr("Reset"));
+    runPB = new QPushButton(tr("Run"));
+    stepPB = new QPushButton(tr("Step"));
     connect(clkResetPB, SIGNAL(clicked()), this, SLOT(clkReset()));
+    connect(runPB, SIGNAL(clicked()), this, SLOT(cpuRun()));
+    connect(stepPB, SIGNAL(clicked()), this, SLOT(cpuStep()));
     QGridLayout *cpuLayout = new QGridLayout;
     cpuLayout->addWidget(ccLb, 0, 0);
     cpuLayout->addWidget(clkLb, 0, 1);
     cpuLayout->addWidget(clkResetPB, 1, 0);
+    cpuLayout->addWidget(runPB, 2, 0);
+    cpuLayout->addWidget(stepPB, 2, 1);
     cpuGroup->setLayout(cpuLayout);
 
     QGroupBox *memGroup = new QGroupBox(tr("Memory"));
@@ -79,14 +86,13 @@ void Simulator::memOpen() {
         if (line[0] == 'L') {
             int add = std::stoi(line.substr(2));
             uint8_t val = 0;
-
             do {
                clk++;
                clkLb->setText(std::to_string(clk).c_str());
                //std::cout<<clk<<" ";
-            } while(_memsys->load(add, &val) == 0);
+            } while(_memsys->loadByte(add, &val) == 0);
            // std::cout<<std::endl;
-            std::cout<<"load "<<add<<": "<<val<<std::endl;
+            std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
             if(_memsys->_cacheOn) {
                 int h = _memsys->getHit();
                 int m = _memsys->getMiss();
@@ -106,9 +112,9 @@ void Simulator::memOpen() {
               clk++;
               clkLb->setText(std::to_string(clk).c_str());
               //std::cout<<clk<<" ";
-            } while(_memsys->store(add, val) == 0);
+            } while(_memsys->storeByte(add, val) == 0);
 
-            std::cout<<"store "<<add<<" "<<val<<std::endl;
+            std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
             if(_memsys->_cacheOn) {
                 int h = _memsys->getHit();
                 int m = _memsys->getMiss();
@@ -128,14 +134,19 @@ void Simulator::memSave() {
 }
 
 void Simulator::memLoad() {
-    int add = std::stoi(addLE->displayText().toStdString());
+    int add = 0;
+    try {
+      add = std::stoi(addLE->displayText().toStdString());
+    } catch(...) {
+      add = 0;
+    }
     uint8_t val = 0;
     do {
        clk++;
        clkLb->setText(std::to_string(clk).c_str());
        std::cout<<clk<<std::endl;
-    } while(_memsys->load(add, &val) == 0);
-    std::cout<<"load "<<add<<": "<<val<<std::endl;
+    } while(_memsys->loadByte(add, &val) == 0);
+    std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
     if(_memsys->_cacheOn) {
         int h = _memsys->getHit();
         int m = _memsys->getMiss();
@@ -146,16 +157,24 @@ void Simulator::memLoad() {
 }
 
 void Simulator::memStore() {
-    int add = std::stoi(addLE->displayText().toStdString());
+    int add = 0;
+    try{
+      add = std::stoi(addLE->displayText().toStdString());
+    } catch(...) {
+      add = 0;
+    }
     uint8_t val = 0;
-    val = (uint8_t)std::stoi(valLE->displayText().toStdString());
-    std::cout<<"test "<<(int)val<<std::endl;
+    try {
+      val = (uint8_t)std::stoi(valLE->displayText().toStdString());
+    } catch(...) {
+      val = 0;
+    }
     do {
       clk++;
       clkLb->setText(std::to_string(clk).c_str());
       std::cout<<clk<<std::endl;
-    } while(_memsys->store(add, val) == 0);
-    std::cout<<"store "<<add<<" "<<val<<std::endl;
+    } while(_memsys->storeByte(add, val) == 0);
+    std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
     if(_memsys->_cacheOn) {
         int h = _memsys->getHit();
         int m = _memsys->getMiss();
@@ -174,20 +193,33 @@ void Simulator::cacheOnOFF() {
     _memsys->_cacheOn = !_memsys->_cacheOn;
     if (_memsys->_cacheOn){
         cacheOnPB->setText(tr("ON"));
-        _memsys->resetHit();
-        _memsys->resetMiss();
+        _memsys->resetCache();
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     } else {
         cacheOnPB->setText(tr("OFF"));
-        _memsys->resetHit();
-        _memsys->resetMiss();
+        _memsys->resetCache();
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     }
 }
 
+void Simulator::cpuRun() {
+    std::cout<<"Run"<<std::endl;
+    while(true) {
+      _cpu->step();
+      clk = _cpu->clk;
+      clkLb->setText(std::to_string(clk).c_str());
+    }
+}
+
+void Simulator::cpuStep() {
+    std::cout<<"Step"<<std::endl;
+    _cpu->step();
+    clk = _cpu->clk;
+    clkLb->setText(std::to_string(clk).c_str());
+}
+
 Simulator::~Simulator() {
 
 }
-

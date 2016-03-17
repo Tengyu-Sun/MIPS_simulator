@@ -4,7 +4,7 @@
 #include <cstdint>
 #include "memsys.h"
 
-struct Instruction {
+struct Pipeline {
   int type;
   int opcode;
   int rd1;
@@ -15,6 +15,7 @@ struct Instruction {
 
 class CPU {
 public:
+  uint64_t clk;
   CPU(MemSys* memsys);
   void run();
   void step();
@@ -25,7 +26,8 @@ private:
   uint64_t vr[16];  //vector register
   uint32_t pc;
   uint32_t ins;
-  uint64_t clk;
+
+  Pipeline *pipe[5];
   int stage;
   bool err;
   MemSys* _memsys;
@@ -36,6 +38,4 @@ private:
   void mem();
   void wbc();
 };
-
-
 #endif /* defined(__MIPS_Simulator__CPU__) */

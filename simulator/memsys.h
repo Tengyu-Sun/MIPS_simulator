@@ -1,3 +1,6 @@
+#ifndef __MIPS_Simulator__Memsys__
+#define __MIPS_Simulator__Memsys__
+
 #include "cache.h"
 #include "memory.h"
 #include <string>
@@ -5,18 +8,18 @@
 class MemSys {
  public:
   MemSys(Cache *cache, Memory *mainMemory, bool cacheOn);
-  int load(int add, uint8_t *val, int len);
-  int store(int add, uint8_t *val, int len);
-  int load(int add, uint8_t *val);
-  int store(int add, uint8_t val);
+  int loadWord(int add, uint32_t *val);
+  int storeWord(int add, uint32_t val);
+  int loadByte(int add, uint8_t *val);
+  int storeByte(int add, uint8_t val);
   void dump(std::string fn);
   bool _cacheOn;
   int getHit() { return _cache->hit; };
-  void resetHit() { _cache->hit = 0; }
+  void resetCache() { _cache->reset(); }
   int getMiss() { return _cache->miss; };
-  void resetMiss() { _cache->miss = 0; }
  private:
   Cache *_cache;
   Memory *_mainMemory;
   int _memSize;
 };
+#endif /* defined(__MIPS_Simulator__Memsys__) */

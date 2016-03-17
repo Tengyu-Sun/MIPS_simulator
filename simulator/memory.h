@@ -20,8 +20,6 @@ class Memory : public Memcache {
     int getSize() { return _size; }
     int load(int add, uint8_t *blk, int len);
     int store(int address, uint8_t *blk, int len);
-    int load(int address, uint8_t *val);
-    int store(int address, uint8_t val);
     std::string dump();
  private:
     int _size;

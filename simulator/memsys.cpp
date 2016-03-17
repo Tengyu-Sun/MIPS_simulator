@@ -6,47 +6,62 @@ _cacheOn(co) {
   _memSize = _mainMemory->getSize();
 }
 
-int MemSys::load(int add, uint8_t* val, int len) {
-    if(add > _memSize - 1 || add < 0) {
+int MemSys::loadWord(int add, uint32_t* val) {
+  if(add > _memSize - 1 || add < 0 || add%4 != 0) {
+    return -1;
+  }
+  uint8_t tmp[4];
+  int flag = -1;
+  if (_cacheOn) {
+      flag = _cache->load(add, tmp, 4);
+  } else {
+      flag = _mainMemory->load(add, tmp, 4);
+  }
+  if(flag == 1) {
+    *val = (tmp[0]<<24) | (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
+  }
+  return flag;
+}
+
+int MemSys::loadByte(int add, uint8_t* val) {
+  if(add > _memSize - 1 || add < 0) {
+    return -1;
+  }
+  if (_cacheOn) {
+      return _cache->load(add, val, 1);
+  } else {
+      return _mainMemory->load(add, val, 1);
+  }
+}
+
+int MemSys::storeWord(int add, uint32_t val) {
+    if(add > _memSize - 1 || add < 0 || add%4 != 0) {
       return -1;
     }
-    if (_cacheOn) {
-        return _cache->load(add, val, len);
+    uint8_t tmp[4];
+    tmp[3] = val%256;
+    val = val/256;
+    tmp[2] = val%256;
+    val = val/256;
+    tmp[1] = val%256;
+    val = val/256;
+    tmp[0] = val;
+
+    if(_cacheOn) {
+        return _cache->store(add, tmp, 4);
     } else {
-        return _mainMemory->load(add, val, len);
+        return _mainMemory->store(add, tmp, 4);
     }
 }
 
-int MemSys::load(int add, uint8_t* val) {
-    if(add > _memSize - 1 || add < 0) {
-      return -1;
-    }
-    if (_cacheOn) {
-        return _cache->load(add, val);
-    } else {
-        return _mainMemory->load(add, val);
-    }
-}
-
-int MemSys::store(int add, uint8_t *val, int len) {
+int MemSys::storeByte(int add, uint8_t val) {
     if(add > _memSize - 1 || add < 0) {
       return -1;
     }
     if(_cacheOn) {
-        return _cache->store(add, val, len);
+        return _cache->store(add, &val, 1);
     } else {
-        return _mainMemory->store(add, val, len);
-    }
-}
-
-int MemSys::store(int add, uint8_t val) {
-    if(add > _memSize - 1 || add < 0) {
-      return -1;
-    }
-    if(_cacheOn) {
-        return _cache->store(add, val);
-    } else {
-        return _mainMemory->store(add, val);
+        return _mainMemory->store(add, &val, 1);
     }
 }
 

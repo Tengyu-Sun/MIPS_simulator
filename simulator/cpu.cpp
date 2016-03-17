@@ -16,12 +16,9 @@ CPU::CPU(MemSys* memsys){
 }
 
 void CPU::ifc() {
-  uint8_t tmp[4];
-  int flag = _memsys->load((int)pc, tmp, 4);
-  if ( flag == 1) {
-    ins = (tmp[0]<<24) | (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
-    //pc = pc + 4;
-  } else if (flag == -1) {
+
+  int flag = _memsys->loadWord((int)pc, &ins);
+  if (flag == -1) {
     std::cout<<"error fectching instructions"<<std::endl;
     err = true;
   }
@@ -37,6 +34,9 @@ void CPU::exc() {
 }
 
 void CPU::mem() {
+  if(stage == 4) {
+    pc = pc + 4;
+  }
   return;
 }
 
@@ -47,16 +47,12 @@ void CPU::wbc() {
 void CPU::run() {
   while(!err) {
     wbc();
-    ++clk;
     stage = (stage + 1)%5;
     mem();
-    ++clk;
     stage = (stage + 1)%5;
     exc();
-    ++clk;
     stage = (stage + 1)%5;
     idc();
-    ++clk;
     stage = (stage + 1)%5;
     ifc();
     ++clk;
@@ -65,6 +61,9 @@ void CPU::run() {
 }
 
 void CPU::step() {
+  if (err) {
+    return;
+  }
   switch(stage) {
     case 0: wbc();
             break;

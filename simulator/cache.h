@@ -16,11 +16,13 @@ struct Cacheline {
     bool valid;
     bool dirty;
     int tag;
+    int lru;
     uint8_t *data;
     Cacheline() {
       valid = false;
       dirty = false;
       tag = 0;
+      lru = 0;
       data = nullptr;
     }
     ~Cacheline() {
@@ -34,11 +36,10 @@ class Cache : public Memcache {
     ~Cache();
     int hit;
     int miss;
-    bool misshit;
+
     int load(int add, uint8_t *blk, int len);
-    int store(int address, uint8_t* blk, int len);
-    int load(int address, uint8_t *val);
-    int store(int address, uint8_t val);
+    int store(int add, uint8_t* blk, int len);
+    void reset();
     std::string dump();
     Cacheline* evict(int add);
     Cacheline* inCache(int address);
@@ -47,6 +48,11 @@ class Cache : public Memcache {
     int _indexsize;
     int _linesize;
     int _ways;
+    uint8_t *buf;
+    int preadd;
+    int prelen;
+    bool missReady;
+
     Cacheline* _cachelines;
 };
 
