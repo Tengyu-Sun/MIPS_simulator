@@ -4,13 +4,16 @@
 #include <cstdint>
 #include "memsys.h"
 
-struct Pipeline {
+struct Instruction {
+  int add;
+  uint32_t ins;
   int type;
   int opcode;
   int rd1;
   int rd2;
   int rd3;
   int imd;
+  int stage;
 };
 
 class CPU {
@@ -25,11 +28,12 @@ private:
   uint32_t fpr[16];  //floating point register
   uint64_t vr[16];  //vector register
   uint32_t pc;
-  uint32_t ins;
+  //uint32_t ins;
 
-  Pipeline *pipe[5];
+  Instruction *pipe[5];
   int stage;
   bool err;
+  bool clear;
   MemSys* _memsys;
 
   void ifc();
