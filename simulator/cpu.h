@@ -6,14 +6,22 @@
 
 struct Instruction {
   int add;
+  uint32_t npc;
   uint32_t ins;
   int type;
   int opcode;
   int rd1;
+  int rf1;
+  int A;
   int rd2;
+  int rf2;
+  int B;
   int rd3;
-  int imd;
+  int rf3;
+  int imm;
   int stage;
+  int aluoutput;
+  uint32_t lmd;
 };
 
 class CPU {
@@ -25,7 +33,7 @@ public:
 
 private:
   uint32_t gpr[16];  //general purpose register
-  uint32_t fpr[16];  //floating point register
+  float fpr[16];  //floating point register
   uint64_t vr[16];  //vector register
   uint32_t pc;
   //uint32_t ins;
