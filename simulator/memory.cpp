@@ -7,11 +7,13 @@ Memory::Memory(int size, int cycle_) {
   nextLevel = nullptr;
   _add = -1;
   _data = new uint8_t[size];
-  if (size > 4) {
+  if (size > 6) {
     _data[0] = 128;
-    _data[1] = 32;
+    _data[1] = 2;
     _data[2] = 0;
     _data[3] = 5;
+    _data[4] = 0;
+    _data[5] = 20;
   }
 }
 

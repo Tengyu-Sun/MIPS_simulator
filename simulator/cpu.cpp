@@ -202,14 +202,15 @@ void CPU::wbc() {
     if (pipe[4]->stage == 4) {
       if (pipe[4]->type == 1) {
         if (pipe[4]->opcode == 0 || pipe[4]->opcode == 1 || pipe[4]->opcode == 2) {
-          gpr[rd2] = lmd;
-          std::cout<<"wbc: "<<pipe[4]->opcode<<std::endl;
+          gpr[pipe[4]->rd2] = pipe[4]->lmd;
+          std::cout<<"wbc: "<<gpr[pipe[4]->rd2]<<std::endl;
           pipe[4]->stage = 5;
         } else if (pipe[4]->opcode == 4) {
-          fpr
+          fpr[pipe[4]->rd2] = pipe[4]->lmd;
+          std::cout<<"wbc: "<<fpr[pipe[4]->rd2]<<std::endl;
+          pipe[4]->stage = 5;
         }
       }
-
     }
     if(pipe[4]->stage == 5) {
       clear = true;
