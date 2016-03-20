@@ -11,16 +11,13 @@ struct Instruction {
   int type;
   int opcode;
   int rd1;
-  int rf1;
-  int A;
+  uint32_t A;
   int rd2;
-  int rf2;
-  int B;
+  uint32_t B;
   int rd3;
-  int rf3;
-  int imm;
+  uint32_t imm;
   int stage;
-  int aluoutput;
+  uint32_t aluoutput;
   uint32_t lmd;
 };
 
@@ -36,6 +33,7 @@ private:
   float fpr[16];  //floating point register
   uint64_t vr[16];  //vector register
   uint32_t pc;
+  uint32_t status;
   //uint32_t ins;
 
   Instruction *pipe[5];

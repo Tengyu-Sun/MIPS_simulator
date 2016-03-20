@@ -8,12 +8,14 @@ Memory::Memory(int size, int cycle_) {
   _add = -1;
   _data = new uint8_t[size];
   if (size > 6) {
-    _data[0] = 128;
+    _data[0] = 32;
     _data[1] = 2;
     _data[2] = 0;
     _data[3] = 5;
     _data[4] = 0;
-    _data[5] = 20;
+    _data[5] = 129;
+    _data[6] = 0;
+    _data[7] = 0;
   }
 }
 
