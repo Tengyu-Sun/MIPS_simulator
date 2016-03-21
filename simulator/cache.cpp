@@ -22,9 +22,12 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLe
   preadd = -1;
   prelen = -1;
   buf = nullptr;
+  policy =0;
   _cachelines = new Cacheline[_cachesize];
+  lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
     _cachelines[i].data = new uint8_t[_linesize];
+    lru[i] = 0;
   }
 }
 
@@ -107,7 +110,9 @@ int Cache::load(int add, uint8_t *blk, int len) {
           for (int i=0; i<_linesize; ++i) {
             tmp[(j-als)*_linesize+i] = candidate->data[i];
           }
+
         }
+        visitLRU(j);
       }
       if (missed) {
         missReady = true;
@@ -227,6 +232,8 @@ int Cache::store(int add, uint8_t *blk, int len) {
             cacheline->tag = (j/_linesize)/_indexsize;
           }
         }
+
+        visitLRU(j);
       }
       if (missed) {
         missReady = true;
@@ -270,8 +277,11 @@ Cacheline* Cache::evict(int add) {
       }
   }
   // if all ways are written, evict it to lower level storage, return the cleared line;
-  //TODO:getLRU
+
   int evictedWay = genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
+  if (policy == 1) {
+    evictedWay = getLRUNumber(idx);
+  }
   if(_cachelines[idx+evictedWay].dirty == true) {
       if(nextLevel != nullptr) {
         // write back to lower level of storage if the dirty flag is set to 1.
@@ -310,4 +320,34 @@ std::string Cache::dump() {
     res += "\n";
   }
   return res;
+}
+
+int Cache::getLRUNumber(int idx) {
+  idx = (idx/_ways)*_ways;
+  int mi = 0;
+  for (int i=0; i<_ways; ++i) {
+    if (lru[idx+i]>lru[idx+mi]) {
+      mi = i;
+    }
+  }
+  return mi;
+}
+
+void Cache::visitLRU(int add) {
+  int idx = ((add/_linesize)%_indexsize)*_ways;
+  int tag = (add/_linesize)/_indexsize;
+  for (int i = 0; i < _ways; i++) {
+      if(_cachelines[idx+i].valid == false) {
+        continue;
+      }
+      if (_cachelines[idx+i].tag == tag) {
+        for(int j=0; j<_ways; ++j) {
+          if (lru[idx+j] < lru[idx+i]) {
+            lru[idx+j]++;
+          }
+        }
+        lru[idx+i] = 0;
+      }
+  }
+  return;
 }

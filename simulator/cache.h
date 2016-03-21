@@ -52,8 +52,12 @@ class Cache : public Memcache {
     int preadd;
     int prelen;
     bool missReady;
+    int policy;
 
     Cacheline* _cachelines;
+    int *lru;
+    int getLRUNumber(int idx);
+    void visitLRU(int add);
 };
 
 
