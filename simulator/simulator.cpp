@@ -188,6 +188,28 @@ void Simulator::memStore() {
 }
 
 void Simulator::memImport() {
+    std::string filename = QFileDialog::getOpenFileName(this,tr("Import Memory"),
+               "/Users/blade/workspace/cs535/MIPS_simulator").toStdString();
+    std::fstream input(filename);
+    uint32_t ins = 0;
+    int add = 0;
+    while(input){
+       input>>ins;
+       //std::cout<<ins<<std::endl;
+       uint8_t tmp = ins & 0xff;
+       while(_memsys->storeByte(add+3, tmp) != 1);
+       ins >>= 8;
+       tmp = ins & 0xff;
+       while(_memsys->storeByte(add+2, tmp) != 1);
+       ins >>= 8;
+       tmp = ins & 0xff;
+       while(_memsys->storeByte(add+1, tmp) != 1);
+       ins >>= 8;
+       tmp = ins & 0xff;
+       while(_memsys->storeByte(add, tmp) != 1);
+       add = add + 4;
+       ins = 0;
+    }
     return;
 }
 
