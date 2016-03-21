@@ -235,9 +235,8 @@ void Simulator::cacheOnOFF() {
 
 void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
-    while(true) {
+    while(!_cpu->err) {
       _cpu->step();
-
       clkLb->setText(std::to_string(_cpu->clk).c_str());
     }
 }

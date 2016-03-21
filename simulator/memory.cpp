@@ -16,6 +16,9 @@ Memory::Memory(int size, int cycle_) {
     _data[5] = 0;//129;
     _data[6] = 0;
     _data[7] = 0;
+    _data[100] = 1;
+    _data[101] = 2;
+    _data[102] = 0;
   }
 }
 

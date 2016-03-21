@@ -28,6 +28,7 @@ public:
   CPU(MemSys* memsys);
   void run();
   void step();
+  bool err;
 
 private:
   uint32_t gpr[16];  //general purpose register
@@ -37,7 +38,6 @@ private:
   uint32_t status;
 
   Instruction *pipe[5];
-  bool err;
   bool clear;
   MemSys* _memsys;
 

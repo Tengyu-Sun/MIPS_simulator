@@ -174,6 +174,7 @@ void CPU::exc() {
       } else if (pipe[2]->type == 3) {
         if (pipe[2]->opcode == 0) {
           err = true;
+          std::cout<<"break"<<std::endl;
           return;
         }
         if (pipe[2]->opcode <3) {
@@ -224,7 +225,7 @@ void CPU::mem() {
       if (pipe[3]->type == 1) {
         int flag = 0;
         if (pipe[3]->opcode == 8) {
-          flag = _memsys->storeByte(pipe[3]->aluoutput, (uint8_t)(pipe[3]->B%256));
+          flag = _memsys->storeByte(pipe[3]->aluoutput, (uint8_t)(pipe[3]->B & 0xff));
         } else if (pipe[3]->opcode == 9) {
           flag = _memsys->storeWord(pipe[3]->aluoutput, (uint32_t)(pipe[3]->B));
         } else if (pipe[3]->opcode == 0 || pipe[3]->opcode == 1) {
@@ -247,10 +248,15 @@ void CPU::mem() {
           pipe[3]->stage = 4;
           std::cout<<"pc: "<<pc<<std::endl;
         }
+      } else if (pipe[3]->type == 2) {
+        pipe[3]->stage = 4;
+        std::cout<<"pc: "<<pc<<std::endl;
       } else if (pipe[3]->type == 3) {
         if (pipe[3]->cond) {
           pc = pipe[3]->aluoutput;
         }
+        pipe[3]->stage = 4;
+        std::cout<<"pc: "<<pc<<std::endl;
       }
     }
     if(pipe[3]->stage == 4) {
@@ -314,6 +320,7 @@ void CPU::run() {
 
 void CPU::step() {
   if (err) {
+    std::cout<<"error program"<<std::endl;
     return;
   }
   wbc();
