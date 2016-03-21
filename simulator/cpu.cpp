@@ -147,7 +147,7 @@ void CPU::exc() {
           case 12: pipe[2]->aluoutput = pipe[2]->A ^ pipe[2]->B;
                   break;
           case 13:{uint32_t tmp = 0; uint32_t tA = pipe[2]->A;
-                  for(int i=0; i<pipe[2]->B; ++i) {
+                  for(uint32_t i=0; i<pipe[2]->B; ++i) {
                     tmp <<= 1; tmp |= tA & 1; tA >>= 1;
                   }
                   pipe[2]->aluoutput = tA | (tmp<<(32-pipe[2]->B));}
@@ -173,7 +173,34 @@ void CPU::exc() {
           default: std::cout<<"exc: type 2 error opcode "<<pipe[2]->opcode<<std::endl;
         }
       } else if (pipe[2]->type == 3) {
-
+        if (pipe[2]->opcode == 0) {
+          err = true;
+          return;
+        }
+        if (pipe[2]->opcode <3) {
+          uint32_t offset = pipe[2]->ins & 0x1ffffff;
+          pipe[2]->aluoutput = offset<<2;
+          if (pipe[2]->opcode == 2) {
+            gpr[15] = pipe[2]->npc;
+          }
+          pipe[2]->cond = true;
+        } else {
+          pipe[2]->aluoutput = pipe[2]->npc + (pipe[2]->imm<<2);
+          switch(pipe[2]->opcode) {
+            case 3: pipe[2]->cond = (pipe[2]->A == pipe[2]->B);
+                  break;
+            case 4: pipe[2]->cond = (pipe[2]->A != pipe[2]->B);
+                  break;
+            case 5: pipe[2]->cond = ((int32_t)pipe[2]->A >= 0);
+                  break;
+            case 6: pipe[2]->cond = ((int32_t)pipe[2]->A > 0);
+                  break;
+            case 7: pipe[2]->cond = ((int32_t)pipe[2]->A <= 0);
+                  break;
+            case 8: pipe[2]->cond = ((int32_t)pipe[2]->A < 0);
+                  break;
+          }
+        }
       }
       std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
       pipe[2]->stage = 3;
@@ -221,6 +248,10 @@ void CPU::mem() {
           pipe[3]->stage = 4;
           std::cout<<"pc: "<<pc<<std::endl;
         }
+      } else if (pipe[3]->type == 3) {
+        if (pipe[3]->cond) {
+          pc = pipe[3]->aluoutput;
+        }
       }
     }
     if(pipe[3]->stage == 4) {
@@ -248,8 +279,16 @@ void CPU::wbc() {
           fpr[pipe[4]->rd2] = *tmp;
           std::cout<<"wbc: "<<fpr[pipe[4]->rd2]<<std::endl;
         }
-        pipe[4]->stage = 5;
+      } else if (pipe[4]->type == 2) {
+        if (pipe[4]->opcode > 18) {
+          gpr[pipe[4]->rd2] = pipe[4]->aluoutput;
+          std::cout<<"wbc: "<<gpr[pipe[4]->rd2]<<std::endl;
+        } else {
+          gpr[pipe[4]->rd3] = pipe[4]->aluoutput;
+          std::cout<<"wbc: "<<gpr[pipe[4]->rd3]<<std::endl;
+        }
       }
+      pipe[4]->stage = 5;
     }
     if(pipe[4]->stage == 5) {
       clear = true;

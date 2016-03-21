@@ -19,6 +19,7 @@ struct Instruction {
   int stage;
   uint32_t aluoutput;
   uint32_t lmd;
+  bool cond;
 };
 
 class CPU {
