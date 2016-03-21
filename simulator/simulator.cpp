@@ -6,15 +6,18 @@
 Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     _cpu = cpu;
     _memsys = memsys;
-    clk = 0;
 
     openAct = new QAction(tr("open"), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
     saveAct = new QAction(tr("save"), this);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(memSave()));
+    importAct = new QAction(tr("import"), this);
+    connect(importAct, SIGNAL(triggered()), this, SLOT(memImport()));
     memMenu = menuBar()->addMenu(tr("Memory"));
     memMenu->addAction(openAct);
+    memMenu->addAction(importAct);
     memMenu->addAction(saveAct);
+
 
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
     QLabel *ccLb = new QLabel(tr("clock circle:"));
@@ -87,8 +90,8 @@ void Simulator::memOpen() {
             int add = std::stoi(line.substr(2));
             uint8_t val = 0;
             do {
-               clk++;
-               clkLb->setText(std::to_string(clk).c_str());
+               _cpu->clk++;
+               clkLb->setText(std::to_string(_cpu->clk).c_str());
                //std::cout<<clk<<" ";
             } while(_memsys->loadByte(add, &val) == 0);
            // std::cout<<std::endl;
@@ -109,8 +112,8 @@ void Simulator::memOpen() {
             int add = std::stoi(line.substr(2, p-2));
             int val = std::stoi(line.substr(p+1));
             do {
-              clk++;
-              clkLb->setText(std::to_string(clk).c_str());
+              _cpu->clk++;
+              clkLb->setText(std::to_string(_cpu->clk).c_str());
               //std::cout<<clk<<" ";
             } while(_memsys->storeByte(add, val) == 0);
 
@@ -142,9 +145,9 @@ void Simulator::memLoad() {
     }
     uint8_t val = 0;
     do {
-       clk++;
-       clkLb->setText(std::to_string(clk).c_str());
-       std::cout<<clk<<std::endl;
+       _cpu->clk++;
+       clkLb->setText(std::to_string(_cpu->clk).c_str());
+       std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->loadByte(add, &val) == 0);
     std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
     if(_memsys->_cacheOn) {
@@ -170,9 +173,9 @@ void Simulator::memStore() {
       val = 0;
     }
     do {
-      clk++;
-      clkLb->setText(std::to_string(clk).c_str());
-      std::cout<<clk<<std::endl;
+      _cpu->clk++;
+      clkLb->setText(std::to_string(_cpu->clk).c_str());
+      std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->storeByte(add, val) == 0);
     std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
     if(_memsys->_cacheOn) {
@@ -184,9 +187,13 @@ void Simulator::memStore() {
     }
 }
 
+void Simulator::memImport() {
+    return;
+}
+
 void Simulator::clkReset() {
-    clk = 0;
-    clkLb->setText(std::to_string(clk).c_str());
+    _cpu->clk = 0;
+    clkLb->setText(std::to_string(_cpu->clk).c_str());
 }
 
 void Simulator::cacheOnOFF() {
@@ -208,16 +215,16 @@ void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
     while(true) {
       _cpu->step();
-      clk = _cpu->clk;
-      clkLb->setText(std::to_string(clk).c_str());
+
+      clkLb->setText(std::to_string(_cpu->clk).c_str());
     }
 }
 
 void Simulator::cpuStep() {
     std::cout<<"Step"<<std::endl;
     _cpu->step();
-    clk = _cpu->clk;
-    clkLb->setText(std::to_string(clk).c_str());
+
+    clkLb->setText(std::to_string(_cpu->clk).c_str());
 }
 
 Simulator::~Simulator() {

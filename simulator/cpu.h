@@ -35,10 +35,8 @@ private:
   uint64_t vr[16];  //vector register
   uint32_t pc;
   uint32_t status;
-  //uint32_t ins;
 
   Instruction *pipe[5];
-  int stage;
   bool err;
   bool clear;
   MemSys* _memsys;

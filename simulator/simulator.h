@@ -15,6 +15,7 @@ public:
 
 private slots:
     void memOpen();
+    void memImport();
     void memSave();
     void memLoad();
     void memStore();
@@ -26,10 +27,11 @@ private slots:
 private:
     QMenu *memMenu;
     QAction *openAct;
+    QAction *importAct;
     QAction *saveAct;
 
     QLabel *clkLb;
-    uint64_t clk;
+    //uint64_t clk;
     QPushButton *clkResetPB;
     QPushButton *runPB;
     QPushButton *stepPB;

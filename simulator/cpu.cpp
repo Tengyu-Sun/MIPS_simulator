@@ -5,7 +5,6 @@ CPU::CPU(MemSys* memsys){
   _memsys = memsys;
   pc = 0;
   clk = 0;
-  stage = 0;
   status = 0;
   err = false;
   for(int i=0; i<16; ++i) {
