@@ -189,7 +189,7 @@ void Simulator::memStore() {
 
 void Simulator::memImport() {
     std::string filename = QFileDialog::getOpenFileName(this,tr("Import Memory"),
-               "/Users/blade/workspace/cs535/MIPS_simulator").toStdString();
+               "/Users/blade/workspace/cs535/MIPS_simulator/asm").toStdString();
     std::fstream input(filename);
     uint32_t ins = 0;
     int add = 0;

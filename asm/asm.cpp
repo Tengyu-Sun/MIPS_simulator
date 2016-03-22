@@ -4,13 +4,62 @@
 #include <vector>
 using namespace std;
 
-int encoding(string opcode, vector<string> para) {
-  cout<<opcode<<" ";
-  for(int i=0; i<para.size(); ++i){
-    cout<<para[i]<<" ";
+uint32_t encoding(string opcode, vector<string> para) {
+  uint32_t code = 0;
+  if (opcode == "lb") {
+    code = 0b0010000;
+  } else if (opcode == "add") {
+    code = 0b1000000;
+  } else if (opcode == "sub") {
+    code = 0b1000001;
+  } else if (opcode == "bgez") {
+    code = 0b0000101;
+  } else if (opcode == "sb") {
+    code = 0b0011000;
+  } else if (opcode == "break") {
+    return 0;
+  } else {
+    cout<<"error opcode: "<<opcode<<endl;
+    return 0;
   }
-  cout<<endl;
-  return 0;
+
+  if (para.size() == 1) {
+    code <<= 25;
+    code |= stoi(para[0]);
+  } else if (para.size() == 2) {
+    code <<= 4;
+    code |= stoi(para[0].substr(1));
+    if (para[1][0] == '$') {
+      code <<= 4;
+      code |= stoi(para[1].substr(1));
+      code <<= 17;
+    } else {
+      code <<=21;
+      code |= stoi(para[1]);
+    }
+  } else if (para.size() == 3) {
+    code <<= 4;
+    code |= stoi(para[0].substr(1));
+    code <<= 4;
+    code |= stoi(para[1].substr(1));
+    if (para[2][0] == '$') {
+      code <<= 4;
+      code |= stoi(para[2].substr(1));
+      code <<=13;
+    } else {
+      code <<= 17;
+      code |= stoi(para[2]);
+    }
+
+  } else {
+    cout<<"error para: ";
+    for (int i=0; i<para.size(); ++i) {
+      cout<<para[i]<<" ";
+    }
+    cout<<endl;
+    return 0;
+  }
+  return code;
 }
 
 int main(int argc, char* argv[]) {
@@ -24,6 +73,9 @@ int main(int argc, char* argv[]) {
   std::string line;
   while(input) {
     std::getline(input, line);
+    if (line.size() == 0) {
+      break;
+    }
     string opcode;
     vector<string> para;
     int i = 0;
