@@ -242,10 +242,11 @@ void Simulator::cpuRun() {
 }
 
 void Simulator::cpuStep() {
-    std::cout<<"Step"<<std::endl;
-    _cpu->step();
-
-    clkLb->setText(std::to_string(_cpu->clk).c_str());
+    if (!_cpu->err) {
+        std::cout<<"Step"<<std::endl;
+        _cpu->step();
+        clkLb->setText(std::to_string(_cpu->clk).c_str());
+    }
 }
 
 Simulator::~Simulator() {
