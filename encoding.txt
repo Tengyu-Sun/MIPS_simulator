@@ -39,3 +39,29 @@ bgtz 0000110
 blez 0000111
 bltz 0001000
 break 0000000
+floating point
+addsp 0100000
+subsp 0100001
+mulsp 0100010
+divsp 0100011
+sltsp 0100100
+witf 0100101
+wfti 0100110
+cache
+pref 0110000
+simd
+move 1101010
+copys 1101011
+copyu 1101100
+insertb 1101101
+fillb 1101110
+vaddb 1100000
+vsubb 1100001
+vmulb 1100010
+vdivv 1100011
+vmodb 1100100
+ceqb 1100101
+cleb 1100110
+cleub 1100111
+cltb 1101000
+cltub 1101001
