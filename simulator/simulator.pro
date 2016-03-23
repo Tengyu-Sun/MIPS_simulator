@@ -13,9 +13,18 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        simulator.cpp
+        simulator.cpp \
+    memsys.cpp \
+    memory.cpp \
+    cache.cpp \
+    cpu.cpp
 
-HEADERS  += simulator.h
+HEADERS  += simulator.h \
+    memsys.h \
+    cache.h \
+    memory.h \
+    memcache.h \
+    cpu.h
 
 CONFIG += c++11
 
