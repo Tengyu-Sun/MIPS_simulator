@@ -1,8 +1,10 @@
 #include "cpu.h"
 #include <iostream>
 
-CPU::CPU(MemSys* memsys){
+CPU::CPU(MemSys* memsys, FPU* fpu = nullptr, VU* vu = nullptr){
   _memsys = memsys;
+  _fpu = fpu;
+  _vu = vu;
   pc = 0;
   clk = 0;
   status = 0;
@@ -63,10 +65,8 @@ void CPU::idc() {
       pipe[1]->rd3 = ins & 0xf;
       ins = ins >> 4;
       pipe[1]->rd2 = ins & 0xf;
-      pipe[1]->B = gpr[pipe[1]->rd2];
       ins = ins >> 4;
       pipe[1]->rd1 = ins & 0xf;
-      pipe[1]->A = gpr[pipe[1]->rd1];
       ins = ins >> 4;
       pipe[1]->opcode = ins;
       ins = ins >> 4;
@@ -91,6 +91,23 @@ void CPU::idc() {
       } else {
         pipe[1]->opcode = pipe[1]->opcode & 0xf;
       }
+      if (pipe[1]->type == 4) {
+        if (pipe[1]->opcode == 5) {
+          pipe[1]->A = gpr[pipe[1]->rd1];
+        } else if (pipe[1]->opcode == 6){
+          pipe[1]->fA = fpr[pipe[1]->rd1];
+        } else {
+          pipe[1]->fA = fpr[pipe[1]->rd1];
+          pipe[1]->fB = fpr[pipe[1]->rd2];
+        }
+
+      } else if (pipe[1]->type == 6) {
+        pipe[1]->vA = vr[pipe[1]->rd1];
+        pipe[2]->vB = vr[pipe[1]->rd2];
+      } else {
+        pipe[1]->A = gpr[pipe[1]->rd1];
+        pipe[1]->B = gpr[pipe[1]->rd2];
+      }
       std::cout<<"idc: type:"<<pipe[1]->type<<" opcode: "<<pipe[1]->opcode<<" rd1: "
       <<pipe[1]->rd1<<" rd2: "<<pipe[1]->rd2<<" rd3: "<<pipe[1]->rd3<<" imm: "<<pipe[1]->imm<<std::endl;
       pipe[1]->stage = 2;
@@ -113,6 +130,8 @@ void CPU::exc() {
     if (pipe[2]->stage == 2) {
       if (pipe[2]->type == 1) {
         pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
+        std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+        pipe[2]->stage = 3;
       } else if (pipe[2]->type == 2) {
         switch (pipe[2]->opcode) {
           case 0: pipe[2]->aluoutput = pipe[2]->A + pipe[2]->B;
@@ -171,6 +190,8 @@ void CPU::exc() {
                   break;
           default: std::cout<<"exc: type 2 error opcode "<<pipe[2]->opcode<<std::endl;
         }
+        std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+        pipe[2]->stage = 3;
       } else if (pipe[2]->type == 3) {
         if (pipe[2]->opcode == 0) {
           err = true;
@@ -201,9 +222,41 @@ void CPU::exc() {
                   break;
           }
         }
+        std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+        pipe[2]->stage = 3;
+      } else if (pipe[2]->type == 4) {
+        if (pipe[2]->opcode < 4) {
+          int flag = _fpu->fpuCal(pipe[2]->fA, pipe[2]->fB, &pipe[2]->fpuoutput, pipe[2]->opcode);
+          if (flag == 1) {
+            std::cout<<"exc: "<<pipe[2]->fpuoutput<<std::endl;
+            pipe[2]->stage = 3;
+          } else if (flag == -1) {
+            std::cout<<"exc: error fpuCal"<<std::endl;
+            return;
+          }
+        } else {
+          if (pipe[2]->opcode == 4) {
+            pipe[2]->aluoutput = pipe[2]->fA < pipe[2]->fB;
+          } else if (pipe[2]->opcode == 5) {
+            float *tmp = (float*)(&pipe[2]->A);
+            pipe[2]->fpuoutput = *tmp;
+          } else if (pipe[2]->opcode == 6) {
+            uint32_t *tmp = (uint32_t*)(&pipe[2]->fA);
+            pipe[2]->aluoutput = *tmp;
+          } else {
+            std::cout<<"exc: error opcode"<<std::endl;
+            return;
+          }
+          std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+          pipe[2]->stage = 3;
+        }
+      } else if (pipe[2]->type == 5) {
+        std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+        pipe[2]->stage = 3;
+      } else if (pipe[2]->type == 6) {
+        std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
+        pipe[2]->stage = 3;
       }
-      std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
-      pipe[2]->stage = 3;
     }
     if (pipe[2]->stage == 3) {
       if (pipe[3] == nullptr) {
@@ -292,6 +345,18 @@ void CPU::wbc() {
           gpr[pipe[4]->rd3] = pipe[4]->aluoutput;
           std::cout<<"wbc: "<<gpr[pipe[4]->rd3]<<std::endl;
         }
+      } else if (pipe[4]->type == 4) {
+        if (pipe[4]->opcode < 4) {
+          fpr[pipe[4]->rd3] = pipe[4]->fpuoutput;
+        } else if (pipe[4]->opcode == 4) {
+          gpr[pipe[4]->rd3] = pipe[4]->aluoutput;
+        } else if (pipe[4]->opcode == 5) {
+          fpr[pipe[4]->rd2] = pipe[4]->fpuoutput;
+        } else if (pipe[4]->opcode == 6) {
+          gpr[pipe[4]->rd2] = pipe[4]->aluoutput;
+        }
+      } else if (pipe[4]->type == 6) {
+
       }
       pipe[4]->stage = 5;
     }

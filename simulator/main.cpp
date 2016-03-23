@@ -9,7 +9,8 @@ int main(int argc, char *argv[]) {
     Cache *cache = new Cache(8, 4, 2, 5, memory);
 
     MemSys *memsys = new MemSys(cache, memory, false);
-    CPU *cpu = new CPU(memsys);
+    FPU *fpu = new FPU(10);
+    CPU *cpu = new CPU(memsys, fpu);
     Simulator w(cpu, memsys);
     w.show();
     return a.exec();

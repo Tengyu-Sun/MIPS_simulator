@@ -22,7 +22,7 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLe
   preadd = -1;
   prelen = -1;
   buf = nullptr;
-  policy =0;
+  policy = 0;
   _cachelines = new Cacheline[_cachesize];
   lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
@@ -112,7 +112,9 @@ int Cache::load(int add, uint8_t *blk, int len) {
             tmp[(j-als)*_linesize+i] = candidate->data[i];
           }
         }
-        visitLRU(j);
+        if (policy == 1){
+          visitLRU(j);
+        }
       }
       if (missed) {
         missReady = true;
@@ -234,7 +236,9 @@ int Cache::store(int add, uint8_t *blk, int len) {
             cacheline->lru = _ways;
           }
         }
-        visitLRU(j);
+        if (policy == 1) {
+          visitLRU(j);
+        }
       }
       if (missed) {
         missReady = true;

@@ -17,14 +17,16 @@ SOURCES += main.cpp\
     memsys.cpp \
     memory.cpp \
     cache.cpp \
-    cpu.cpp
+    cpu.cpp \
+    fpu.cpp
 
 HEADERS  += simulator.h \
     memsys.h \
     cache.h \
     memory.h \
     memcache.h \
-    cpu.h
+    cpu.h \
+    fpu.h
 
 CONFIG += c++11
 
