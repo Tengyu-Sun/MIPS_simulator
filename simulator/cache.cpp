@@ -95,6 +95,7 @@ int Cache::load(int add, uint8_t *blk, int len) {
             }
             cacheline->valid = true;
             cacheline->tag = (j/_linesize)/_indexsize;
+            cacheline->lru = _ways;
             delete[] tmpblk;
           } else {
             countdown = cycle;
@@ -110,7 +111,6 @@ int Cache::load(int add, uint8_t *blk, int len) {
           for (int i=0; i<_linesize; ++i) {
             tmp[(j-als)*_linesize+i] = candidate->data[i];
           }
-
         }
         visitLRU(j);
       }
@@ -213,6 +213,7 @@ int Cache::store(int add, uint8_t *blk, int len) {
               cacheline->dirty = true;
               cacheline->valid = true;
               cacheline->tag = (j/_linesize)/_indexsize;
+              cacheline->lru = _ways;
               delete[] tmpblk;
             } else {
               countdown = cycle;
@@ -230,9 +231,9 @@ int Cache::store(int add, uint8_t *blk, int len) {
             cacheline->valid = true;
             cacheline->dirty = true;
             cacheline->tag = (j/_linesize)/_indexsize;
+            cacheline->lru = _ways;
           }
         }
-
         visitLRU(j);
       }
       if (missed) {
@@ -342,11 +343,12 @@ void Cache::visitLRU(int add) {
       }
       if (_cachelines[idx+i].tag == tag) {
         for(int j=0; j<_ways; ++j) {
-          if (lru[idx+j] < lru[idx+i]) {
+          if (_cachelines[idx+j].valid == true && lru[idx+j] < lru[idx+i]) {
             lru[idx+j]++;
           }
         }
         lru[idx+i] = 0;
+        break;
       }
   }
   return;
