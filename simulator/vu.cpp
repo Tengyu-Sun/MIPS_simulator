@@ -29,41 +29,49 @@ int VU::vuCal(uint64_t A, uint64_t B, uint64_t *C, int opcode) {
       }
     } else if (opcode == 1) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] - tmpB[i];
       }
     } else if (opcode == 2) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] * tmpB[i];
       }
     } else if (opcode == 3) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] / tmpB[i];
       }
     } else if (opcode == 4) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] % tmpB[i];
       }
     } else if (opcode == 5) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] == tmpB[i];
       }
     } else if (opcode == 6) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = (int8_t)tmpA[i] <= (int8_t)tmpB[i];
       }
     } else if (opcode == 7) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] < tmpB[i];
       }
     } else if (opcode == 8) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = (int8_t)tmpA[i] < (int8_t)tmpB[i];
       }
     } else if (opcode == 9) {
       for(int i=0; i<8; ++i) {
-        tmpC[i] = tmpA[i] + tmpB[i];
+        tmpC[i] = tmpA[i] < tmpB[i];
       }
     }
+    res = tmpC[0];
+    for(int i=1; i<8; ++i){
+      res <<= 8;
+      res |= tmpC[i];
+    }
+    *C = res;
+    countdown = cycle;
+    return 1;
   } else {
     return 0;
   }

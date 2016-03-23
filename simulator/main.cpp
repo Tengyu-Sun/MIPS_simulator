@@ -10,7 +10,8 @@ int main(int argc, char *argv[]) {
 
     MemSys *memsys = new MemSys(cache, memory, false);
     FPU *fpu = new FPU(10);
-    CPU *cpu = new CPU(memsys, fpu);
+    VU* vu = new VU(5);
+    CPU *cpu = new CPU(memsys, fpu, vu);
     Simulator w(cpu, memsys);
     w.show();
     return a.exec();

@@ -25,6 +25,7 @@ struct Instruction {
   int stage;
   uint32_t aluoutput;
   float fpuoutput;
+  uint64_t vuoutput;
   uint32_t lmd;
   bool cond;
 };

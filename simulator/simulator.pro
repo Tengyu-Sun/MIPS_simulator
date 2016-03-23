@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     memory.cpp \
     cache.cpp \
     cpu.cpp \
-    fpu.cpp
+    fpu.cpp \
+    vu.cpp
 
 HEADERS  += simulator.h \
     memsys.h \
@@ -26,7 +27,8 @@ HEADERS  += simulator.h \
     memory.h \
     memcache.h \
     cpu.h \
-    fpu.h
+    fpu.h \
+    vu.h
 
 CONFIG += c++11
 
