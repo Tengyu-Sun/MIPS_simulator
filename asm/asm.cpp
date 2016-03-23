@@ -5,7 +5,7 @@
 #include <map>
 using namespace std;
 
-map<String, uint32_t> opcode_map = {
+map<string, uint32_t> opcode_map = {
     //data transfer
     {"lb",      0b0010000},
     {"lbu",     0b0010001},
@@ -72,7 +72,7 @@ map<String, uint32_t> opcode_map = {
     {"cleb",    0b1100110},
     {"cleub",   0b1100111},
     {"cltb",    0b1101000},
-    {"cltub",   0b1101001},
+    {"cltub",   0b1101001}
 };
 
 
@@ -81,11 +81,12 @@ map<String, uint32_t> opcode_map = {
 uint32_t encoding(string opcode, vector<string> para) {
   uint32_t code = 0;
   auto entry = opcode_map.find(opcode);
-  if(entry != opcode_map.end()) {
+  if(entry == opcode_map.end()) {
     cout<<"error opcode: "<<opcode<<endl;
     return 0;
   } else {
     code = entry->second;
+    cout << entry->first << " " << code << endl;
     if(code == 0) return 0;
   }
 
