@@ -2,7 +2,45 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
 using namespace std;
+
+map<String, uint32_t> opcode_map = {
+    {"lb",   0b0010000},
+    {"add",  0b1000000},
+    {"sub",  0b1000001},
+    {"bgez", 0b0000101},
+    {"sb",   0b0011000},
+    {"break",0b0000000},
+    {"blez", 0b0000111},
+    {"bltz", 0b0001000},
+    {"addsp",0b0100000},
+    {"subsp",0b0100001},
+    {"mulsp",0b0100010},
+    {"divsp",0b0100011},
+    {"sltsp",0b0100100},
+    {"witf", 0b0100101},
+    {"wfti", 0b0100110},
+    {"pref", 0b0110000},
+    {"move", 0b1101010},
+    {"copys",0b1101011},
+    {"copyu",0b1101100},
+    {"insertb",0b1101101},
+    {"fillb", 0b1101110},
+    {"vaddb", 0b1100000},
+    {"vsubb", 0b1100001},
+    {"vmulb", 0b1100010},
+    {"vdivv", 0b1100011},
+    {"vmodb", 0b1100100},
+    {"ceqb", 0b1100101},
+    {"cleb", 0b1100110},
+    {"cleub", 0b1100111},
+    {"cltb", 0b1101000},
+    {"cltub", 0b1101001},
+};
+
+
+
 
 uint32_t encoding(string opcode, vector<string> para) {
   uint32_t code = 0;
@@ -18,6 +56,36 @@ uint32_t encoding(string opcode, vector<string> para) {
     code = 0b0011000;
   } else if (opcode == "break") {
     return 0;
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+
+  } else if (opcode == " ") {
+
+
+  } else if (opcode == " ") {
+
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+  } else if (opcode == " ") {
+
+
   } else {
     cout<<"error opcode: "<<opcode<<endl;
     return 0;
