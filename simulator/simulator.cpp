@@ -20,7 +20,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
 
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
-    QLabel *ccLb = new QLabel(tr("clock circle:"));
+    QLabel *ccLb = new QLabel(tr("clock cycle:"));
     clkLb = new QLabel(tr("0"));
     clkResetPB = new QPushButton(tr("Reset"));
     runPB = new QPushButton(tr("Run"));
