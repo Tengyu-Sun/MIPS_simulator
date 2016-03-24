@@ -79,7 +79,7 @@ map<string, uint32_t> opcode_map = {
 
 // store label in a symbol map. non label clauses start with two whitespaces
 void first_pass(fstream& input, map<string, int>& symbol_map) {
-  int line_num = -1; 
+  int line_num = -1;
   string line;
   while(input) {
     std::getline(input, line);
@@ -103,7 +103,7 @@ void first_pass(fstream& input, map<string, int>& symbol_map) {
         ++i;
       }
     string label  = line.substr(s, i - s - 1);
-    symbol_map[label] = line_num;    
+    symbol_map[label] = line_num;
     cout << "Label: " << label << " at line " << symbol_map[label] << endl;
     --line_num;
     }
@@ -127,7 +127,7 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     // the variable exists in the symbol map, it's a jump
     int offset = 0;
     if(symbol_map.find(para[0]) != symbol_map.end()) {
-	offset = symbol_map[para[0]] - line_num;
+	offset = symbol_map[para[0]] - line_num - 1;
     } else {
 	offset = stoi(para[0]);
     }
@@ -143,10 +143,10 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     } else {
       int offset = 0;
       if(symbol_map.find(para[1]) != symbol_map.end()) {
-	 offset = symbol_map[para[1]] - line_num;
+	 offset = symbol_map[para[1]] - line_num - 1;
        } else {
       	  offset = stoi(para[1]);
-       } 
+       }
       code <<=21;
       code |= offset;
     }
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
     // this is a label or empty line
     if (i == 0 || i == line.size()) {
        continue;
-    } 
+    }
     ++line_num;
     s = i;
     while(i<line.size() && line[i] != ' ') {
