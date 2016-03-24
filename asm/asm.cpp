@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 #include <map>
+
+#define TEMP_FILE "temp.txt"
 using namespace std;
 
 map<string, uint32_t> opcode_map = {
@@ -75,10 +77,42 @@ map<string, uint32_t> opcode_map = {
     {"cltub",   0b1101001}
 };
 
+// store label in a symbol map. non label clauses start with two whitespaces
+void first_pass(fstream& input, map<string, int>& symbol_map) {
+  int line_num = -1; 
+  string line;
+  while(input) {
+    std::getline(input, line);
+    line_num += 1;
+    if (line.size() == 0) {
+      break;
+    }
+    if (isspace(line[line.size()-1])) {
+      line = line.substr(0, line.size()-1);
+    }
+    string opcode;
+    vector<string> para;
+    int i = 0;
+    int s = 0;
+    while(i<line.size() && ' ' == line[i]) {
+      ++i;
+    }
+    if(i == 0) {
+      cout << "this is a label" << endl;   
+      s = i;
+      while(i<line.size() && line[i] != ' ') {
+        ++i;
+      }
+    string label  = line.substr(s, i - s - 1);
+    symbol_map["label"] = line_num;
+    --line_num;
+    cout << "Label: " << label << " at line " << line_num << endl;
+    }
+  }
+}
 
 
-
-uint32_t encoding(string opcode, vector<string> para) {
+uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_map, int line_num) {
   uint32_t code = 0;
   auto entry = opcode_map.find(opcode);
   if(entry == opcode_map.end()) {
@@ -86,13 +120,18 @@ uint32_t encoding(string opcode, vector<string> para) {
     return 0;
   } else {
     code = entry->second;
-    cout << entry->first << " " << code << endl;
+//    cout << entry->first << " " << code << endl;
     if(code == 0) return 0;
   }
 
   if (para.size() == 1) {
+    // the variable exists in the symbol map, it's a jump
+    int offset = stoi(para[0]);
+    if(symbol_map.find(para[0]) != symbol_map.end()) {
+	offset = symbol_map[para[0]] - line_num;
+    }
     code <<= 25;
-    code |= stoi(para[0]);
+    code |= offset;
   } else if (para.size() == 2) {
     code <<= 4;
     code |= stoi(para[0].substr(1));
@@ -101,8 +140,12 @@ uint32_t encoding(string opcode, vector<string> para) {
       code |= stoi(para[1].substr(1));
       code <<= 17;
     } else {
+      int offset = stoi(para[1]);
+      if(symbol_map.find(para[0]) != symbol_map.end()) {
+	 offset = symbol_map[para[0]] - line_num;
+       } 
       code <<=21;
-      code |= stoi(para[1]);
+      code |= offset;
     }
   } else if (para.size() == 3) {
     code <<= 4;
@@ -138,8 +181,13 @@ int main(int argc, char* argv[]) {
   std::fstream input(filename, std::fstream::in);
   std::fstream output(filename.substr(0,filename.size()-4)+".out", std::fstream::out);
   std::string line;
+
+  map<string, int> symbol_map;
+  first_pass(input, symbol_map);
+  int line_num = -1;
   while(input) {
     std::getline(input, line);
+    ++line_num;
     if (line.size() == 0) {
       break;
     }
@@ -153,7 +201,8 @@ int main(int argc, char* argv[]) {
     while(i<line.size() && ' ' == line[i]) {
       ++i;
     }
-    if (i == line.size()) {
+    // this is a label
+    if (i == 0 || i == line.size()) {
       continue;
     }
     s = i;
@@ -168,13 +217,13 @@ int main(int argc, char* argv[]) {
     for (int k=i; k<line.size(); ++k) {
       if (line[k] == ',') {
         para.push_back(line.substr(s, k-s));
-        s = k+1;
+        s = k + 1;
       }
     }
     if (s < line.size()){
       para.push_back(line.substr(s, line.size()-s));
     }
-    output<<encoding(opcode, para)<<endl;
+    output<<encoding(opcode, para, symbol_map, line_num)<<endl;
   }
   return 0;
 }
