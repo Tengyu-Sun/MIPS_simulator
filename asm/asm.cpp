@@ -98,7 +98,6 @@ void first_pass(fstream& input, map<string, int>& symbol_map) {
       ++i;
     }
     if(i == 0) {
-      cout << "this is a label" << endl;   
       s = i;
       while(i<line.size() && line[i] != ' ') {
         ++i;
@@ -126,9 +125,11 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
 
   if (para.size() == 1) {
     // the variable exists in the symbol map, it's a jump
-    int offset = stoi(para[0]);
+    int offset = 0;
     if(symbol_map.find(para[0]) != symbol_map.end()) {
 	offset = symbol_map[para[0]] - line_num;
+    } else {
+	offset = stoi(para[0]);
     }
     code <<= 25;
     code |= offset;
@@ -140,9 +141,11 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
       code |= stoi(para[1].substr(1));
       code <<= 17;
     } else {
-      int offset = stoi(para[1]);
-      if(symbol_map.find(para[0]) != symbol_map.end()) {
-	 offset = symbol_map[para[0]] - line_num;
+      int offset = 0;
+      if(symbol_map.find(para[1]) != symbol_map.end()) {
+	 offset = symbol_map[para[1]] - line_num;
+       } else {
+      	  offset = stoi(para[1]);
        } 
       code <<=21;
       code |= offset;
@@ -181,13 +184,13 @@ int main(int argc, char* argv[]) {
   std::fstream input(filename, std::fstream::in);
   std::fstream output(filename.substr(0,filename.size()-4)+".out", std::fstream::out);
   std::string line;
-
   map<string, int> symbol_map;
   first_pass(input, symbol_map);
+  input.clear();
+  input.seekg(0, ios::beg);
   int line_num = -1;
   while(input) {
     std::getline(input, line);
-    ++line_num;
     if (line.size() == 0) {
       break;
     }
@@ -201,10 +204,11 @@ int main(int argc, char* argv[]) {
     while(i<line.size() && ' ' == line[i]) {
       ++i;
     }
-    // this is a label
+    // this is a label or empty line
     if (i == 0 || i == line.size()) {
-      continue;
-    }
+       continue;
+    } 
+    ++line_num;
     s = i;
     while(i<line.size() && line[i] != ' ') {
       ++i;

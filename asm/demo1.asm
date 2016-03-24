@@ -6,5 +6,5 @@ L2:
 L1:  
   lb $0,$3,100
   sb $0,$3,102
-  bgez $3 L2
+  bgez $3,L2
   break
