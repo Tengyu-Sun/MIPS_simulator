@@ -104,9 +104,9 @@ void first_pass(fstream& input, map<string, int>& symbol_map) {
         ++i;
       }
     string label  = line.substr(s, i - s - 1);
-    symbol_map["label"] = line_num;
+    symbol_map[label] = line_num;    
+    cout << "Label: " << label << " at line " << symbol_map[label] << endl;
     --line_num;
-    cout << "Label: " << label << " at line " << line_num << endl;
     }
   }
 }
