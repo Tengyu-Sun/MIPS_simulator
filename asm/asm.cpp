@@ -46,7 +46,7 @@ map<string, uint32_t> opcode_map = {
     {"bgtz",    0b0000110},
     {"blez",    0b0000111},
     {"bltz",    0b0001000},
-    {"break",   0b0000000},
+    {"break",   0},
     //floating point
     {"addsp",   0b0100000},
     {"subsp",   0b0100001},
@@ -143,15 +143,21 @@ int main(int argc, char* argv[]) {
     if (line.size() == 0) {
       break;
     }
+    if (isspace(line[line.size()-1])) {
+      line = line.substr(0, line.size()-1);
+    }
     string opcode;
     vector<string> para;
     int i = 0;
     int s = 0;
-    while(' ' == line[i]) {
+    while(i<line.size() && ' ' == line[i]) {
       ++i;
     }
+    if (i == line.size()) {
+      continue;
+    }
     s = i;
-    while(line[i] != ' ') {
+    while(i<line.size() && line[i] != ' ') {
       ++i;
     }
     opcode = line.substr(s, i-s);
