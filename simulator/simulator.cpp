@@ -280,14 +280,15 @@ void Simulator::cpuStep() {
     }
 }
 
-void Simulator::memUpdate(uint8_t *data) {
+void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
     for (int i=0; i<5; ++i) {
         memView[i]->setText(std::to_string((int)data[i]).c_str());
     }
 }
 
-void Simulator::cacheUpadate(Cacheline *data) {
-
+void Simulator::cacheUpadate(Cacheline *data, int idx, int hit, int miss) {
+    hitLb->setText(std::to_string(hit).c_str());
+    missLb->setText(std::to_string(miss).c_str());
 }
 
 Simulator::~Simulator() {

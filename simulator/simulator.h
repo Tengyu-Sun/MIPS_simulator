@@ -13,8 +13,8 @@ public:
     Simulator(CPU* cpu, MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
 public slots:
-    void memUpdate(uint8_t *data);
-    void cacheUpadate(Cacheline* data);
+    void memUpdate(uint8_t *data, uint32_t add, int len);
+    void cacheUpadate(Cacheline* data, int idx, int hit, int miss);
 
 private slots:
     void memOpen();

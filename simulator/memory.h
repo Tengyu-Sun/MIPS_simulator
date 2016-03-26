@@ -10,7 +10,6 @@
 #ifndef __MIPS_Simulator__Memory__
 #define __MIPS_Simulator__Memory__
 
-#include <string>
 #include "storage.h"
 
 class Memory : public Storage {
@@ -24,11 +23,7 @@ class Memory : public Storage {
     uint32_t _size;
     uint8_t* _data;  //byte-addressable
  signals:
-    void update(uint8_t *data);
- private:
-    bool _idle;
-    uint32_t _add; //current serving add
+    void update(uint8_t *data, uint32_t add, int len);
 };
-
 
 #endif /* defined(__MIPS_Simulator__Memory__) */

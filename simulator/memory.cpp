@@ -1,17 +1,18 @@
 #include "memory.h"
 
 Memory::Memory(uint32_t size, int cycle_) {
- cycle = cycle_;
- countdown = cycle_;
- nextLevel = nullptr;
- _size = size;
- _add = 0;
- _idle = true;
- _data = new uint8_t[size];
+  cycle = cycle_;
+  countdown = cycle_;
+  nextLevel = nullptr;
+  _size = size;
+  _add = 0;
+  _len = -1;
+  _idle = true;
+  _data = (uint8_t*) calloc(_size, sizeof(uint8_t));  //new uint8_t[size];
 }
 
 Memory::~Memory() {
- delete[] _data;
+  free((void*)_data);
 }
 
 int Memory::load(uint32_t add, uint8_t *blk, int len) {
@@ -20,8 +21,9 @@ int Memory::load(uint32_t add, uint8_t *blk, int len) {
   } else {
     if(_idle) {
       _add = add;
+      _len = len;
       _idle = false;
-    } else if(_add != add) {
+    } else if(_add != add || _len != len) {
       return -1;  //previous request not finished
     }
     if (countdown > 0) {
@@ -46,8 +48,9 @@ int Memory::store(uint32_t add, uint8_t *blk, int len) {
     } else {
       if(_idle) {
         _add = add;
+        _len = len;
         _idle = false;
-      } else if(_add != add) {
+      } else if(_add != add || _len != len) {
         return -1;  //previous request not finished
       }
       if (countdown > 0) {
@@ -59,7 +62,7 @@ int Memory::store(uint32_t add, uint8_t *blk, int len) {
         }
         countdown = cycle;
         _idle = true;
-        emit update(_data);
+        emit update(_data, add, len);
         return len;
       } else {
         return 0;
