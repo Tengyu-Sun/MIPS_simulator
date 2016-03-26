@@ -102,10 +102,11 @@ void first_pass(fstream& input, map<string, int>& symbol_map) {
       while(i<line.size() && line[i] != ' ') {
         ++i;
       }
-    string label  = line.substr(s, i - s - 1);
-    symbol_map[label] = line_num;
-    cout << "Label: " << label << " at line " << symbol_map[label] << endl;
-    --line_num;
+      if(line.substr(s,1) == "#")continue;// it's a comment
+      string label  = line.substr(s, i - s - 1);
+      symbol_map[label] = line_num;
+      cout << "Label: " << label << " at line " << symbol_map[label] << endl;
+      --line_num;
     }
   }
 }
