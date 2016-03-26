@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "memory.h"
 #include <string>
+#include <QObject>
 
 class MemSys {
  public:

@@ -8,7 +8,7 @@ int genRandomNumber(int ways) {
     return distribution(generator);
 }
 
-Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_) {
+Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_) {
   _indexsize = indexsize;
   _linesize = linesize;
   _ways = ways;
@@ -35,7 +35,7 @@ Cache::~Cache() {
   delete[] _cachelines;
 }
 
-int Cache::load(int add, uint8_t *blk, int len) {
+int Cache::load(uint32_t add, uint8_t *blk, int len) {
   if (preadd == -1 && prelen == -1) {
     preadd = add;
     prelen = len;
@@ -143,7 +143,7 @@ int Cache::load(int add, uint8_t *blk, int len) {
   }
 }
 
-int Cache::store(int add, uint8_t *blk, int len) {
+int Cache::store(uint32_t add, uint8_t *blk, int len) {
   if (preadd == -1 && prelen == -1) {
     preadd = add;
     prelen = len;
@@ -357,3 +357,4 @@ void Cache::visitLRU(int add) {
   }
   return;
 }
+

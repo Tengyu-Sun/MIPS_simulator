@@ -25,10 +25,10 @@ HEADERS  += simulator.h \
     memsys.h \
     cache.h \
     memory.h \
-    memcache.h \
     cpu.h \
     fpu.h \
-    vu.h
+    vu.h \
+    storage.h
 
 CONFIG += c++11
 

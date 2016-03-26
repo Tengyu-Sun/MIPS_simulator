@@ -9,8 +9,9 @@
 #ifndef __MIPS_Simulator__Cache__
 #define __MIPS_Simulator__Cache__
 
-#include "memcache.h"
 #include <string>
+#include "storage.h"
+
 
 struct Cacheline {
     bool valid;
@@ -30,15 +31,15 @@ struct Cacheline {
     }
 };
 
-class Cache : public Memcache {
+class Cache : public Storage {
+    Q_OBJECT
  public:
-    Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_);
     ~Cache();
     int hit;
     int miss;
-
-    int load(int add, uint8_t *blk, int len);
-    int store(int add, uint8_t* blk, int len);
+    int load(uint32_t add, uint8_t *blk, int len);
+    int store(uint32_t add, uint8_t* blk, int len);
     void reset();
     std::string dump();
     Cacheline* evict(int add);
@@ -59,8 +60,5 @@ class Cache : public Memcache {
     int getLRUNumber(int idx);
     void visitLRU(int add);
 };
-
-
-
 
 #endif /* defined(__MIPS_Simulator__Cache__) */

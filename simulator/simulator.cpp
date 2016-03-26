@@ -20,7 +20,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
 
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
-    QLabel *ccLb = new QLabel(tr("clock circle:"));
+    QLabel *ccLb = new QLabel(tr("clock cycle:"));
     clkLb = new QLabel(tr("0"));
     clkResetPB = new QPushButton(tr("Reset"));
     runPB = new QPushButton(tr("Run"));
@@ -36,7 +36,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     cpuLayout->addWidget(stepPB, 2, 1);
     cpuGroup->setLayout(cpuLayout);
 
-    QGroupBox *memGroup = new QGroupBox(tr("Memory"));
+    QGroupBox *memGroup = new QGroupBox(tr("Memory System"));
     addLE = new QLineEdit;
     valLE = new QLineEdit;
     loadPB = new QPushButton(tr("Load"));
@@ -52,8 +52,17 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     hitLb = new QLabel(tr("0"));
     QLabel *mLb = new QLabel(tr("miss: "));
     missLb = new QLabel(tr("0"));
-    memTW = new QTableWidget(5,2);
-    cacheTW = new QTableWidget(5,2);
+    memTW = new QTableWidget(5, 2);
+    cacheTW = new QTableWidget(5, 2);
+    QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
+    QGridLayout *mmLayout = new QGridLayout;
+    for(int i=0; i<5; ++i) {
+        std::string lb = std::to_string(i)+":";
+        memView[i] = new QLabel(tr("0"));
+        mmLayout->addWidget(new QLabel(lb.c_str()), i, 0);
+        mmLayout->addWidget(memView[i], i, 1);
+    }
+    mmGroup->setLayout(mmLayout);
 
     QGridLayout *memLayout = new QGridLayout;
     memLayout->addWidget(addLE, 0, 0);
@@ -65,8 +74,8 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     memLayout->addWidget(hitLb, 1, 2);
     memLayout->addWidget(mLb, 1, 3);
     memLayout->addWidget(missLb, 1, 4);
-    //memLayout->addWidget(cacheTW, 1, 0);
-    //memLayout->addWidget(memTW, 1, 1);
+   // memLayout->addWidget(cacheTW, 2, 1);
+    memLayout->addWidget(mmGroup, 2, 2);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;
@@ -247,6 +256,10 @@ void Simulator::cpuStep() {
         _cpu->step();
         clkLb->setText(std::to_string(_cpu->clk).c_str());
     }
+}
+
+void Simulator::memUpdate(uint8_t byte) {
+    memView[2]->setText(std::to_string((int)byte).c_str());
 }
 
 Simulator::~Simulator() {

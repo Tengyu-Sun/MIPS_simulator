@@ -1,55 +1,45 @@
 #include "memory.h"
 
-Memory::Memory(int size, int cycle_) {
-  _size = size;
-  cycle = cycle_;
-  countdown = cycle_;
-  nextLevel = nullptr;
-  _add = -1;
-  _data = new uint8_t[size];
-  if (size > 108) {
-    _data[0] = 0;//32;
-    _data[1] = 0;//2;
-    _data[2] = 0;
-    _data[3] = 0;//5;
-    _data[4] = 0;
-    _data[5] = 0;//129;
-    _data[6] = 0;
-    _data[7] = 0;
-    _data[100] = 1;
-    _data[101] = 2;
-    _data[102] = 0;
-  }
-}
+//Memory::Memory(uint32_t size, int cycle_) {
+//  cycle = cycle_;
+//  countdown = cycle_;
+//  nextLevel = nullptr;
+//  _add = 0;
+//  _idle = true;
+//  _data = new uint8_t[size];
+//}
 
-Memory::~Memory() {
-  delete[] _data;
-}
+//Memory::~Memory() {
+//  delete[] _data;
+//}
 
-int Memory::load(int add, uint8_t *blk, int len) {
-  if(add > _size - 1 || add < 0) {
+int Memory::load(uint32_t add, uint8_t *blk, int len) {
+  if(add + len > _size) {
       return -1;
   } else {
-    if(_add == -1) {
+    if(_idle) {
       _add = add;
+      _idle = false;
     } else if(_add != add) {
-      return -1;  //
+      return -1;  //previous request not finished
     }
-    countdown--;
+    if (countdown > 0) {
+      countdown--;
+    }
     if(countdown == 0) {
-      for (int i=0; i<len; ++i){
+      for (int i = 0; i < len; ++i){
         blk[i] = _data[add+i];
       }
       countdown = cycle;
-      _add = -1;
-      return 1;
+      _idle = true;
+      return len;
     } else {
       return 0;
     }
   }
 }
 
-int Memory::store(int add, uint8_t *blk, int len) {
+int Memory::store(uint32_t add, uint8_t *blk, int len) {
     if(add > _size - 1 || add < 0) {
         return -1;//throw?
     } else {
@@ -74,3 +64,6 @@ std::string Memory::dump() {
   }
   return res;
 }
+
+
+

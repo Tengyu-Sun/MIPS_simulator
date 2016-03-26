@@ -2,17 +2,18 @@
 #define SIMULATOR_H
 
 #include <QMainWindow>
+#include <QObject>
 #include <QtWidgets>
 #include "memsys.h"
 #include "cpu.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
-
 public:
     Simulator(CPU* cpu, MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
-
+public slots:
+    void memUpdate(uint8_t byte);
 private slots:
     void memOpen();
     void memImport();
@@ -43,6 +44,9 @@ private:
     QPushButton *cacheOnPB;
     QLabel *hitLb;
     QLabel *missLb;
+
+    QLabel *memView[5];
+    QLabel *cacheView[5];
 
     QTableWidget *cacheTW;
     QTableWidget *memTW;
