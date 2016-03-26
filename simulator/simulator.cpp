@@ -7,6 +7,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     _cpu = cpu;
     _memsys = memsys;
 
+    //menu
     openAct = new QAction(tr("open"), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
     saveAct = new QAction(tr("save"), this);
@@ -18,7 +19,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     memMenu->addAction(importAct);
     memMenu->addAction(saveAct);
 
-
+    //cpu group
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
     QLabel *ccLb = new QLabel(tr("clock cycle:"));
     clkLb = new QLabel(tr("0"));
@@ -36,46 +37,66 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     cpuLayout->addWidget(stepPB, 2, 1);
     cpuGroup->setLayout(cpuLayout);
 
+    //memory system group
     QGroupBox *memGroup = new QGroupBox(tr("Memory System"));
+
+    //row 0
     addLE = new QLineEdit;
+    addLE->setMaximumWidth(80);
     valLE = new QLineEdit;
+    valLE->setMaximumWidth(80);
     loadPB = new QPushButton(tr("Load"));
     connect(loadPB, SIGNAL(clicked()), this, SLOT(memLoad()));
     storePB = new QPushButton(tr("Store"));
     connect(storePB, SIGNAL(clicked()), this, SLOT(memStore()));
+
+    //row 1
     cacheOnPB = new QPushButton(tr("ON"));
     if (!_memsys->_cacheOn){
       cacheOnPB->setText(tr("OFF"));
     }
     connect(cacheOnPB, SIGNAL(clicked()), this, SLOT(cacheOnOFF()));
-    QLabel *hLb = new QLabel(tr("hit: "));
     hitLb = new QLabel(tr("0"));
-    QLabel *mLb = new QLabel(tr("miss: "));
     missLb = new QLabel(tr("0"));
-    memTW = new QTableWidget(5, 2);
-    cacheTW = new QTableWidget(5, 2);
+
+    //row 2
+    ccGroup = new QGroupBox(tr("Cache"));
+    QGridLayout *ccLayout = new QGridLayout;
+    for(int i = 0; i < 5; ++i) {
+        std::string lb = std::to_string(i)+":";
+        cacheView[i] = new QLabel(tr("0"));
+        ccLayout->addWidget(new QLabel(lb.c_str()), i, 0);
+        ccLayout->addWidget(cacheView[i], i, 1);
+    }
+    ccGroup->setLayout(ccLayout);
+    ccGroup->setVisible(_memsys->_cacheOn);
+
+    QScrollArea *mmsa = new QScrollArea;
     QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
     QGridLayout *mmLayout = new QGridLayout;
-    for(int i=0; i<5; ++i) {
+    for(int i = 0; i < 5; ++i) {
         std::string lb = std::to_string(i)+":";
         memView[i] = new QLabel(tr("0"));
         mmLayout->addWidget(new QLabel(lb.c_str()), i, 0);
         mmLayout->addWidget(memView[i], i, 1);
     }
     mmGroup->setLayout(mmLayout);
+    mmsa->setWidget(mmGroup);
 
     QGridLayout *memLayout = new QGridLayout;
-    memLayout->addWidget(addLE, 0, 0);
-    memLayout->addWidget(valLE, 0, 1);
-    memLayout->addWidget(loadPB, 0, 2);
-    memLayout->addWidget(storePB, 0, 3);
+    memLayout->addWidget(new QLabel(tr("address:")), 0, 0);
+    memLayout->addWidget(addLE, 0, 1);
+    memLayout->addWidget(new QLabel(tr("value:")), 0, 2);
+    memLayout->addWidget(valLE, 0, 3);
+    memLayout->addWidget(loadPB, 0, 4);
+    memLayout->addWidget(storePB, 0, 5);
     memLayout->addWidget(cacheOnPB, 1, 0);
-    memLayout->addWidget(hLb, 1, 1);
+    memLayout->addWidget(new QLabel(tr("hit:")), 1, 1);
     memLayout->addWidget(hitLb, 1, 2);
-    memLayout->addWidget(mLb, 1, 3);
+    memLayout->addWidget(new QLabel(tr("miss:")), 1, 3);
     memLayout->addWidget(missLb, 1, 4);
-   // memLayout->addWidget(cacheTW, 2, 1);
-    memLayout->addWidget(mmGroup, 2, 2);
+    memLayout->addWidget(ccGroup, 2, 0);
+    memLayout->addWidget(mmsa, 2, 1);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;
@@ -240,6 +261,7 @@ void Simulator::cacheOnOFF() {
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     }
+    ccGroup->setVisible(_memsys->_cacheOn);
 }
 
 void Simulator::cpuRun() {
@@ -258,8 +280,14 @@ void Simulator::cpuStep() {
     }
 }
 
-void Simulator::memUpdate(uint8_t byte) {
-    memView[2]->setText(std::to_string((int)byte).c_str());
+void Simulator::memUpdate(uint8_t *data) {
+    for (int i=0; i<5; ++i) {
+        memView[i]->setText(std::to_string((int)data[i]).c_str());
+    }
+}
+
+void Simulator::cacheUpadate(Cacheline *data) {
+
 }
 
 Simulator::~Simulator() {

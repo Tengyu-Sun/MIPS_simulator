@@ -16,29 +16,18 @@
 class Memory : public Storage {
     Q_OBJECT
  public:
-    uint32_t _size;
-    uint8_t* _data;  //byte-addressable
-
-    Memory(uint32_t size, int cycle_) {
-       cycle = cycle_;
-       countdown = cycle_;
-       nextLevel = nullptr;
-       _add = 0;
-       _idle = true;
-       _data = new uint8_t[size];
-    }
-    ~Memory() {
-        delete[] _data;
-    }
+    Memory(uint32_t size, int cycle_);
+    ~Memory();
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t *blk, int len);
     std::string dump();
-
-
+    uint32_t _size;
+    uint8_t* _data;  //byte-addressable
+ signals:
+    void update(uint8_t *data);
  private:
     bool _idle;
-    uint32_t _add; //current waiting add
-
+    uint32_t _add; //current serving add
 };
 
 

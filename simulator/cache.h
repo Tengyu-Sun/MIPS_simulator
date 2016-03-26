@@ -36,14 +36,17 @@ class Cache : public Storage {
  public:
     Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_);
     ~Cache();
-    int hit;
-    int miss;
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t* blk, int len);
     void reset();
     std::string dump();
     Cacheline* evict(int add);
     Cacheline* inCache(int address);
+    int hit;
+    int miss;
+    Cacheline* _cachelines;
+signals:
+    void update(Cacheline* data);
  private:
     int _cachesize;
     int _indexsize;
@@ -54,8 +57,6 @@ class Cache : public Storage {
     int prelen;
     bool missReady;
     int policy;
-
-    Cacheline* _cachelines;
     int *lru;
     int getLRUNumber(int idx);
     void visitLRU(int add);

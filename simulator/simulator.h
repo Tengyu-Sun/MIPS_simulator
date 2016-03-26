@@ -13,7 +13,9 @@ public:
     Simulator(CPU* cpu, MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
 public slots:
-    void memUpdate(uint8_t byte);
+    void memUpdate(uint8_t *data);
+    void cacheUpadate(Cacheline* data);
+
 private slots:
     void memOpen();
     void memImport();
@@ -32,7 +34,6 @@ private:
     QAction *saveAct;
 
     QLabel *clkLb;
-    //uint64_t clk;
     QPushButton *clkResetPB;
     QPushButton *runPB;
     QPushButton *stepPB;
@@ -46,10 +47,10 @@ private:
     QLabel *missLb;
 
     QLabel *memView[5];
+    int memData[5];
+    QGroupBox *ccGroup;
     QLabel *cacheView[5];
-
-    QTableWidget *cacheTW;
-    QTableWidget *memTW;
+    int cacheData[5];
 
     MemSys *_memsys;
     CPU *_cpu;

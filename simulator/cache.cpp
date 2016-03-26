@@ -58,6 +58,7 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
       missReady = false;
       delete[] buf;
       buf = nullptr;
+      emit update(_cachelines);
       return 1;
     } else {
       int als = (add/_linesize)*_linesize;
@@ -161,6 +162,7 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
       preadd = -1;
       prelen = -1;
       missReady = false;
+      emit update(_cachelines);
       return 1;
     } else {
       int als = (add/_linesize)*_linesize;
@@ -248,6 +250,7 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
         preadd = -1;
         prelen = -1;
         missReady = false;
+        emit update(_cachelines);
         return 1;
       }
     }

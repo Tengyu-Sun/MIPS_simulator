@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
     VU* vu = new VU(5);
     CPU *cpu = new CPU(memsys, fpu, vu);
     Simulator w(cpu, memsys);
-    //QObject::connect(memsys, &MemSys::update, &w, &Simulator::memUpdate);
+    QObject::connect(memory, &Memory::update, &w, &Simulator::memUpdate);
     w.show();
     return a.exec();
 }

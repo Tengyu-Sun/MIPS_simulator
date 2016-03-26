@@ -4,7 +4,6 @@
 #include "cache.h"
 #include "memory.h"
 #include <string>
-#include <QObject>
 
 class MemSys {
  public:
@@ -15,12 +14,13 @@ class MemSys {
   int storeByte(int add, uint8_t val);
   void dump(std::string fn);
   bool _cacheOn;
-  int getHit() { return _cache->hit; };
+  int getHit() { return _cache->hit; }
   void resetCache() { _cache->reset(); }
-  int getMiss() { return _cache->miss; };
+  int getMiss() { return _cache->miss; }
  private:
   Cache *_cache;
   Memory *_mainMemory;
-  int _memSize;
+  uint32_t _memSize;
 };
+
 #endif /* defined(__MIPS_Simulator__Memsys__) */
