@@ -1,9 +1,9 @@
 # allocate memory for the array
-  addi $1,$0,10
+  addi $0,$1,10
   sw $0,$1,100
-  addi $1,$0,3
+  addi $0,$1,3
   sw $0,$1,101
-  addi $1,$0,7
+  addi $0,$1,7
   sw $0,$1,102
   addi $1,$0,2
   sw $0,$1,103
@@ -20,41 +20,58 @@
   addi $0,$1,1
   sw $0,$1,1
 # store the length of the array
-  mem[110] = 10
+  addi $0,$1,10
+  sw $0,$1,110
 # $4 = 10
   lw $0,$4,110
-# $1 = i, $2 = j
-  addi $1,$1,0
+# $1 = i, i = 0
+  addi $0,$1,0
 # start outer loop
 BEGINFOR1:
-  subi $7,$4,1 #$7 = length - 1
-  subi $7,$7,$1 #$7 = $1 - $7
+#$7 = $4 - 1
+  subi $4,$7,1
+#$7 = $1 - $7
+  sub $1,$7,$7
+# if(i >= len - 1) jump to the end of outer loop
   bgez $7,ENDFOR1
 # start inner loop
-  addi $2,$1,1 #j = i + 1
+#j = i + 1
+  addi $1,$2,1
 BEGINFOR2: 
-  subi $7,$2,$4 #$7 = $4(len) - $2(j)
-  bgez $7,ENDFOR2 #if(j > len)
+#$7 = $2(j) - $4(len)
+  sub $2,$4,$7 
+#if(j >= len) jump to the end of inner loop
+  bgez $7,ENDFOR2
 # $4 = a[i], $5 = a[j]
-  lw $0,$4,$1 # load $4 = a[i]
-  lw $0,$5,$2 # load $5 = a[j] 
+# load $4 = a[i]
+  lw $1,$4,0
+# load $5 = a[j]
+  lw $2,$5,0
 # $6 = $4 - $5
-  subi $6,$4,$5 
+  sub $4,$5,$6 
   bgez $6,ENDIF
 # swap array elements
 # $3 is the temp
 # swap 
-  addi $3,$0,$4 # temp = $4
-  addi $4,$0,$5 # $4 = $5
-  sw $0,$4,$1 # a[i] = $4
-  addi $5,$0,$3 # $5 = $3
-  sw $0,$5,$2 # a[j] = $5 
+# temp = $4
+  add $3,$0,$4
+# $4 = $5
+  add $4,$0,$5
+# a[i] = $4
+  sw $1,$4,0
+# $5 = $3
+  add $3,$0,$5
+# a[j] = $5
+  sw $2,$5,0
 ENDIF:
-  addi $2,$2,1 #j = j + 1
-  j BEGINFOR2 #jump to the beginning of inner loop
+#j = j + 1
+  addi $2,$2,1
+#jump to the beginning of inner loop
+  j BEGINFOR2
 ENDFOR2:
-  addi $1,$1,1 #i = i + 1
-  j BEGINFOR1 # jump to the beginning of outer loop
+#i = i + 1
+  addi $1,$1,1
+# jump to the beginning of outer loop
+  j BEGINFOR1
 ENDFOR1:
   break
-
