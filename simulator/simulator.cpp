@@ -126,13 +126,13 @@ void Simulator::memOpen() {
             } while(_memsys->loadByte(add, &val) == 0);
            // std::cout<<std::endl;
             std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
-            if(_memsys->_cacheOn) {
-                int h = _memsys->getHit();
-                int m = _memsys->getMiss();
-                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-                hitLb->setText(std::to_string(h).c_str());
-                missLb->setText(std::to_string(m).c_str());
-            }
+//            if(_memsys->_cacheOn) {
+//                int h = _memsys->getHit();
+//                int m = _memsys->getMiss();
+//                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+//                hitLb->setText(std::to_string(h).c_str());
+//                missLb->setText(std::to_string(m).c_str());
+//            }
         } else if (line[0] == 'S') {
             int p = 2;
             int nl = line.size();
@@ -148,13 +148,13 @@ void Simulator::memOpen() {
             } while(_memsys->storeByte(add, val) == 0);
 
             std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
-            if(_memsys->_cacheOn) {
-                int h = _memsys->getHit();
-                int m = _memsys->getMiss();
-                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-                hitLb->setText(std::to_string(h).c_str());
-                missLb->setText(std::to_string(m).c_str());
-            }
+//            if(_memsys->_cacheOn) {
+//                int h = _memsys->getHit();
+//                int m = _memsys->getMiss();
+//                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+//                hitLb->setText(std::to_string(h).c_str());
+//                missLb->setText(std::to_string(m).c_str());
+//            }
         } else {
             return;
            // std::cout<<"unrecognized command: "<<line<<std::endl;
@@ -180,13 +180,13 @@ void Simulator::memLoad() {
        std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->loadByte(add, &val) == 0);
     std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
-    if(_memsys->_cacheOn) {
-        int h = _memsys->getHit();
-        int m = _memsys->getMiss();
-        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-        hitLb->setText(std::to_string(h).c_str());
-        missLb->setText(std::to_string(m).c_str());
-    }
+//    if(_memsys->_cacheOn) {
+//        int h = _memsys->getHit();
+//        int m = _memsys->getMiss();
+//        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+//        hitLb->setText(std::to_string(h).c_str());
+//        missLb->setText(std::to_string(m).c_str());
+//    }
 }
 
 void Simulator::memStore() {
@@ -208,13 +208,13 @@ void Simulator::memStore() {
       std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->storeByte(add, val) == 0);
     std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
-    if(_memsys->_cacheOn) {
-        int h = _memsys->getHit();
-        int m = _memsys->getMiss();
-        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-        hitLb->setText(std::to_string(h).c_str());
-        missLb->setText(std::to_string(m).c_str());
-    }
+//    if(_memsys->_cacheOn) {
+//        int h = _memsys->getHit();
+//        int m = _memsys->getMiss();
+//        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
+//        hitLb->setText(std::to_string(h).c_str());
+//        missLb->setText(std::to_string(m).c_str());
+//    }
 }
 
 void Simulator::memImport() {
@@ -286,8 +286,15 @@ void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
     }
 }
 
-void Simulator::cacheUpadate(Cacheline *data, int idx, int hit, int miss) {
+void Simulator::cacheUpadate(Cacheline *data, int idx) {
+
+}
+
+void Simulator::cacheHitUpdate(int hit) {
     hitLb->setText(std::to_string(hit).c_str());
+}
+
+void Simulator::cacheMissUpdate(int miss) {
     missLb->setText(std::to_string(miss).c_str());
 }
 

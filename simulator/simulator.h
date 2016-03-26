@@ -14,7 +14,9 @@ public:
     ~Simulator();
 public slots:
     void memUpdate(uint8_t *data, uint32_t add, int len);
-    void cacheUpadate(Cacheline* data, int idx, int hit, int miss);
+    void cacheUpadate(Cacheline* data, int idx);
+    void cacheHitUpdate(int hit);
+    void cacheMissUpdate(int miss);
 
 private slots:
     void memOpen();

@@ -23,7 +23,7 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLev
   _add = 0;
   _len = -1;
   buf = nullptr;
-  policy = 0;
+  policy = 1;
   _cachelines = new Cacheline[_cachesize];
   lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
@@ -60,7 +60,6 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
       _idle = true;
       delete[] buf;
       buf = nullptr;
-    //  emit update(_cachelines, hit, miss);
       return len;
     } else {
       uint32_t als = (add/_linesize)*_linesize;
@@ -68,11 +67,11 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
 
       uint8_t *tmp = new uint8_t[ale-als+_linesize];
       bool missed = false;
-      for (int j = als; j <= ale; j = j+_linesize) {
+      for (uint32_t j = als; j <= ale; j = j+_linesize) {
         int candidate = inCache(j);
         if(candidate == -1) {// there is a miss
           ++miss;
-          updateMiss(miss);
+          emit updateMiss(miss);
           missed = true;
           if(nextLevel != nullptr) {
             uint8_t* tmpblk = new uint8_t[_linesize];
@@ -120,7 +119,7 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
           }
         } else {
           ++hit;
-          updateHit(hit);
+          emit updateHit(hit);
           for (int i=0; i<_linesize; ++i) {
             tmp[j-als+i] = _cachelines[candidate].data[i];
           }
@@ -180,12 +179,12 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
       uint32_t ale = ((add+len-1)/_linesize)*_linesize;
       bool missed = false;
       int i = 0;
-      for (int j = als; j <= ale; j = j+_linesize) {
+      for (uint32_t j = als; j <= ale; j = j+_linesize) {
         int candidate = inCache(j);
         if(candidate != -1) {
           ++hit;
           emit updateHit(hit);
-          if (add > j) {
+          if (add+i > j) {
             while(add-j+i < _linesize && i < len) {
               _cachelines[candidate].data[add-j+i] = blk[i];
               ++i;
@@ -201,7 +200,7 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
           ++miss;
           emit updateMiss(miss);
           missed = true;
-          if (add+i > j || add+len-1 < j+_linesize) {
+          if (add+i > j || add+len-1 < j+_linesize-1) {
             if(nextLevel != nullptr) {
               uint8_t* tmpblk = new uint8_t[_linesize];
               ++countdown;
@@ -224,14 +223,16 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
               for(int k = 0; k < _linesize; k++) {
                   _cachelines[eline].data[k] = tmpblk[k];
               }
+              _cachelines[eline].dirty = true;
+              _cachelines[eline].valid = true;
+              _cachelines[eline].tag = (j/_linesize)/_indexsize;
+              if (policy == 1) {
+                _cachelines[eline].lru = _ways;
+              }
               while(add-j+i < _linesize && i < len) {
                 _cachelines[eline].data[add-j+i] = blk[i];//idx bug
                 ++i;
               }
-              _cachelines[eline].dirty = true;
-              _cachelines[eline].valid = true;
-              _cachelines[eline].tag = (j/_linesize)/_indexsize;
-              _cachelines[eline].lru = _ways;
               delete[] tmpblk;
             } else {
               countdown = cycle;
@@ -250,7 +251,9 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
             _cachelines[eline].valid = true;
             _cachelines[eline].dirty = true;
             _cachelines[eline].tag = (j/_linesize)/_indexsize;
-            _cachelines[eline].lru = _ways;
+            if (policy == 1) {
+              _cachelines[eline].lru = _ways;
+            }
           }
         }
         if (policy == 1) {
@@ -323,22 +326,27 @@ void Cache::reset() {
   miss = 0;
   countdown = cycle;
   missReady = false;
-  _add = -1;
+  _add = 0;
   _len = -1;
   _idle = true;
   delete[] buf;
   buf = nullptr;
   delete[] _cachelines;
+  delete[] lru;
   _cachelines = new Cacheline[_cachesize];
+  lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
     _cachelines[i].data = new uint8_t[_linesize];
+    lru[i] = 0;
   }
 }
 
 std::string Cache::dump() {
   std::string res;
   for(int i=0; i<_cachesize; ++i) {
-    res += std::to_string((int)_cachelines[i].valid) + " " + std::to_string((int)_cachelines[i].dirty) + " " + std::to_string(_cachelines[i].tag) + " ";
+    res += std::to_string((int)_cachelines[i].valid) + " " +
+    std::to_string((int)_cachelines[i].dirty) + " " +
+    std::to_string(_cachelines[i].lru) + " " + std::to_string(_cachelines[i].tag);
     for (int j=0; j<_linesize; ++j) {
       res += std::to_string(_cachelines[i].data[j]) + " ";
     }
@@ -366,7 +374,7 @@ void Cache::visitLRU(uint32_t add) {
         continue;
       }
       if (_cachelines[idx+i].tag == tag) {
-        for(int j=0; j<_ways; ++j) {
+        for(int j = 0; j < _ways; ++j) {
           if (_cachelines[idx+j].valid == true && lru[idx+j] < lru[idx+i]) {
             lru[idx+j]++;
           }

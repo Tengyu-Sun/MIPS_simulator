@@ -8,15 +8,13 @@
 class MemSys {
  public:
   MemSys(Cache *cache, Memory *mainMemory, bool cacheOn);
-  int loadWord(int add, uint32_t *val);
-  int storeWord(int add, uint32_t val);
-  int loadByte(int add, uint8_t *val);
-  int storeByte(int add, uint8_t val);
+  int loadWord(uint32_t add, uint32_t *val);
+  int storeWord(uint32_t add, uint32_t val);
+  int loadByte(uint32_t add, uint8_t *val);
+  int storeByte(uint32_t add, uint8_t val);
   void dump(std::string fn);
   bool _cacheOn;
-  int getHit() { return _cache->hit; }
   void resetCache() { _cache->reset(); }
-  int getMiss() { return _cache->miss; }
  private:
   Cache *_cache;
   Memory *_mainMemory;
