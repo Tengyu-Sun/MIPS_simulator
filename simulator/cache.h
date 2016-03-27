@@ -9,15 +9,14 @@
 #ifndef __MIPS_Simulator__Cache__
 #define __MIPS_Simulator__Cache__
 
-#include "memcache.h"
-#include <string>
+#include "storage.h"
 
 struct Cacheline {
-    bool valid;
-    bool dirty;
     int tag;
     int lru;
     uint8_t *data;
+    bool valid;
+    bool dirty;
     Cacheline() {
       valid = false;
       dirty = false;
@@ -30,37 +29,36 @@ struct Cacheline {
     }
 };
 
-class Cache : public Memcache {
+class Cache : public Storage {
+    Q_OBJECT
  public:
-    Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_);
     ~Cache();
-    int hit;
-    int miss;
-
-    int load(int add, uint8_t *blk, int len);
-    int store(int add, uint8_t* blk, int len);
+    int load(uint32_t add, uint8_t *blk, int len);
+    int store(uint32_t add, uint8_t* blk, int len);
     void reset();
     std::string dump();
-    Cacheline* evict(int add);
-    Cacheline* inCache(int address);
- private:
+    int evict(uint32_t add);
+    int inCache(uint32_t address);
+    int hit;
+    int miss;
     int _cachesize;
+    Cacheline* _cachelines;
+signals:
+    void updateCacheline(Cacheline* data, int idx);
+    void updateHit(int hit);
+    void updateMiss(int miss);
+
+ private:
     int _indexsize;
     int _linesize;
     int _ways;
-    uint8_t *buf;
-    int preadd;
-    int prelen;
-    bool missReady;
     int policy;
-
-    Cacheline* _cachelines;
     int *lru;
+    uint8_t *buf;
+    bool missReady;
     int getLRUNumber(int idx);
-    void visitLRU(int add);
+    void visitLRU(uint32_t add);
 };
-
-
-
 
 #endif /* defined(__MIPS_Simulator__Cache__) */

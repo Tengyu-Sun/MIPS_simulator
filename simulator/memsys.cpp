@@ -1,13 +1,15 @@
 #include "memsys.h"
 #include <fstream>
+#include <iostream>
 
 MemSys::MemSys(Cache *cc, Memory *mm, bool co):_cache(cc), _mainMemory(mm),
 _cacheOn(co) {
-  _memSize = _mainMemory->getSize();
+  _memSize = _mainMemory->_size;
+  _cacheSize = _cache->_cachesize;
 }
 
-int MemSys::loadWord(int add, uint32_t* val) {
-  if(add > _memSize - 1 || add < 0 || add%4 != 0) {
+int MemSys::loadWord(uint32_t add, uint32_t* val) {
+  if(add+3 > _memSize - 1 || add%4 != 0) {
     return -1;
   }
   uint8_t tmp[4];
@@ -23,8 +25,8 @@ int MemSys::loadWord(int add, uint32_t* val) {
   return flag;
 }
 
-int MemSys::loadByte(int add, uint8_t* val) {
-  if(add > _memSize - 1 || add < 0) {
+int MemSys::loadByte(uint32_t add, uint8_t* val) {
+  if(add > _memSize - 1) {
     return -1;
   }
   if (_cacheOn) {
@@ -34,17 +36,17 @@ int MemSys::loadByte(int add, uint8_t* val) {
   }
 }
 
-int MemSys::storeWord(int add, uint32_t val) {
-    if(add > _memSize - 1 || add < 0 || add%4 != 0) {
+int MemSys::storeWord(uint32_t add, uint32_t val) {
+    if(add + 3 > _memSize - 1 || add%4 != 0) {
       return -1;
     }
     uint8_t tmp[4];
-    tmp[3] = val%256;
-    val = val/256;
-    tmp[2] = val%256;
-    val = val/256;
-    tmp[1] = val%256;
-    val = val/256;
+    tmp[3] = val & 0xff;
+    val >>= 8;
+    tmp[2] = val & 0xff;
+    val >>= 8;
+    tmp[1] = val & 0xff;
+    val >>=8;
     tmp[0] = val;
 
     if(_cacheOn) {
@@ -54,8 +56,8 @@ int MemSys::storeWord(int add, uint32_t val) {
     }
 }
 
-int MemSys::storeByte(int add, uint8_t val) {
-    if(add > _memSize - 1 || add < 0) {
+int MemSys::storeByte(uint32_t add, uint8_t val) {
+    if(add > _memSize - 1) {
       return -1;
     }
     if(_cacheOn) {
@@ -65,10 +67,18 @@ int MemSys::storeByte(int add, uint8_t val) {
     }
 }
 
+int MemSys::directStoreByte(uint32_t add, uint8_t val) {
+    if(add > _memSize - 1) {
+      return -1;
+    }
+    return _mainMemory->store(add, &val, 1);
+}
+
 void MemSys::dump(std::string filename) {
   std::fstream output(filename, std::fstream::out);
   if(_cacheOn) {
     output<<"cache:\n";
+    output<<"valid dirty lru tag data...\n";
     Cache *cur = _cache;
     while(cur != nullptr){
       output<<cur->dump();

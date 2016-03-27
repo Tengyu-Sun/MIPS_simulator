@@ -8,7 +8,7 @@ int genRandomNumber(int ways) {
     return distribution(generator);
 }
 
-Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLevel_) {
+Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_) {
   _indexsize = indexsize;
   _linesize = linesize;
   _ways = ways;
@@ -19,10 +19,11 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLe
   hit = 0;
   miss = 0;
   missReady = false;
-  preadd = -1;
-  prelen = -1;
+  _idle = true;
+  _add = 0;
+  _len = -1;
   buf = nullptr;
-  policy =0;
+  policy = 1;
   _cachelines = new Cacheline[_cachesize];
   lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
@@ -33,15 +34,15 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Memcache* nextLe
 
 Cache::~Cache() {
   delete[] _cachelines;
+  delete[] lru;
+  delete[] buf;
 }
 
-int Cache::load(int add, uint8_t *blk, int len) {
-  if (preadd == -1 && prelen == -1) {
-    preadd = add;
-    prelen = len;
-  } else if (preadd != add || prelen != len) {
-    std::cout<<"error add access! current: "<<add
-    <<" "<<len<<" pending: "<<preadd<<" "<<prelen<<std::endl;
+int Cache::load(uint32_t add, uint8_t *blk, int len) {
+  if (_idle) {
+    _add = add;
+    _len = len;
+  } else if (_add != add || _len != len) {
     return -1;
   }
   if(countdown > 0) {
@@ -49,91 +50,105 @@ int Cache::load(int add, uint8_t *blk, int len) {
   }
   if(countdown == 0) {
     if (missReady) {
-      for (int i=0; i<len; ++i) {
+      for (int i = 0; i < len; ++i) {
         blk[i] = buf[i];
       }
       countdown = cycle;
-      preadd = -1;
-      prelen = -1;
+      _add = 0;
+      _len = -1;
       missReady = false;
+      _idle = true;
       delete[] buf;
       buf = nullptr;
-      return 1;
+      return len;
     } else {
-      int als = (add/_linesize)*_linesize;
-      int ale = ((add+len-1)/_linesize)*_linesize;
-      uint8_t *tmp = new uint8_t[_linesize*(ale-als+1)];
+      uint32_t als = (add/_linesize)*_linesize;
+      uint32_t ale = ((add+len-1)/_linesize)*_linesize;
+
+      uint8_t *tmp = new uint8_t[ale-als+_linesize];
       bool missed = false;
-      for (int j = als; j <= ale; ++j) {
-        Cacheline* candidate = inCache(j);
-        if(candidate == nullptr) {// there is a miss
+      for (uint32_t j = als; j <= ale; j = j+_linesize) {
+        int candidate = inCache(j);
+        if(candidate == -1) {// there is a miss
           ++miss;
+          emit updateMiss(miss);
           missed = true;
           if(nextLevel != nullptr) {
             uint8_t* tmpblk = new uint8_t[_linesize];
             ++countdown;
             int flag = nextLevel->load(j, tmpblk, _linesize);
             while(flag == 0) {
-              ++countdown;//
+              ++countdown;
               flag = nextLevel->load(j, tmpblk, _linesize);
             }
             if(flag == -1) {
               countdown = cycle;
               delete[] tmpblk;
-              preadd = -1;
-              prelen = -1;
+              delete[] tmp;
+              _add = 0;
+              _len = -1;
               missReady = false;
+              _idle = true;
               delete[] buf;
               buf = nullptr;
               return -1;
             }
-            Cacheline* cacheline = evict(j);
+            int eline = evict(j);
             // copy data into the current cacheline
             for(int i = 0; i < _linesize; i++) {
-                cacheline->data[i] = tmpblk[i];
-                tmp[(j-als)*_linesize+i] = tmpblk[i];
+                _cachelines[eline].data[i] = tmpblk[i];
+                tmp[j-als+i] = tmpblk[i];
             }
-            cacheline->valid = true;
-            cacheline->tag = (j/_linesize)/_indexsize;
+            _cachelines[eline].valid = true;
+            _cachelines[eline].tag = (j/_linesize)/_indexsize;
+            if (policy == 1) {
+              _cachelines[eline].lru = _ways;
+            }
             delete[] tmpblk;
+            emit updateCacheline(_cachelines, eline);
           } else {
             countdown = cycle;
-            preadd = -1;
-            prelen = -1;
+            _add = 0;
+            _len = -1;
             missReady = false;
+            _idle = true;
             delete[] buf;
             buf = nullptr;
+            delete[] tmp;
             return -1;
           }
         } else {
           ++hit;
+          emit updateHit(hit);
           for (int i=0; i<_linesize; ++i) {
-            tmp[(j-als)*_linesize+i] = candidate->data[i];
+            tmp[j-als+i] = _cachelines[candidate].data[i];
           }
-
         }
-        visitLRU(j);
+        if (policy == 1){
+          visitLRU(j);
+        }
       }
       if (missed) {
         missReady = true;
         buf = new uint8_t[len];
-        for (int i=0; i<len; ++i) {
+        for (int i = 0; i < len; ++i) {
           buf[i] = tmp[add-als+i];
         }
         delete[] tmp;
         return 0;
       } else {
-        for (int i=0; i<len; ++i) {
+        for (int i = 0; i < len; ++i) {
           blk[i] = tmp[add-als+i];
         }
         countdown = cycle;
-        preadd = -1;
-        prelen = -1;
+        _add = 0;
+        _len = -1;
         missReady = false;
+        _idle = true;
         delete[] buf;
         buf = nullptr;
         delete[] tmp;
-        return 1;
+        return len;
       }
     }
   } else {
@@ -141,109 +156,120 @@ int Cache::load(int add, uint8_t *blk, int len) {
   }
 }
 
-int Cache::store(int add, uint8_t *blk, int len) {
-  if (preadd == -1 && prelen == -1) {
-    preadd = add;
-    prelen = len;
-  } else if (preadd != add || prelen != len) {
-    std::cout<<"error add access! current: "<<add
-    <<" "<<len<<" pending: "<<preadd<<" "<<prelen<<std::endl;
+int Cache::store(uint32_t add, uint8_t *blk, int len) {
+  if (_idle) {
+    _add = add;
+    _len = len;
+  } else if (_add != add || _len != len) {
     return -1;
   }
-  if(countdown>0) {
+  if(countdown > 0) {
     countdown--;
   }
   if(countdown == 0) {
     if (missReady) {
       countdown = cycle;
-      preadd = -1;
-      prelen = -1;
+      _add = 0;
+      _len = -1;
       missReady = false;
-      return 1;
+      _idle = true;
+      return len;
     } else {
-      int als = (add/_linesize)*_linesize;
-      int ale = ((add+len-1)/_linesize)*_linesize;
+      uint32_t als = (add/_linesize)*_linesize;
+      uint32_t ale = ((add+len-1)/_linesize)*_linesize;
       bool missed = false;
-      int i=0;
-      for (int j=als; j<=ale; ++j) {
-        Cacheline* candidate = inCache(j);
-        if(candidate != nullptr) {
+      int i = 0;
+      for (uint32_t j = als; j <= ale; j = j+_linesize) {
+        int candidate = inCache(j);
+        if(candidate != -1) {
           ++hit;
-          if (add>j) {
-            while(add-j+i<_linesize && i<len) {
-              candidate->data[add-j+i] = blk[i];
+          emit updateHit(hit);
+          if (add+i > j) {
+            while(add-j+i < _linesize && i < len) {
+              _cachelines[candidate].data[add-j+i] = blk[i];
               ++i;
             }
           } else {
-            for(int k=0; k<_linesize && i<len; ++k) {
-              candidate->data[k] = blk[i];
+            for(int k = 0; k < _linesize && i < len; ++k) {
+              _cachelines[candidate].data[k] = blk[i];
               ++i;
             }
           }
-          candidate->dirty = true;
+          _cachelines[candidate].dirty = true;
         } else {
           ++miss;
+          emit updateMiss(miss);
           missed = true;
-          if (add+i > j || add+len-1 < j+_linesize) {
+          if (add+i > j || add+len-1 < j+_linesize-1) {
             if(nextLevel != nullptr) {
               uint8_t* tmpblk = new uint8_t[_linesize];
               ++countdown;
               int flag = nextLevel->load(j, tmpblk, _linesize);
               while(flag == 0) {
-                ++countdown;//
+                ++countdown;
                 flag = nextLevel->load(j, tmpblk, _linesize);
               }
               if(flag == -1) {
                 countdown = cycle;
                 delete[] tmpblk;
-                preadd = -1;
-                prelen = -1;
+                _add = 0;
+                _len = -1;
                 missReady = false;
+                _idle = true;
                 return -1;
               }
-              Cacheline* cacheline = evict(j);
+              int eline = evict(j);
               // copy data into the current cacheline
               for(int k = 0; k < _linesize; k++) {
-                  cacheline->data[k] = tmpblk[k];
+                  _cachelines[eline].data[k] = tmpblk[k];
               }
-              while(add-j+i<_linesize && i<len) {
-                cacheline->data[add-j+i] = blk[i];
+              _cachelines[eline].dirty = true;
+              _cachelines[eline].valid = true;
+              _cachelines[eline].tag = (j/_linesize)/_indexsize;
+              if (policy == 1) {
+                _cachelines[eline].lru = _ways;
+              }
+              while(add-j+i < _linesize && i < len) {
+                _cachelines[eline].data[add-j+i] = blk[i];//idx bug
                 ++i;
               }
-              cacheline->dirty = true;
-              cacheline->valid = true;
-              cacheline->tag = (j/_linesize)/_indexsize;
               delete[] tmpblk;
             } else {
               countdown = cycle;
-              preadd = -1;
-              prelen = -1;
+              _add = 0;
+              _len = -1;
               missReady = false;
+              _idle = true;
               return -1;
             }
           } else {
-            Cacheline* cacheline = evict(j);
-            for(int k = 0; k < _linesize && i<len; ++k) {
-                cacheline->data[k] = blk[i];
+            int eline = evict(j);
+            for(int k = 0; k < _linesize && i < len; ++k) {
+                _cachelines[eline].data[k] = blk[i];
                 ++i;
             }
-            cacheline->valid = true;
-            cacheline->dirty = true;
-            cacheline->tag = (j/_linesize)/_indexsize;
+            _cachelines[eline].valid = true;
+            _cachelines[eline].dirty = true;
+            _cachelines[eline].tag = (j/_linesize)/_indexsize;
+            if (policy == 1) {
+              _cachelines[eline].lru = _ways;
+            }
           }
         }
-
-        visitLRU(j);
+        if (policy == 1) {
+          visitLRU(j);
+        }
       }
       if (missed) {
         missReady = true;
         return 0;
       } else {
         countdown = cycle;
-        preadd = -1;
-        prelen = -1;
+        _add = 0;
+        _len = -1;
         missReady = false;
-        return 1;
+        _idle = true;
+        return len;
       }
     }
   } else {
@@ -251,47 +277,48 @@ int Cache::store(int add, uint8_t *blk, int len) {
   }
 }
 
-Cacheline* Cache::inCache(int add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
+int Cache::inCache(uint32_t add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
     // calculate the block number
     int idx = ((add/_linesize)%_indexsize)*_ways;
     int tag = (add/_linesize)/_indexsize;
-    for (int i = 0; i < _ways; i++) {
-        if(_cachelines[idx+i].valid == false) {
+    for (int i = idx; i < idx+_ways; ++i) {
+        if(_cachelines[i].valid == false) {
           continue;
         }
-        if (_cachelines[idx+i].tag == tag) {
-            return &_cachelines[idx+i];
+        if (_cachelines[i].tag == tag) {
+            return i;
         }
     }
-    return nullptr;
+    return -1;
 }
+
 
 // evict a cacheline from the current block (referenced by blockNumber) if all ways are occupied, return the cleared line
 // if there is a line not occupied, return it
-Cacheline* Cache::evict(int add) {
+int Cache::evict(uint32_t add) {
   int idx = ((add/_linesize)%_indexsize)*_ways;
-  for(int i = 0; i < _ways; i++) {
+  for(int i = idx; i < idx+_ways; i++) {
       // return the empty line;
-      if(_cachelines[idx+i].valid == false) {
-        return &_cachelines[idx+i];
+      if(_cachelines[i].valid == false) {
+        return i;
       }
   }
   // if all ways are written, evict it to lower level storage, return the cleared line;
 
-  int evictedWay = genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
+  int evictedWay =  idx+genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
   if (policy == 1) {
     evictedWay = getLRUNumber(idx);
   }
-  if(_cachelines[idx+evictedWay].dirty == true) {
+  if(_cachelines[evictedWay].dirty == true) {
       if(nextLevel != nullptr) {
         // write back to lower level of storage if the dirty flag is set to 1.
-        uint8_t *block = _cachelines[idx+evictedWay].data;
+        uint8_t *block = _cachelines[evictedWay].data;
         while(nextLevel->store(add, block, _linesize) == 0);
       }
   }
-  _cachelines[idx+evictedWay].valid = false;
-  _cachelines[idx+evictedWay].dirty = false;
-  return &_cachelines[idx+evictedWay];
+  _cachelines[evictedWay].valid = false;
+  _cachelines[evictedWay].dirty = false;
+  return evictedWay;
 }
 
 void Cache::reset() {
@@ -299,21 +326,27 @@ void Cache::reset() {
   miss = 0;
   countdown = cycle;
   missReady = false;
-  preadd = -1;
-  prelen = -1;
+  _add = 0;
+  _len = -1;
+  _idle = true;
   delete[] buf;
   buf = nullptr;
   delete[] _cachelines;
+  delete[] lru;
   _cachelines = new Cacheline[_cachesize];
+  lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
     _cachelines[i].data = new uint8_t[_linesize];
+    lru[i] = 0;
   }
 }
 
 std::string Cache::dump() {
   std::string res;
   for(int i=0; i<_cachesize; ++i) {
-    res += std::to_string((int)_cachelines[i].valid) + " " + std::to_string((int)_cachelines[i].dirty) + " " + std::to_string(_cachelines[i].tag) + " ";
+    res += std::to_string(_cachelines[i].tag) + " " + std::to_string((int)_cachelines[i].valid)
+     + " " +std::to_string((int)_cachelines[i].dirty)
+    + " " + std::to_string(_cachelines[i].lru);
     for (int j=0; j<_linesize; ++j) {
       res += std::to_string(_cachelines[i].data[j]) + " ";
     }
@@ -333,7 +366,7 @@ int Cache::getLRUNumber(int idx) {
   return mi;
 }
 
-void Cache::visitLRU(int add) {
+void Cache::visitLRU(uint32_t add) {
   int idx = ((add/_linesize)%_indexsize)*_ways;
   int tag = (add/_linesize)/_indexsize;
   for (int i = 0; i < _ways; i++) {
@@ -341,12 +374,13 @@ void Cache::visitLRU(int add) {
         continue;
       }
       if (_cachelines[idx+i].tag == tag) {
-        for(int j=0; j<_ways; ++j) {
-          if (lru[idx+j] < lru[idx+i]) {
+        for(int j = 0; j < _ways; ++j) {
+          if (_cachelines[idx+j].valid == true && lru[idx+j] < lru[idx+i]) {
             lru[idx+j]++;
           }
         }
         lru[idx+i] = 0;
+        break;
       }
   }
   return;

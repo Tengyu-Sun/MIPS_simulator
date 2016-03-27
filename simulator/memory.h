@@ -10,21 +10,20 @@
 #ifndef __MIPS_Simulator__Memory__
 #define __MIPS_Simulator__Memory__
 
-#include "memcache.h"
-#include <string>
+#include "storage.h"
 
-class Memory : public Memcache {
+class Memory : public Storage {
+    Q_OBJECT
  public:
-    Memory(int size, int cycle);
+    Memory(uint32_t size, int cycle_);
     ~Memory();
-    int getSize() { return _size; }
-    int load(int add, uint8_t *blk, int len);
-    int store(int address, uint8_t *blk, int len);
+    int load(uint32_t add, uint8_t *blk, int len);
+    int store(uint32_t add, uint8_t *blk, int len);
     std::string dump();
- private:
-    int _size;
-    int _add; //current waiting add
+    uint32_t _size;
     uint8_t* _data;  //byte-addressable
+ signals:
+    void update(uint8_t *data, uint32_t add, int len);
 };
 
 #endif /* defined(__MIPS_Simulator__Memory__) */
