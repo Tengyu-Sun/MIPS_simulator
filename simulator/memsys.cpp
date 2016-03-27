@@ -5,6 +5,7 @@
 MemSys::MemSys(Cache *cc, Memory *mm, bool co):_cache(cc), _mainMemory(mm),
 _cacheOn(co) {
   _memSize = _mainMemory->_size;
+  _cacheSize = _cache->_cachesize;
 }
 
 int MemSys::loadWord(uint32_t add, uint32_t* val) {
@@ -64,6 +65,13 @@ int MemSys::storeByte(uint32_t add, uint8_t val) {
     } else {
         return _mainMemory->store(add, &val, 1);
     }
+}
+
+int MemSys::directStoreByte(uint32_t add, uint8_t val) {
+    if(add > _memSize - 1) {
+      return -1;
+    }
+    return _mainMemory->store(add, &val, 1);
 }
 
 void MemSys::dump(std::string filename) {

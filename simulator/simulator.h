@@ -48,11 +48,11 @@ private:
     QLabel *hitLb;
     QLabel *missLb;
 
-    QLabel *memView[5];
-    int memData[5];
+    QLabel **memView;
+    int *memData;
     QGroupBox *ccGroup;
-    QLabel *cacheView[5];
-    int cacheData[5];
+    QLabel **cacheView;
+    int *cacheData;
 
     MemSys *_memsys;
     CPU *_cpu;

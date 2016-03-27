@@ -42,13 +42,14 @@ class Cache : public Storage {
     int inCache(uint32_t address);
     int hit;
     int miss;
+    int _cachesize;
     Cacheline* _cachelines;
 signals:
     void updateCacheline(Cacheline* data, int idx);
     void updateHit(int hit);
     void updateMiss(int miss);
+
  private:
-    int _cachesize;
     int _indexsize;
     int _linesize;
     int _ways;

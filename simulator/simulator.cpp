@@ -60,28 +60,50 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     missLb = new QLabel(tr("0"));
 
     //row 2
+    QScrollArea *ccsa = new QScrollArea;
     ccGroup = new QGroupBox(tr("Cache"));
     QGridLayout *ccLayout = new QGridLayout;
-    for(int i = 0; i < 5; ++i) {
+    QGroupBox *tmpGroup = new QGroupBox;
+    QGridLayout *tmpLayout = new QGridLayout;
+    cacheView = new QLabel*[_memsys->_cacheSize];
+    cacheData = new int[_memsys->_cacheSize];
+
+    for(int i = 0; i < _memsys->_cacheSize; ++i) {
         std::string lb = std::to_string(i)+":";
-        cacheView[i] = new QLabel(tr("0"));
-        ccLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-        ccLayout->addWidget(cacheView[i], i, 1);
+        cacheView[i] = new QLabel(tr("0 | 0 | 0 | 0 | "));
+        tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
+        tmpLayout->addWidget(cacheView[i], i, 1);
     }
+    tmpGroup->setLayout(tmpLayout);
+    ccsa->setWidget(tmpGroup);
+    ccLayout->addWidget(new QLabel("index:"), 0, 0);
+    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1);
+    ccLayout->addWidget(ccsa, 1, 0, 1, 2);
     ccGroup->setLayout(ccLayout);
     ccGroup->setVisible(_memsys->_cacheOn);
+
 
     QScrollArea *mmsa = new QScrollArea;
     QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
     QGridLayout *mmLayout = new QGridLayout;
-    for(int i = 0; i < 5; ++i) {
+    QGroupBox *tmpGroup2 = new QGroupBox;
+    QGridLayout *tmpLayout2 = new QGridLayout;
+
+    memView = new QLabel*[_memsys->_memSize];
+    memData = new int[_memsys->_memSize];
+    for(int i = 0; i < _memsys->_memSize; ++i) {
         std::string lb = std::to_string(i)+":";
         memView[i] = new QLabel(tr("0"));
-        mmLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-        mmLayout->addWidget(memView[i], i, 1);
+        tmpLayout2->addWidget(new QLabel(lb.c_str()), i, 0);
+        tmpLayout2->addWidget(memView[i], i, 1);
     }
+    tmpGroup2->setLayout(tmpLayout2);
+    mmsa->setWidget(tmpGroup2);
+    mmLayout->addWidget(new QLabel("index:"), 0, 0);
+    mmLayout->addWidget(new QLabel("data"), 0, 1);
+    mmLayout->addWidget(mmsa, 1, 0, 1, 2);
     mmGroup->setLayout(mmLayout);
-    mmsa->setWidget(mmGroup);
+
 
     QGridLayout *memLayout = new QGridLayout;
     memLayout->addWidget(new QLabel(tr("address:")), 0, 0);
@@ -95,8 +117,8 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     memLayout->addWidget(hitLb, 1, 2);
     memLayout->addWidget(new QLabel(tr("miss:")), 1, 3);
     memLayout->addWidget(missLb, 1, 4);
-    memLayout->addWidget(ccGroup, 2, 0);
-    memLayout->addWidget(mmsa, 2, 1);
+    memLayout->addWidget(ccGroup, 2, 0, 1, 4);
+    memLayout->addWidget(mmGroup, 2, 4, 1, 2);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;
@@ -227,16 +249,16 @@ void Simulator::memImport() {
        input>>ins;
        //std::cout<<ins<<std::endl;
        uint8_t tmp = ins & 0xff;
-       while(_memsys->storeByte(add+3, tmp) != 1);
+       while(_memsys->directStoreByte(add+3, tmp) != 1);
        ins >>= 8;
        tmp = ins & 0xff;
-       while(_memsys->storeByte(add+2, tmp) != 1);
+       while(_memsys->directStoreByte(add+2, tmp) != 1);
        ins >>= 8;
        tmp = ins & 0xff;
-       while(_memsys->storeByte(add+1, tmp) != 1);
+       while(_memsys->directStoreByte(add+1, tmp) != 1);
        ins >>= 8;
        tmp = ins & 0xff;
-       while(_memsys->storeByte(add, tmp) != 1);
+       while(_memsys->directStoreByte(add, tmp) != 1);
        add = add + 4;
        ins = 0;
     }
@@ -281,7 +303,7 @@ void Simulator::cpuStep() {
 }
 
 void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
-    for (int i=0; i<5; ++i) {
+    for (int i=add; i<=add+len; ++i) {
         memView[i]->setText(std::to_string((int)data[i]).c_str());
     }
 }

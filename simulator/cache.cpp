@@ -344,9 +344,9 @@ void Cache::reset() {
 std::string Cache::dump() {
   std::string res;
   for(int i=0; i<_cachesize; ++i) {
-    res += std::to_string((int)_cachelines[i].valid) + " " +
-    std::to_string((int)_cachelines[i].dirty) + " " +
-    std::to_string(_cachelines[i].lru) + " " + std::to_string(_cachelines[i].tag);
+    res += std::to_string(_cachelines[i].tag) + " " + std::to_string((int)_cachelines[i].valid)
+     + " " +std::to_string((int)_cachelines[i].dirty)
+    + " " + std::to_string(_cachelines[i].lru);
     for (int j=0; j<_linesize; ++j) {
       res += std::to_string(_cachelines[i].data[j]) + " ";
     }
