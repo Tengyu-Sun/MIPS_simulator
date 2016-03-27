@@ -23,7 +23,7 @@ CPU::CPU(MemSys* memsys, FPU* fpu = nullptr, VU* vu = nullptr){
 void CPU::ifc() {
   if (pipe[0] == nullptr && clear) {
     pipe[0] = new Instruction();
-    pipe[0]->add = (int)pc;
+    pipe[0]->add = pc;
     pipe[0]->stage = 0;
     pipe[0]->npc = pc + 4;
     clear = false;
@@ -31,13 +31,14 @@ void CPU::ifc() {
   if (pipe[0] != nullptr) {
     if (pipe[0]->stage == 0) {
       int flag = _memsys->loadWord(pipe[0]->add, &(pipe[0]->ins));
+     // std::cout<<"fectching instructions"<<std::endl;
       if (flag == -1) {
         std::cout<<"error fectching instructions"<<std::endl;
         err = true;
         return;
-      } else if (flag == 1) {
+      } else if (flag == 4) {
         pipe[0]->stage = 1;
-        std::cout<<"instruction fectched"<<std::endl;
+        std::cout<<"instruction fectched "<<pipe[0]->ins<<std::endl;
       }
     }
     if (pipe[0]->stage == 1){
@@ -341,11 +342,12 @@ void CPU::mem() {
         } else if (pipe[3]->opcode == 2 || pipe[3]->opcode == 4) {
           uint32_t tmp;
           int flag = _memsys->loadWord(pipe[3]->aluoutput, &tmp);
-          if (flag == 1) {
+          if (flag == 4 ) {
             pipe[3]->lmd = tmp;
           }
         }
-        if (flag == 1) {
+        //std::cout<<"flag "<<flag<<std::endl;
+        if (flag > 0 ) {
           pipe[3]->stage = 4;
           std::cout<<"pc: "<<pc<<std::endl;
         }
@@ -442,10 +444,15 @@ void CPU::step() {
     std::cout<<"error program"<<std::endl;
     return;
   }
+  //std::cout<<"wbc"<<std::endl;
   wbc();
+  //std::cout<<"mem"<<std::endl;
   mem();
+  //std::cout<<"exc"<<std::endl;
   exc();
+  //std::cout<<"idc"<<std::endl;
   idc();
+  //std::cout<<"ifc"<<std::endl;
   ifc();
   ++clk;
   return;

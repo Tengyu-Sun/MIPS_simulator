@@ -6,10 +6,12 @@ MemSys::MemSys(Cache *cc, Memory *mm, bool co):_cache(cc), _mainMemory(mm),
 _cacheOn(co) {
   _memSize = _mainMemory->_size;
   _cacheSize = _cache->_cachesize;
+  _lineSize = _cache->_linesize;
 }
 
 int MemSys::loadWord(uint32_t add, uint32_t* val) {
   if(add+3 > _memSize - 1 || add%4 != 0) {
+    std::cout<<add<<" "<<_memSize<<std::endl;
     return -1;
   }
   uint8_t tmp[4];
@@ -17,9 +19,10 @@ int MemSys::loadWord(uint32_t add, uint32_t* val) {
   if (_cacheOn) {
       flag = _cache->load(add, tmp, 4);
   } else {
+
       flag = _mainMemory->load(add, tmp, 4);
   }
-  if(flag == 1) {
+  if(flag == 4) {
     *val = (tmp[0]<<24) | (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
   }
   return flag;

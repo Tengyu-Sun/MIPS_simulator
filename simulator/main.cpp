@@ -6,8 +6,8 @@
 int main(int argc, char *argv[]) {
 
     QApplication a(argc, argv);
-    Memory *memory = new Memory(1024, 5);
-    Cache *cache = new Cache(8, 4, 2, 5, memory);
+    Memory *memory = new Memory(1024, 100);
+    Cache *cache = new Cache(8, 4, 2, 10, memory);
 
     MemSys *memsys = new MemSys(cache, memory, true);
     FPU *fpu = new FPU(10);

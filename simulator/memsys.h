@@ -18,6 +18,7 @@ class MemSys {
   void resetCache() { _cache->reset(); }
   uint32_t _memSize;
   int _cacheSize;
+  int _lineSize;
   Cache *_cache;
   Memory *_mainMemory;
 };

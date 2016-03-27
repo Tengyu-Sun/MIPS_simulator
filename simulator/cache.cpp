@@ -25,16 +25,16 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLev
   buf = nullptr;
   policy = 1;
   _cachelines = new Cacheline[_cachesize];
-  lru = new int[_cachesize];
+  //lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
     _cachelines[i].data = new uint8_t[_linesize];
-    lru[i] = 0;
+    //lru[i] = 0;
   }
 }
 
 Cache::~Cache() {
   delete[] _cachelines;
-  delete[] lru;
+  //delete[] lru;
   delete[] buf;
 }
 
@@ -49,6 +49,7 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
     countdown--;
   }
   if(countdown == 0) {
+
     if (missReady) {
       for (int i = 0; i < len; ++i) {
         blk[i] = buf[i];
@@ -196,6 +197,7 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
             }
           }
           _cachelines[candidate].dirty = true;
+          emit updateCacheline(_cachelines, candidate);
         } else {
           ++miss;
           emit updateMiss(miss);
@@ -226,13 +228,16 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
               _cachelines[eline].dirty = true;
               _cachelines[eline].valid = true;
               _cachelines[eline].tag = (j/_linesize)/_indexsize;
+
               if (policy == 1) {
                 _cachelines[eline].lru = _ways;
               }
               while(add-j+i < _linesize && i < len) {
-                _cachelines[eline].data[add-j+i] = blk[i];//idx bug
+                _cachelines[eline].data[add-j+i] = blk[i];//
+                //std::cout<<i<<" "<<add-j+i<<" "<<(int)(_cachelines[eline].data[add-j+i])<<std::endl;
                 ++i;
               }
+              emit updateCacheline(_cachelines, eline);
               delete[] tmpblk;
             } else {
               countdown = cycle;
@@ -254,6 +259,7 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
             if (policy == 1) {
               _cachelines[eline].lru = _ways;
             }
+            emit updateCacheline(_cachelines, eline);
           }
         }
         if (policy == 1) {
@@ -289,6 +295,7 @@ int Cache::inCache(uint32_t add) {// if the address is valid and exists in the c
             return i;
         }
     }
+    //std::cout<<add<<" missed"<<std::endl;
     return -1;
 }
 
@@ -305,15 +312,16 @@ int Cache::evict(uint32_t add) {
   }
   // if all ways are written, evict it to lower level storage, return the cleared line;
 
-  int evictedWay =  idx+genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
+  int evictedWay =  idx + genRandomNumber(_ways);// if all ways are occupied, we have to randommly evict one line of them.
   if (policy == 1) {
-    evictedWay = getLRUNumber(idx);
+    evictedWay = idx + getLRUNumber(idx);
   }
   if(_cachelines[evictedWay].dirty == true) {
       if(nextLevel != nullptr) {
         // write back to lower level of storage if the dirty flag is set to 1.
         uint8_t *block = _cachelines[evictedWay].data;
-        while(nextLevel->store(add, block, _linesize) == 0);
+        uint32_t eadd = (evictedWay/_ways)*_linesize + _cachelines[evictedWay].tag*_linesize*_indexsize;
+        while(nextLevel->store(eadd, block, _linesize) == 0);
       }
   }
   _cachelines[evictedWay].valid = false;
@@ -332,12 +340,12 @@ void Cache::reset() {
   delete[] buf;
   buf = nullptr;
   delete[] _cachelines;
-  delete[] lru;
+  //delete[] lru;
   _cachelines = new Cacheline[_cachesize];
-  lru = new int[_cachesize];
+  //lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {
     _cachelines[i].data = new uint8_t[_linesize];
-    lru[i] = 0;
+  //  lru[i] = 0;
   }
 }
 
@@ -359,7 +367,7 @@ int Cache::getLRUNumber(int idx) {
   idx = (idx/_ways)*_ways;
   int mi = 0;
   for (int i=0; i<_ways; ++i) {
-    if (lru[idx+i]>lru[idx+mi]) {
+    if (_cachelines[idx+i].lru>_cachelines[idx+mi].lru) {
       mi = i;
     }
   }
@@ -375,11 +383,13 @@ void Cache::visitLRU(uint32_t add) {
       }
       if (_cachelines[idx+i].tag == tag) {
         for(int j = 0; j < _ways; ++j) {
-          if (_cachelines[idx+j].valid == true && lru[idx+j] < lru[idx+i]) {
-            lru[idx+j]++;
+          if (_cachelines[idx+j].valid == true && _cachelines[idx+j].lru < _cachelines[idx+i].lru) {
+            (_cachelines[idx+j].lru)++;
+            emit updateCacheline(_cachelines, idx+j);
           }
         }
-        lru[idx+i] = 0;
+        _cachelines[idx+i].lru = 0;
+        emit updateCacheline(_cachelines, idx+i);
         break;
       }
   }

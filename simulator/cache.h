@@ -43,6 +43,7 @@ class Cache : public Storage {
     int hit;
     int miss;
     int _cachesize;
+    int _linesize;
     Cacheline* _cachelines;
 signals:
     void updateCacheline(Cacheline* data, int idx);
@@ -51,10 +52,9 @@ signals:
 
  private:
     int _indexsize;
-    int _linesize;
     int _ways;
     int policy;
-    int *lru;
+    //int *lru;
     uint8_t *buf;
     bool missReady;
     int getLRUNumber(int idx);

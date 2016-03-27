@@ -7,7 +7,7 @@
 #include "vu.h"
 
 struct Instruction {
-  int add;
+  uint32_t add;
   uint32_t npc;
   uint32_t ins;
   int type;
@@ -21,7 +21,7 @@ struct Instruction {
   uint64_t vB;
   float fB;
   int rd3;
-  uint32_t imm;
+  int imm;
   int stage;
   uint32_t aluoutput;
   float fpuoutput;

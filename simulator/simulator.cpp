@@ -70,14 +70,19 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
     for(int i = 0; i < _memsys->_cacheSize; ++i) {
         std::string lb = std::to_string(i)+":";
-        cacheView[i] = new QLabel(tr("0 | 0 | 0 | 0 | "));
+        std::string cv = "0 | 0 | 0 | 0 | ";
+        for (int k = 0; k < _memsys->_lineSize; ++k) {
+            cv += " 0 ";
+        }
+        cacheView[i] = new QLabel(cv.c_str());
         tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-        tmpLayout->addWidget(cacheView[i], i, 1);
+        tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
     }
     tmpGroup->setLayout(tmpLayout);
+    tmpGroup->setMinimumWidth(250);
     ccsa->setWidget(tmpGroup);
     ccLayout->addWidget(new QLabel("index:"), 0, 0);
-    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1);
+    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1, Qt::AlignHCenter);
     ccLayout->addWidget(ccsa, 1, 0, 1, 2);
     ccGroup->setLayout(ccLayout);
     ccGroup->setVisible(_memsys->_cacheOn);
@@ -98,6 +103,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
         tmpLayout2->addWidget(memView[i], i, 1);
     }
     tmpGroup2->setLayout(tmpLayout2);
+    tmpGroup2->setMinimumWidth(150);
     mmsa->setWidget(tmpGroup2);
     mmLayout->addWidget(new QLabel("index:"), 0, 0);
     mmLayout->addWidget(new QLabel("data"), 0, 1);
@@ -132,14 +138,18 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 }
 
 void Simulator::memOpen() {
-    std::string filename = QFileDialog::getOpenFileName(this,tr("Open Test Case"),
-               "/Users/blade/workspace/cs535/MIPS_simulator").toStdString();
+    std::string filename =  QFileDialog::getOpenFileName(this,tr("Open Test Case"),
+               "/Users/blade/workspace/cs535/MIPS_simulator").toStdString();//"/Users/blade/workspace/cs535/MIPS_simulator/GenTestCases/sequential_small.txt";
     std::fstream input(filename);
     std::string line;
     while(input){
         std::getline(input, line);
         if (line[0] == 'L') {
-            int add = std::stoi(line.substr(2));
+            uint32_t add = std::stoi(line.substr(2));
+            if (add == 64) {
+                std::cout<<"debug "<<add<<std::endl;
+
+            }
             uint8_t val = 0;
             do {
                _cpu->clk++;
@@ -309,6 +319,15 @@ void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
 }
 
 void Simulator::cacheUpadate(Cacheline *data, int idx) {
+    std::cout<<"cache update "<<idx<<std::endl;
+    std::string cv = "";
+    cv += std::to_string(data[idx].tag) + " | " + std::to_string((int)data[idx].valid)
+            + " | " + std::to_string((int)data[idx].dirty) + " | " + std::to_string(data[idx].lru)
+            + " | ";
+    for (int k = 0; k < _memsys->_lineSize; ++k) {
+            cv += std::to_string((int)(data[idx].data[k])) + " ";
+    }
+    cacheView[idx]->setText(cv.c_str());
 
 }
 

@@ -1,4 +1,5 @@
 #include "memory.h"
+#include <iostream>
 
 Memory::Memory(uint32_t size, int cycle_) {
   cycle = cycle_;
@@ -9,6 +10,7 @@ Memory::Memory(uint32_t size, int cycle_) {
   _len = -1;
   _idle = true;
   _data = (uint8_t*) calloc(_size, sizeof(uint8_t));  //new uint8_t[size];
+  
 }
 
 Memory::~Memory() {
@@ -24,7 +26,8 @@ int Memory::load(uint32_t add, uint8_t *blk, int len) {
       _len = len;
       _idle = false;
     } else if(_add != add || _len != len) {
-      return -1;  //previous request not finished
+        std::cout<<_add<<" "<<_len<<" previous request not finished"<<std::endl;
+      return -1;  //
     }
     if (countdown > 0) {
       countdown--;
