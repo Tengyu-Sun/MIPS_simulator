@@ -1,0 +1,84 @@
+#allocate memory for matrices
+#left matrix
+  addi $0,$1,1
+  sb $0,$1,500
+  addi $0,$1,2
+  sb $0,$1,501
+  addi $0,$1,3
+  sb $0,$1,502
+  addi $0,$1,4
+  sb $0,$1,503
+#right matrix
+  addi $0,$1,5
+  sb $0,$1,504
+  addi $0,$1,6
+  sb $0,$1,505
+  addi $0,$1,7
+  sb $0,$1,506
+  addi $0,$1,8
+  sb $0,$1,507
+#result matrix
+  addi $0,$1,0
+  sb $0,$1,508
+  addi $0,$1,0
+  sb $0,$1,509
+  addi $0,$1,0
+  sb $0,$1,510
+  addi $0,$1,0
+  sb $0,$1,511
+# $1 = i = 0, $v1 = 1 2 1 2 3 4 3 4
+  addi $0,$1,0
+  lb $1,$2,500
+  insertb $2,$1,0
+  insertb $2,$1,2
+  addi $1,$1,1
+  lb $1,$2,500
+  insertb $2,$1,1
+  insertb $2,$1,3
+  addi $1,$1,1
+  lb $1,$2,500
+  insertb $2,$1,4
+  insertb $2,$1,6
+  addi $1,$1,1
+  lb $1,$2,500
+  insertb $2,$1,5
+  insertb $2,$1,7
+# $1 = i = 0, $v2 = 5 7 6 8 5 7 6 8
+  addi $0,$1,0
+  lb $1,$2,504
+  insertb $2,$2,0
+  insertb $2,$2,4
+  addi $1,$1,1
+  lb $1,$2,504
+  insertb $2,$2,2
+  insertb $2,$2,6
+  addi $1,$1,1
+  lb $1,$2,504
+  insertb $2,$2,1
+  insertb $2,$2,5
+  addi $1,$1,1
+  lb $1,$2,504
+  insertb $2,$2,3
+  insertb $2,$2,7
+  vmulb $1,$2,$3
+  addi $0,$4,0
+  copys $3,$1,0
+  copys $3,$2,1
+  add $1,$2,$3
+  sb $4,$3,508
+  addi $4,$4,1
+  copys $3,$1,2
+  copys $3,$2,3
+  add $1,$2,$3
+  sb $4,$3,508
+  addi $4,$4,1
+  copys $3,$1,4
+  copys $3,$2,5
+  add $1,$2,$3
+  sb $4,$3,508
+  addi $4,$4,1
+  copys $3,$1,6
+  copys $3,$2,7
+  add $1,$2,$3
+  sb $4,$3,508
+  break

@@ -101,11 +101,12 @@ void CPU::idc() {
           pipe[1]->fA = fpr[pipe[1]->rd1];
           pipe[1]->fB = fpr[pipe[1]->rd2];
         }
-
       } else if (pipe[1]->type == 6) {
+        //std::cout<<pipe[1]->rd1<<" "<<pipe[1]->rd2<<std::endl;
         pipe[1]->vA = vr[pipe[1]->rd1];
-        pipe[2]->vB = vr[pipe[1]->rd2];
+        pipe[1]->vB = vr[pipe[1]->rd2];
         if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
+          //std::cout<<pipe[1]->rd1<<std::endl;
           pipe[1]->A = gpr[pipe[1]->rd1];
         }
         // if (pipe[1]->opcode < 10) {
@@ -292,10 +293,12 @@ void CPU::exc() {
             }
             pipe[2]->aluoutput = tmp;
           } else if (pipe[2]->opcode == 13) {
-            uint32_t tmp = pipe[2]->A & 0xff;
-            int n = 7 - pipe[2]->imm;
-            uint32_t mask = ~(0xff<<(8*n));
-            pipe[2]->vuoutput = (pipe[2]->vB & mask) | (tmp<<(8*n));
+            uint64_t tmp = pipe[2]->A & 0xff;
+            int n = (7 - pipe[2]->imm)*8;
+            uint64_t mask = 0xff;
+            mask = ~(mask << n);
+            pipe[2]->vuoutput = (pipe[2]->vB & mask) | (tmp<<n);
+            std::cout<<"exc: mask:"<<mask<<" n:"<<n<<" tmp:"<<(tmp<<n)<<std::endl;
           } else if (pipe[2]->opcode == 14) {
             uint64_t tmp = pipe[2]->A & 0xff;
             uint64_t res = 0;
@@ -306,8 +309,9 @@ void CPU::exc() {
             }
             pipe[2]->vuoutput = res;
           }
-          std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
           pipe[2]->stage = 3;
+          std::cout<<"exc: "<<pipe[2]->vuoutput<<std::endl;
+
         }
       }
     }
@@ -362,6 +366,9 @@ void CPU::mem() {
         if (pipe[3]->cond) {
           pc = pipe[3]->aluoutput;
         }
+        pipe[3]->stage = 4;
+        std::cout<<"pc: "<<pc<<std::endl;
+      } else {
         pipe[3]->stage = 4;
         std::cout<<"pc: "<<pc<<std::endl;
       }

@@ -22,9 +22,10 @@ int main(int argc, const char * argv[]) {
             for(int k = 0; k < b; k++) {
                 res[i][j] += lM[i][k]*rM[k][j];
             }
+            //res[i][j] = sum(lM[i][:]*rM[:][j]);
         }
     }
-    
+
     for(int i = 0; i < a; i++) {
         for(int j = 0; j < c; j++) {
                 cout << res[i][j] << " ";
