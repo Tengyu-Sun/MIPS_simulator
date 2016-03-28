@@ -9,7 +9,7 @@ int main(int argc, char *argv[]) {
     Memory *memory = new Memory(1024, 100);
     Cache *cache = new Cache(8, 4, 2, 10, memory);
 
-    MemSys *memsys = new MemSys(cache, memory, true);
+    MemSys *memsys = new MemSys(cache, memory, false);
     FPU *fpu = new FPU(10);
     VU* vu = new VU(5);
     CPU *cpu = new CPU(memsys, fpu, vu);

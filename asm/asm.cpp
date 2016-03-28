@@ -116,6 +116,11 @@ void first_pass(fstream& input, map<string, int>& symbol_map) {
 
 
 uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_map, int line_num) {
+  cout<<opcode<<" ";
+  for(int i=0; i<para.size(); ++i) {
+    cout<<para[i]<<" ";
+  }
+  cout<<endl;
   uint32_t code = 0;
   auto entry = opcode_map.find(opcode);
   if(entry == opcode_map.end()) {
@@ -135,8 +140,10 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     } else {
 	offset = stoi(para[0]);
     }
+    std::cout<<opcode<<" "<<para[0]<<" "<<code<<" "<<offset<<endl;
     code <<= 25;
-    code |= offset;
+    code |= (offset & 0x1ffffff);
+
   } else if (para.size() == 2) {
     code <<= 4;
     code |= stoi(para[0].substr(1));
@@ -152,7 +159,7 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
       	  offset = stoi(para[1]);
        }
       code <<=21;
-      code |= offset;
+      code |= (offset & 0x1ffff);
     }
   } else if (para.size() == 3) {
     code <<= 4;
@@ -164,8 +171,14 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
       code |= stoi(para[2].substr(1));
       code <<=13;
     } else {
+      int imm;
+      if(symbol_map.find(para[2]) != symbol_map.end()) {
+	        imm = symbol_map[para[2]] - line_num - 1;
+       } else {
+      	  imm = stoi(para[2]);
+       }
       code <<= 17;
-      code |= stoi(para[2]);
+      code |= imm & 0x1ffff;
     }
 
   } else {
@@ -176,6 +189,7 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     cout<<endl;
     return 0;
   }
+
   return code;
 }
 
@@ -231,7 +245,9 @@ int main(int argc, char* argv[]) {
     if (s < line.size()){
       para.push_back(line.substr(s, line.size()-s));
     }
-    output<<encoding(opcode, para, symbol_map, line_num)<<endl;
+    uint32_t code = encoding(opcode, para, symbol_map, line_num);
+    output<<code<<endl;
+    std::cout<<line<<" "<<code<<endl;
   }
   return 0;
 }

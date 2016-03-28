@@ -121,6 +121,7 @@ void CPU::idc() {
         pipe[1]->A = gpr[pipe[1]->rd1];
         pipe[1]->B = gpr[pipe[1]->rd2];
       }
+
       std::cout<<"idc: type:"<<pipe[1]->type<<" opcode: "<<pipe[1]->opcode<<" rd1: "
       <<pipe[1]->rd1<<" rd2: "<<pipe[1]->rd2<<" rd3: "<<pipe[1]->rd3<<" imm: "<<pipe[1]->imm<<std::endl;
       pipe[1]->stage = 2;
@@ -214,6 +215,9 @@ void CPU::exc() {
         }
         if (pipe[2]->opcode <3) {
           uint32_t offset = pipe[2]->ins & 0x1ffffff;
+          if (offset >> 24 == 1) {
+            offset |= 0xfe000000;
+          }
           pipe[2]->aluoutput = offset<<2;
           if (pipe[2]->opcode == 2) {
             gpr[15] = pipe[2]->npc;
