@@ -192,6 +192,7 @@ void Simulator::memOpen() {
            // std::cout<<"unrecognized command: "<<line<<std::endl;
         }
     }
+    input.close();
 }
 
 void Simulator::memSave() {
@@ -255,8 +256,8 @@ void Simulator::memImport() {
     std::fstream input(filename);
     uint32_t ins = 0;
     int add = 0;
+    input>>ins;
     while(input){
-       input>>ins;
        //std::cout<<ins<<std::endl;
        uint8_t tmp = ins & 0xff;
        while(_memsys->directStoreByte(add+3, tmp) != 1);
@@ -271,12 +272,17 @@ void Simulator::memImport() {
        while(_memsys->directStoreByte(add, tmp) != 1);
        add = add + 4;
        ins = 0;
+       input>>ins;
     }
+    input.close();
     return;
 }
 
 void Simulator::clkReset() {
     _cpu->clk = 0;
+    _cpu->err = false;
+    _cpu->clear = true;
+    _cpu->pc = 0;
     clkLb->setText(std::to_string(_cpu->clk).c_str());
 }
 

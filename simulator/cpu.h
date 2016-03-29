@@ -37,16 +37,17 @@ public:
   void run();
   void step();
   bool err;
+  uint32_t pc;
+  bool clear;
 
 private:
   uint32_t gpr[16];  //general purpose register
   float fpr[16];  //floating point register
   uint64_t vr[16];  //vector register
-  uint32_t pc;
   uint32_t status;
 
   Instruction *pipe[5];
-  bool clear;
+
   MemSys* _memsys;
   FPU* _fpu;
   VU* _vu;

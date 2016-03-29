@@ -27,11 +27,12 @@ void CPU::ifc() {
     pipe[0]->stage = 0;
     pipe[0]->npc = pc + 4;
     clear = false;
+    std::cout<<"fectch instructions at "<<pc<<std::endl;
   }
   if (pipe[0] != nullptr) {
     if (pipe[0]->stage == 0) {
       int flag = _memsys->loadWord(pipe[0]->add, &(pipe[0]->ins));
-     // std::cout<<"fectching instructions"<<std::endl;
+
       if (flag == -1) {
         std::cout<<"error fectching instructions"<<std::endl;
         err = true;
@@ -109,15 +110,15 @@ void CPU::idc() {
           //std::cout<<pipe[1]->rd1<<std::endl;
           pipe[1]->A = gpr[pipe[1]->rd1];
         }
-        // if (pipe[1]->opcode < 10) {
-        //   pipe[1]->vA = vr[pipe[1]->rd1];
-        //   pipe[2]->vB = vr[pipe[1]->rd2];
-        // } else if (pipe[1]->opcode <13) {
-        //   pipe[1]->vA = vr[pipe[1]->rd1];
-        // } else if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
-        //   pipe[1]->A = gpr[pipe[1]->rd1];
-        //   pipe[1]->vB = vr[pipe[1]->rd2];
-        // }
+//         if (pipe[1]->opcode < 10) {
+//           pipe[1]->vA = vr[pipe[1]->rd1];
+//           pipe[2]->vB = vr[pipe[1]->rd2];
+//         } else if (pipe[1]->opcode <13) {
+//           pipe[1]->vA = vr[pipe[1]->rd1];
+//         } else if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
+//           pipe[1]->A = gpr[pipe[1]->rd1];
+//           pipe[1]->vB = vr[pipe[1]->rd2];
+//         }
       } else {
         pipe[1]->A = gpr[pipe[1]->rd1];
         pipe[1]->B = gpr[pipe[1]->rd2];
@@ -211,6 +212,8 @@ void CPU::exc() {
       } else if (pipe[2]->type == 3) {
         if (pipe[2]->opcode == 0) {
           err = true;
+          delete pipe[2];
+          pipe[2] = nullptr;
           std::cout<<"break"<<std::endl;
           return;
         }
