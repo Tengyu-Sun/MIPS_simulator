@@ -28,6 +28,7 @@ struct Instruction {
   uint64_t vuoutput;
   uint32_t lmd;
   bool cond;
+  int dst; //gpr:0-15 fpr:16-31 vr:32-47
 };
 
 class CPU {
@@ -39,7 +40,7 @@ public:
   bool err;
   uint32_t pc;
   bool clear;
-
+  bool piped;
 private:
   uint32_t gpr[16];  //general purpose register
   float fpr[16];  //floating point register
@@ -57,5 +58,6 @@ private:
   void exc();
   void mem();
   void wbc();
+  bool opReady(int rd, int ab);
 };
 #endif /* defined(__MIPS_Simulator__CPU__) */

@@ -18,16 +18,24 @@ CPU::CPU(MemSys* memsys, FPU* fpu = nullptr, VU* vu = nullptr){
     pipe[i] = nullptr;
   }
   clear = true;
+  piped = true;
 }
 
 void CPU::ifc() {
-  if (pipe[0] == nullptr && clear) {
+  if (pipe[0] == nullptr && (clear || piped)) {
     pipe[0] = new Instruction();
     pipe[0]->add = pc;
     pipe[0]->stage = 0;
-    pipe[0]->npc = pc + 4;
+    pc = pc + 4;
+    if (piped) {
+      if (pipe[3]!= nullptr && pipe[3]->type == 3 && pipe[3]->cond) {
+        pc = pipe[3]->aluoutput;
+      }
+    }
+    pipe[0]->npc = pc;
+    pipe[0]->dst = -1;
     clear = false;
-    std::cout<<"fectch instructions at "<<pc<<std::endl;
+    std::cout<<"fectch instructions at "<<pipe[0]->add<<std::endl;
   }
   if (pipe[0] != nullptr) {
     if (pipe[0]->stage == 0) {
@@ -93,22 +101,44 @@ void CPU::idc() {
       } else {
         pipe[1]->opcode = pipe[1]->opcode & 0xf;
       }
+      bool ready = false;
       if (pipe[1]->type == 4) {
         if (pipe[1]->opcode == 5) {
-          pipe[1]->A = gpr[pipe[1]->rd1];
+            ready = opReady(pipe[1]->rd1, 1);
+            //pipe[1]->A = gpr[pipe[1]->rd1];
         } else if (pipe[1]->opcode == 6){
-          pipe[1]->fA = fpr[pipe[1]->rd1];
+            //pipe[1]->fA = fpr[pipe[1]->rd1];
+            ready = opReady(16+pipe[1]->rd1, 1);
         } else {
-          pipe[1]->fA = fpr[pipe[1]->rd1];
-          pipe[1]->fB = fpr[pipe[1]->rd2];
+          bool tmp1 = opReady(16+pipe[1]->rd1, 1);
+          bool tmp2 = opReady(16+pipe[1]->rd2, 2);
+
+          //   pipe[1]->fA = fpr[pipe[1]->rd1];
+          //   pipe[1]->fB = fpr[pipe[1]->rd2];
+
+          ready = tmp1 && tmp2;
         }
       } else if (pipe[1]->type == 6) {
         //std::cout<<pipe[1]->rd1<<" "<<pipe[1]->rd2<<std::endl;
-        pipe[1]->vA = vr[pipe[1]->rd1];
-        pipe[1]->vB = vr[pipe[1]->rd2];
-        if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
+        if (pipe[1]->opcode < 10){
+          bool tmp1 = opReady(32+pipe[1]->rd1, 1);
+          bool tmp2 = opReady(32+pipe[1]->rd2, 2);
+
+          //   pipe[1]->vA = vr[pipe[1]->rd1];
+
+
+          //   pipe[1]->vB = vr[pipe[1]->rd2];
+
+          ready = tmp1 && tmp2;
+        } else if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
           //std::cout<<pipe[1]->rd1<<std::endl;
-          pipe[1]->A = gpr[pipe[1]->rd1];
+
+            //pipe[1]->A = gpr[pipe[1]->rd1];
+            ready = opReady(pipe[1]->rd1, 1);
+
+        } else if (pipe[1]->opcode == 10 || pipe[1]->opcode == 11 || pipe[1]->opcode == 12) {
+            //pipe[1]->vA = vr[pipe[1]->rd1];
+          ready = opReady(32+pipe[1]->rd1, 1);
         }
 //         if (pipe[1]->opcode < 10) {
 //           pipe[1]->vA = vr[pipe[1]->rd1];
@@ -119,14 +149,59 @@ void CPU::idc() {
 //           pipe[1]->A = gpr[pipe[1]->rd1];
 //           pipe[1]->vB = vr[pipe[1]->rd2];
 //         }
-      } else {
-        pipe[1]->A = gpr[pipe[1]->rd1];
-        pipe[1]->B = gpr[pipe[1]->rd2];
+      } else if (pipe[1]->type == 1) {
+        if (pipe[1]->opcode < 8) {
+          //  pipe[1]->A = gpr[pipe[1]->rd1];
+          ready = opReady(pipe[1]->rd1, 1);
+        } else {
+          bool tmp1 = opReady(pipe[1]->rd1, 1);
+          bool tmp2 = opReady(pipe[1]->rd2, 2);
+          // if (tmp1) {
+          //   pipe[1]->A = gpr[pipe[1]->rd1];
+          // }
+          // if (tmp2) {
+          //   pipe[1]->B = gpr[pipe[1]->rd2];
+          // }
+          ready = tmp1 && tmp2;
+        }
+      } else if (pipe[1]->type == 2) {
+        if (pipe[1]->opcode < 19) {
+          bool tmp1 = opReady(pipe[1]->rd1, 1);
+          bool tmp2 = opReady(pipe[1]->rd2, 2);
+          // if (tmp1) {
+          //   pipe[1]->A = gpr[pipe[1]->rd1];
+          // }
+          // if (tmp2) {
+          //   pipe[1]->B = gpr[pipe[1]->rd2];
+          // }
+          ready = tmp1 && tmp2;
+        } else {
+          //pipe[1]->A = gpr[pipe[1]->rd1];
+          ready = opReady(pipe[1]->rd1, 1);
+        }
+      } else if (pipe[1]->type == 3) {
+        if (pipe[1]->opcode < 3) {
+          ready = true;
+        } else if (pipe[1]->opcode == 3 || pipe[1]->opcode == 4) {
+          bool tmp1 = opReady(pipe[1]->rd1, 1);
+          bool tmp2 = opReady(pipe[1]->rd2, 2);
+          // if (tmp1) {
+          //   pipe[1]->A = gpr[pipe[1]->rd1];
+          // }
+          // if (tmp2) {
+          //   pipe[1]->B = gpr[pipe[1]->rd2];
+          // }
+          ready = tmp1 && tmp2;
+        } else if (pipe[1]->opcode > 4 && pipe[1]->opcode < 9) {
+          //pipe[1]->A = gpr[pipe[1]->rd1];
+          ready = opReady(pipe[1]->rd1, 1);
+        }
       }
-
-      std::cout<<"idc: type:"<<pipe[1]->type<<" opcode: "<<pipe[1]->opcode<<" rd1: "
-      <<pipe[1]->rd1<<" rd2: "<<pipe[1]->rd2<<" rd3: "<<pipe[1]->rd3<<" imm: "<<pipe[1]->imm<<std::endl;
-      pipe[1]->stage = 2;
+      if (ready) {
+        std::cout<<"idc: type:"<<pipe[1]->type<<" opcode: "<<pipe[1]->opcode<<" rd1: "
+        <<pipe[1]->rd1<<" rd2: "<<pipe[1]->rd2<<" rd3: "<<pipe[1]->rd3<<" imm: "<<pipe[1]->imm<<std::endl;
+        pipe[1]->stage = 2;
+      }
     }
     if (pipe[1]->stage == 2) {
       if (pipe[2] == nullptr) {
@@ -146,9 +221,20 @@ void CPU::exc() {
     if (pipe[2]->stage == 2) {
       if (pipe[2]->type == 1) {
         pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
+        if (pipe[2]->opcode == 0 || pipe[2]->opcode == 1 || pipe[2]->opcode == 2) {
+          pipe[2]->dst = pipe[2]->rd2;
+        } else if (pipe[2]->opcode == 4) {
+          pipe[2]->dst = 16 + pipe[2]->rd2;
+        }
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
+
       } else if (pipe[2]->type == 2) {
+        if (pipe[2]->opcode < 19) {
+          pipe[2]->dst = pipe[2]->rd3;
+        } else {
+          pipe[2]->dst = pipe[2]->rd2;
+        }
         switch (pipe[2]->opcode) {
           case 0: pipe[2]->aluoutput = pipe[2]->A + pipe[2]->B;
                   break;
@@ -207,17 +293,17 @@ void CPU::exc() {
           default: std::cout<<"exc: type 2 error opcode "<<pipe[2]->opcode<<std::endl;
                 return;
         }
+
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 3) {
         if (pipe[2]->opcode == 0) {
-          err = true;
-          delete pipe[2];
-          pipe[2] = nullptr;
-          std::cout<<"break"<<std::endl;
-          return;
-        }
-        if (pipe[2]->opcode <3) {
+          // err = true;
+          // delete pipe[2];  //TODO clear pipe or not?
+          // pipe[2] = nullptr;
+          // std::cout<<"break"<<std::endl;
+          // return;
+        } else if (pipe[2]->opcode < 3) {
           uint32_t offset = pipe[2]->ins & 0x1ffffff;
           if (offset >> 24 == 1) {
             offset |= 0xfe000000;
@@ -248,6 +334,7 @@ void CPU::exc() {
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 4) {
         if (pipe[2]->opcode < 4) {
+          pipe[2]->dst = 16 + pipe[2]->rd3;
           int flag = _fpu->fpuCal(pipe[2]->fA, pipe[2]->fB, &pipe[2]->fpuoutput, pipe[2]->opcode);
           if (flag == 1) {
             std::cout<<"exc: "<<pipe[2]->fpuoutput<<std::endl;
@@ -258,11 +345,14 @@ void CPU::exc() {
           }
         } else {
           if (pipe[2]->opcode == 4) {
+            pipe[2]->dst = 16 + pipe[2]->rd3;
             pipe[2]->aluoutput = pipe[2]->fA < pipe[2]->fB;
           } else if (pipe[2]->opcode == 5) {
+            pipe[2]->dst = 16 + pipe[2]->rd2;
             float *tmp = (float*)(&pipe[2]->A);
             pipe[2]->fpuoutput = *tmp;
           } else if (pipe[2]->opcode == 6) {
+            pipe[2]->dst = pipe[2]->rd2;
             uint32_t *tmp = (uint32_t*)(&pipe[2]->fA);
             pipe[2]->aluoutput = *tmp;
           } else {
@@ -277,6 +367,7 @@ void CPU::exc() {
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 6) {
         if (pipe[2]->opcode < 10) {
+          pipe[2]->dst = 32 + pipe[2]->rd3;
           int flag = _vu->vuCal(pipe[2]->vA, pipe[2]->vB, &pipe[2]->vuoutput, pipe[2]->opcode);
           if (flag == 1) {
             std::cout<<"exc: "<<pipe[2]->vuoutput<<std::endl;
@@ -287,8 +378,10 @@ void CPU::exc() {
           }
         } else {
           if (pipe[2]->opcode == 10) {
+            pipe[2]->dst = 32 + pipe[2]->rd2;
             pipe[2]->vuoutput = pipe[2]->vA;
           } else if (pipe[2]->opcode == 11 || pipe[2]->opcode == 12) {
+            pipe[2]->dst = pipe[2]->rd2;
             int n = 7 - pipe[2]->imm;
             uint32_t tmp = (pipe[2]->vA>>(8*n)) & 0xff;
             if (pipe[2]->opcode == 11 && (tmp>>7 == 1)) {
@@ -296,6 +389,7 @@ void CPU::exc() {
             }
             pipe[2]->aluoutput = tmp;
           } else if (pipe[2]->opcode == 13) {
+            pipe[2]->dst = 32 + pipe[2]->rd2;
             uint64_t tmp = pipe[2]->A & 0xff;
             int n = (7 - pipe[2]->imm)*8;
             uint64_t mask = 0xff;
@@ -303,6 +397,7 @@ void CPU::exc() {
             pipe[2]->vuoutput = (pipe[2]->vB & mask) | (tmp<<n);
             std::cout<<"exc: mask:"<<mask<<" n:"<<n<<" tmp:"<<(tmp<<n)<<std::endl;
           } else if (pipe[2]->opcode == 14) {
+            pipe[2]->dst = 32 + pipe[2]->rd2;
             uint64_t tmp = pipe[2]->A & 0xff;
             uint64_t res = 0;
             res = tmp;
@@ -314,7 +409,6 @@ void CPU::exc() {
           }
           pipe[2]->stage = 3;
           std::cout<<"exc: "<<pipe[2]->vuoutput<<std::endl;
-
         }
       }
     }
@@ -334,7 +428,6 @@ void CPU::exc() {
 void CPU::mem() {
   if (pipe[3] != nullptr) {
     if (pipe[3]->stage == 3) {
-      pc = pipe[3]->npc;
       if (pipe[3]->type == 1) {
         int flag = 0;
         if (pipe[3]->opcode == 8) {
@@ -366,8 +459,17 @@ void CPU::mem() {
         pipe[3]->stage = 4;
         std::cout<<"pc: "<<pc<<std::endl;
       } else if (pipe[3]->type == 3) {
+        if (pipe[3]->opcode == 0) {
+          err = true;
+          delete pipe[3];  //TODO clear pipe or not?
+          pipe[3] = nullptr;
+          std::cout<<"break"<<std::endl;
+          return;
+        }
         if (pipe[3]->cond) {
-          pc = pipe[3]->aluoutput;
+          if (!piped){
+            pc = pipe[3]->aluoutput; //
+          }
         }
         pipe[3]->stage = 4;
         std::cout<<"pc: "<<pc<<std::endl;
@@ -442,6 +544,110 @@ void CPU::wbc() {
   return;
 }
 
+bool CPU::opReady(int rd, int a) {
+    if (rd < 0) {
+        return false;
+    }
+    if (pipe[2] != nullptr && pipe[2]->dst == rd) { //exc
+      return false;
+    }
+    int type = rd/16;
+    if (pipe[3] != nullptr && pipe[3]->dst == rd) { //mem
+      if (pipe[3]->type == 1) {
+        return false;
+      } else {
+        if (a == 1) {
+          switch(type) {
+            case 0: pipe[1]->A = pipe[3]->aluoutput;
+                    break;
+            case 1: pipe[1]->fA = pipe[3]->fpuoutput;
+                    break;
+            case 2: pipe[1]->vA = pipe[3]->vuoutput;
+                    break;
+          }
+        } else {
+          switch(type) {
+            case 0: pipe[1]->B = pipe[3]->aluoutput;
+                    break;
+            case 1: pipe[1]->fB = pipe[3]->fpuoutput;
+                    break;
+            case 2: pipe[1]->vB = pipe[3]->vuoutput;
+                    break;
+          }
+        }
+        return true;
+      }
+    }
+    if (pipe[4] != nullptr && pipe[4]->dst == rd) {
+      if (pipe[4]->type == 1) {
+        if (a == 1) {
+          switch(type) {
+            case 0: pipe[1]->A = pipe[4]->lmd;
+                    break;
+            case 1: {float *tmp = (float*)(&pipe[4]->lmd);
+                    pipe[1]->fA = *tmp;
+                    break;}
+            case 2: {std::cout<<"opReady error: vu oprand"<<std::endl;
+                    break;}
+          }
+        } else {
+          switch(type) {
+            case 0: pipe[1]->B = pipe[4]->lmd;
+                    break;
+            case 1: {float *tmp = (float*)(&pipe[4]->lmd);
+                    pipe[1]->fB = *tmp;
+                    break;}
+            case 2: {std::cout<<"opReady error: vu oprand"<<std::endl;
+                    break;}
+          }
+        }
+        return true;
+      } else {
+        if (a == 1) {
+          switch(type) {
+            case 0: pipe[1]->A = pipe[4]->aluoutput;
+                    break;
+            case 1: pipe[1]->fA = pipe[4]->fpuoutput;
+                    break;
+            case 2: pipe[1]->vA = pipe[4]->vuoutput;
+                    break;
+          }
+        } else {
+          switch(type) {
+            case 0: pipe[1]->B = pipe[4]->aluoutput;
+                    break;
+            case 1: pipe[1]->fB = pipe[4]->fpuoutput;
+                    break;
+            case 2: pipe[1]->vB = pipe[4]->vuoutput;
+                    break;
+          }
+        }
+        return true;
+      }
+    }
+
+    if (a == 1) {
+      switch(type) {
+        case 0: pipe[1]->A = gpr[pipe[1]->rd1];
+                break;
+        case 1: pipe[1]->fA = fpr[pipe[1]->rd1];
+                break;
+        case 2: pipe[1]->vA = vr[pipe[1]->rd1];
+                break;
+      }
+    } else {
+      switch(type) {
+        case 0: pipe[1]->B = gpr[pipe[1]->rd1];
+                break;
+        case 1: pipe[1]->fB = fpr[pipe[1]->rd1];
+                break;
+        case 2: pipe[1]->vB = vr[pipe[1]->rd1];
+                break;
+      }
+    }
+    return true;
+}
+
 void CPU::run() {
   while(!err) {
     wbc();
@@ -468,6 +674,13 @@ void CPU::step() {
   idc();
   //std::cout<<"ifc"<<std::endl;
   ifc();
+  std::cout<<"pipe"<<std::endl;
+  for (int i = 0; i < 5; ++i) {
+    if (pipe[i] != nullptr) {
+      std::cout<<i<<" "<<pipe[i]->type<<" "<<pipe[i]->opcode<<std::endl;
+    }
+  }
+
   ++clk;
   return;
 }

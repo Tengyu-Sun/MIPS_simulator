@@ -19,7 +19,7 @@ class Storage : public QObject {
     virtual ~Storage() {}
     int cycle;
     int countdown;
-    uint32_t _add;
+    uint32_t _add;//simultaneous read write?
     int _len;
     Storage *nextLevel;
     bool _idle;
