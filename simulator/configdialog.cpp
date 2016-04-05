@@ -10,39 +10,50 @@ ConfigDialog::ConfigDialog() {
     QPushButton *cancelPB = new QPushButton(tr("Cancel"));
     connect(cancelPB, SIGNAL(clicked()), this, SLOT(close()));
 
+
     QGroupBox *ccgroup = new QGroupBox("cache");
+    cacheTW = new QTabWidget;
+    cacheTW->addTab(new CacheConfigs(),"level 0");
+    QPushButton *addPB = new QPushButton(tr("Add"));
+    connect(addPB, SIGNAL(clicked()), this, SLOT(addLevel()));
+    QPushButton *rmPB = new QPushButton(tr("Remove"));
+    connect(rmPB, SIGNAL(clicked()), this, SLOT(removeLevel()));
     QGridLayout *ccLayout = new QGridLayout;
-    ccLayout->addWidget(new QLabel("index size:"), 0, 0);
-    ccLayout->addWidget(new QLabel("line size:"), 1, 0);
-    ccLayout->addWidget(new QLabel("ways:"), 2, 0);
-    ccLayout->addWidget(new QLabel("cycle:"), 3, 0);
-    ccLayout->addWidget(new QLabel("policy:"), 4, 0);
-    ccLayout->addWidget(new QLabel("level:"), 5, 0);
-    indexSizeLE = new QLineEdit("8");
-    indexSizeLE->setMaximumWidth(40);
-    ccLayout->addWidget(indexSizeLE, 0, 1);
-    lineSizeLE = new QLineEdit("4");
-    lineSizeLE->setMaximumWidth(40);
-    ccLayout->addWidget(lineSizeLE, 1, 1);
-    waysLE = new QLineEdit("2");
-    waysLE->setMaximumWidth(40);
-    ccLayout->addWidget(waysLE, 2, 1);
-    cacheCycleLE = new QLineEdit("10");
-    cacheCycleLE->setMaximumWidth(40);
-    ccLayout->addWidget(cacheCycleLE, 3, 1);
-    policyRB = new QRadioButton("LRU");
-    policyRB->setChecked(true);
-    QRadioButton *rdRB = new QRadioButton("random");
-    QGroupBox *rbGroup = new QGroupBox;
-    QHBoxLayout *rbLayout = new QHBoxLayout;
-    rbLayout->addWidget(policyRB);
-    rbLayout->addWidget(rdRB);
-    rbGroup->setLayout(rbLayout);
-    ccLayout->addWidget(rbGroup, 4, 1);
-    cacheLeveLE = new QLineEdit("1");
-    cacheLeveLE->setMaximumWidth(40);
-    ccLayout->addWidget(cacheLeveLE, 5, 1);
+    ccLayout->addWidget(cacheTW, 0, 0, 1, 2);
+    ccLayout->addWidget(addPB, 1, 0);
+    ccLayout->addWidget(rmPB, 1, 1);
+//    ccLayout->addWidget(new QLabel("index size:"), 0, 0);
+//    ccLayout->addWidget(new QLabel("line size:"), 1, 0);
+//    ccLayout->addWidget(new QLabel("ways:"), 2, 0);
+//    ccLayout->addWidget(new QLabel("cycle:"), 3, 0);
+//    ccLayout->addWidget(new QLabel("policy:"), 4, 0);
+//    ccLayout->addWidget(new QLabel("level:"), 5, 0);
+//    indexSizeLE = new QLineEdit("8");
+//    indexSizeLE->setMaximumWidth(40);
+//    ccLayout->addWidget(indexSizeLE, 0, 1);
+//    lineSizeLE = new QLineEdit("4");
+//    lineSizeLE->setMaximumWidth(40);
+//    ccLayout->addWidget(lineSizeLE, 1, 1);
+//    waysLE = new QLineEdit("2");
+//    waysLE->setMaximumWidth(40);
+//    ccLayout->addWidget(waysLE, 2, 1);
+//    cacheCycleLE = new QLineEdit("10");
+//    cacheCycleLE->setMaximumWidth(40);
+//    ccLayout->addWidget(cacheCycleLE, 3, 1);
+//    policyRB = new QRadioButton("LRU");
+//    policyRB->setChecked(true);
+//    QRadioButton *rdRB = new QRadioButton("random");
+//    QGroupBox *rbGroup = new QGroupBox;
+//    QHBoxLayout *rbLayout = new QHBoxLayout;
+//    rbLayout->addWidget(policyRB);
+//    rbLayout->addWidget(rdRB);
+//    rbGroup->setLayout(rbLayout);
+//    ccLayout->addWidget(rbGroup, 4, 1);
+//    cacheLeveLE = new QLineEdit("1");
+//    cacheLeveLE->setMaximumWidth(40);
+//    ccLayout->addWidget(cacheLeveLE, 5, 1);
     ccgroup->setLayout(ccLayout);
+
 
     QGroupBox *mmGroup = new QGroupBox("memory");
     QGridLayout *mmLayout = new QGridLayout;
@@ -91,4 +102,14 @@ void ConfigDialog::memsysUpdate() {
 
 void ConfigDialog::close() {
     this->reject();
+}
+
+void ConfigDialog::addLevel() {
+    int l = cacheTW->count();
+    std::string level = "level " + std::to_string(l);
+    cacheTW->addTab(new CacheConfigs(), level.c_str());
+}
+
+void ConfigDialog::removeLevel() {
+    cacheTW->removeTab(cacheTW->currentIndex());
 }
