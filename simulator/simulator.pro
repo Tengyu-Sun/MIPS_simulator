@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     cache.cpp \
     cpu.cpp \
     fpu.cpp \
-    vu.cpp
+    vu.cpp \
+    configdialog.cpp
 
 HEADERS  += simulator.h \
     memsys.h \
@@ -28,7 +29,8 @@ HEADERS  += simulator.h \
     cpu.h \
     fpu.h \
     vu.h \
-    storage.h
+    storage.h \
+    configdialog.h
 
 CONFIG += c++11
 

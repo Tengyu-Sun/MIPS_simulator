@@ -32,7 +32,7 @@ struct Cacheline {
 class Cache : public Storage {
     Q_OBJECT
  public:
-    Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, int policy_, Storage* nextLevel_);
     ~Cache();
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t* blk, int len);

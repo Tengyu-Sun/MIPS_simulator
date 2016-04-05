@@ -8,7 +8,7 @@ int genRandomNumber(int ways) {
     return distribution(generator);
 }
 
-Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLevel_) {
+Cache::Cache(int indexsize, int linesize, int ways, int cycle_, int policy_, Storage* nextLevel_) {
   _indexsize = indexsize;
   _linesize = linesize;
   _ways = ways;
@@ -23,7 +23,7 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, Storage* nextLev
   _add = 0;
   _len = -1;
   buf = nullptr;
-  policy = 1;
+  policy = policy_;
   _cachelines = new Cacheline[_cachesize];
   //lru = new int[_cachesize];
   for (int i = 0; i < _cachesize; ++i) {

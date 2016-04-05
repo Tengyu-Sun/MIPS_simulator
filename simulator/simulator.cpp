@@ -8,17 +8,25 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     _memsys = memsys;
 
     //menu
+
     openAct = new QAction(tr("open"), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
     saveAct = new QAction(tr("save"), this);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(memSave()));
     importAct = new QAction(tr("import"), this);
     connect(importAct, SIGNAL(triggered()), this, SLOT(memImport()));
+    configAct = new QAction(this);
+    configAct->setText("memsys config");
+    connect(configAct, SIGNAL(triggered()), this, SLOT(memConfig()));
+
     memMenu = menuBar()->addMenu(tr("Memory"));
     memMenu->addAction(openAct);
     memMenu->addAction(importAct);
     memMenu->addAction(saveAct);
+    memMenu->addAction(configAct);
 
+    configDL = new ConfigDialog();
+    connect(configDL, &ConfigDialog::memsysConfig, this, &Simulator::memsysConfig);
     //cpu group
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
     QLabel *ccLb = new QLabel(tr("clock cycle:"));
@@ -60,13 +68,13 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     missLb = new QLabel(tr("0"));
 
     //row 2
-    QScrollArea *ccsa = new QScrollArea;
+    ccsa = new QScrollArea;
     ccGroup = new QGroupBox(tr("Cache"));
     QGridLayout *ccLayout = new QGridLayout;
     QGroupBox *tmpGroup = new QGroupBox;
     QGridLayout *tmpLayout = new QGridLayout;
     cacheView = new QLabel*[_memsys->_cacheSize];
-    cacheData = new int[_memsys->_cacheSize];
+    //cacheData = new int[_memsys->_cacheSize];
 
     for(int i = 0; i < _memsys->_cacheSize; ++i) {
         std::string lb = std::to_string(i)+":";
@@ -88,14 +96,14 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     ccGroup->setVisible(_memsys->_cacheOn);
 
 
-    QScrollArea *mmsa = new QScrollArea;
+    mmsa = new QScrollArea;
     QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
     QGridLayout *mmLayout = new QGridLayout;
     QGroupBox *tmpGroup2 = new QGroupBox;
     QGridLayout *tmpLayout2 = new QGridLayout;
 
     memView = new QLabel*[_memsys->_memSize];
-    memData = new int[_memsys->_memSize];
+    //memData = new int[_memsys->_memSize];
     for(int i = 0; i < _memsys->_memSize; ++i) {
         std::string lb = std::to_string(i)+":";
         memView[i] = new QLabel(tr("0"));
@@ -276,6 +284,79 @@ void Simulator::memImport() {
     }
     input.close();
     return;
+}
+
+void Simulator::memConfig() {
+    configDL->exec();
+}
+
+void Simulator::memsysConfig(int indexsize, int linesize, int ways, int cachecycle, int policy, int level, int memsize, int memcycle) {
+
+    Memory *memory = new Memory(memsize, memcycle);
+    delete _memsys->_mainMemory;
+    _memsys->_mainMemory = memory;
+    _memsys->_memSize = memory->_size;
+    QGroupBox *tmpGroup2 = new QGroupBox;
+    QGridLayout *tmpLayout2 = new QGridLayout;
+    delete[] memView;
+    memView = new QLabel*[_memsys->_memSize];
+    //memData = new int[_memsys->_memSize];
+    for(int i = 0; i < _memsys->_memSize; ++i) {
+        std::string lb = std::to_string(i)+":";
+        memView[i] = new QLabel(tr("0"));
+        tmpLayout2->addWidget(new QLabel(lb.c_str()), i, 0);
+        tmpLayout2->addWidget(memView[i], i, 1);
+    }
+    tmpGroup2->setLayout(tmpLayout2);
+    tmpGroup2->setMinimumWidth(150);
+    mmsa->setWidget(tmpGroup2);
+
+    Cache *cache = nullptr;
+    if (level > 0) {
+        Storage* next = memory;
+        cache = new Cache(indexsize, linesize, ways, cachecycle, policy, next);
+        --level;
+        while(level > 0) {
+            next = cache;
+            cache = new Cache(indexsize, linesize, ways, cachecycle, policy, next);
+            --level;
+        }
+    }
+
+    QObject::connect(memory, &Memory::update, this, &Simulator::memUpdate);
+    delete _memsys->_cache;
+    _memsys->_cache = cache;
+    if (cache != nullptr) {
+        _memsys->_cacheSize = cache->_cachesize;
+        _memsys->_lineSize = cache->_linesize;
+        _memsys->_cacheOn = true;
+        QObject::connect(cache, &Cache::updateHit, this, &Simulator::cacheHitUpdate);
+        QObject::connect(cache, &Cache::updateMiss, this, &Simulator::cacheMissUpdate);
+        QObject::connect(cache, &Cache::updateCacheline, this, &Simulator::cacheUpadate);
+        QGroupBox *tmpGroup = new QGroupBox;
+        QGridLayout *tmpLayout = new QGridLayout;
+        cacheView = new QLabel*[_memsys->_cacheSize];
+
+        for(int i = 0; i < _memsys->_cacheSize; ++i) {
+            std::string lb = std::to_string(i)+":";
+            std::string cv = "0 | 0 | 0 | 0 | ";
+            for (int k = 0; k < _memsys->_lineSize; ++k) {
+                cv += " 0 ";
+            }
+            cacheView[i] = new QLabel(cv.c_str());
+            tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
+            tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
+        }
+        tmpGroup->setLayout(tmpLayout);
+        tmpGroup->setMinimumWidth(250);
+        ccsa->setWidget(tmpGroup);
+
+        cacheOnPB->setText(tr("ON"));
+        hitLb->setText(tr("0"));
+        missLb->setText(tr("0"));
+        ccGroup->setVisible(_memsys->_cacheOn);
+    }
+
 }
 
 void Simulator::clkReset() {
