@@ -4,23 +4,48 @@
 #include "cache.h"
 #include "memory.h"
 #include <string>
+#include <vector>
+#include <map>
+#include <QObject>
+
+struct CacheSettings {
+  int linesize;
+  int indexsize;
+  int ways;
+  int cycle;
+  ReplacePolicy rpolicy;
+  WritePolicy wpolicy;
+};
+
+struct MemSysConfig {
+  uint32_t memSize;
+  int memCycle;
+  int cacheLevel;
+  bool cacheOn;
+  std::vector<CacheSettings> cacheSettings;
+};
 
 class MemSys {
  public:
-  MemSys(Cache *cache, Memory *mainMemory, bool cacheOn);
+  void init(MemSysConfig config);
   int loadWord(uint32_t add, uint32_t *val);
   int storeWord(uint32_t add, uint32_t val);
   int loadByte(uint32_t add, uint8_t *val);
   int storeByte(uint32_t add, uint8_t val);
-  int directStoreByte(uint32_t add, uint8_t val);
-  void dump(std::string fn);
-  bool _cacheOn;
-  void resetCache() { _cache->reset(); }
-  uint32_t _memSize;
-  int _cacheSize;
-  int _lineSize;
-  Cache *_cache;
+  int directWriteByte(uint32_t add, uint8_t val);
+  int directWriteWord(uint32_t add, uint32_t val);
+  std::string dump();
+  void resetCache();
+
+  MemSysConfig _config;
+  std::vector<Cache*> _caches;
   Memory *_mainMemory;
+private:
+  std::string request;
+  int countdown;
+  bool busy;
+  uint32_t buf32;
+  uint8_t buf8;
 };
 
 #endif /* defined(__MIPS_Simulator__Memsys__) */

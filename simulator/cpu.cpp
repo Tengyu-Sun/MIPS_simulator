@@ -45,7 +45,7 @@ void CPU::ifc() {
         std::cout<<"error fectching instructions"<<std::endl;
         err = true;
         return;
-      } else if (flag == 4) {
+      } else if (flag == 1) {
         pipe[0]->stage = 1;
         std::cout<<"instruction fectched "<<pipe[0]->ins<<std::endl;
       }
@@ -446,7 +446,7 @@ void CPU::mem() {
         } else if (pipe[3]->opcode == 2 || pipe[3]->opcode == 4) {
           uint32_t tmp;
           int flag = _memsys->loadWord(pipe[3]->aluoutput, &tmp);
-          if (flag == 4 ) {
+          if (flag == 1 ) {
             pipe[3]->lmd = tmp;
           }
         }

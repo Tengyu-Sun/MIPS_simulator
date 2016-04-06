@@ -11,20 +11,15 @@
 
 #include <cstdint>
 #include <string>
-#include <QObject>
+//#include <QObject>
 
-class Storage : public QObject {
-    Q_OBJECT
+class Storage {
   public:
     virtual ~Storage() {}
     int cycle;
-    int countdown;
-    uint32_t _add;//simultaneous read write?
-    int _len;
     Storage *nextLevel;
-    bool _idle;
-    virtual int load(uint32_t address, uint8_t *blk, int len) = 0;
-    virtual int store(uint32_t address, uint8_t *blk, int len) = 0;
+    virtual int load(uint32_t address, uint8_t *block, int length) = 0;
+    virtual int store(uint32_t address, uint8_t *block, int length) = 0;
     virtual std::string dump() = 0;
 };
 

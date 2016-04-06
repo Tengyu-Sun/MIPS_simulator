@@ -21,7 +21,7 @@ struct Cacheline {
       valid = false;
       dirty = false;
       tag = 0;
-      lru = 0;
+      lru = -1;
       data = nullptr;
     }
     ~Cacheline() {
@@ -29,35 +29,43 @@ struct Cacheline {
     }
 };
 
+enum class ReplacePolicy {RANDOM, LRU};
+enum class WritePolicy {WRITEBACK, WRITETROUGH};
+
+struct Position {
+  int idx;
+  int way;
+  Position() {
+    idx = -1;
+    way = -1;
+  }
+  Position(int i, int j) {
+    idx = i;
+    way = j;
+  }
+};
+
 class Cache : public Storage {
-    Q_OBJECT
  public:
-    Cache(int indexsize, int linesize, int ways, int cycle_, int policy_, Storage* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, ReplacePolicy rpolicy_, WritePolicy wploicy_, Storage* nextLevel_);
     ~Cache();
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t* blk, int len);
     void reset();
     std::string dump();
-    int evict(uint32_t add);
-    int inCache(uint32_t address);
+    Position evict(uint32_t add, int &t);
+    Position inCache(uint32_t address);
     int hit;
     int miss;
-    int _cachesize;
     int _linesize;
-    Cacheline* _cachelines;
-signals:
-    void updateCacheline(Cacheline* data, int idx);
-    void updateHit(int hit);
-    void updateMiss(int miss);
-
- private:
     int _indexsize;
     int _ways;
-    int policy;
-    //int *lru;
-    uint8_t *buf;
-    bool missReady;
+    ReplacePolicy rpolicy;
+    WritePolicy wpolicy;
+    Cacheline** _cachelines;
+
     int getLRUNumber(int idx);
+    int genRandomNumber(int ways);
     void visitLRU(uint32_t add);
 };
 

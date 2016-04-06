@@ -2,11 +2,10 @@
 #include <fstream>
 #include <iostream>
 
-MemSys::MemSys(Cache *cc, Memory *mm, bool co):_cache(cc), _mainMemory(mm),
-_cacheOn(co) {
-  _memSize = _mainMemory->_size;
-  _cacheSize = _cache->_cachesize;
-  _lineSize = _cache->_linesize;
+void init(MemSysConfig config) {
+  busy = false;
+  request = "";
+  return;
 }
 
 int MemSys::loadWord(uint32_t add, uint32_t* val) {
@@ -14,33 +13,155 @@ int MemSys::loadWord(uint32_t add, uint32_t* val) {
     std::cout<<add<<" "<<_memSize<<std::endl;
     return -1;
   }
-  uint8_t tmp[4];
-  int flag = -1;
-  if (_cacheOn) {
-      flag = _cache->load(add, tmp, 4);
+  std::string tmp = "lw" + std::to_string(add);
+  if (busy && tmp != request) {
+    return 0;
+  } else if (!busy) {
+    request = tmp;
+    busy = true;
+    uint8_t blk[4];
+    int flag = -1;
+    if (_config.cacheOn) {
+        flag = _caches[0]->load(add, blk, 4);
+    } else {
+        flag = _mainMemory->load(add, blk, 4);
+    }
+    if(flag == -1) {
+      busy = false;
+      return -1;
+    }
+    buf32 = (blk[0]<<24) | (blk[1]<<16) | (blk[2]<<8) | blk[3];
+    countdown = flag;
+  }
+  if (countdown > 0) {
+    --countdown;
+  }
+  if (countdown == 0) {
+    *val = buf32;
+    busy = false;
+    return 1;
   } else {
-
-      flag = _mainMemory->load(add, tmp, 4);
+    return 0;
   }
-  if(flag == 4) {
-    *val = (tmp[0]<<24) | (tmp[1]<<16) | (tmp[2]<<8) | tmp[3];
-  }
-  return flag;
 }
 
 int MemSys::loadByte(uint32_t add, uint8_t* val) {
   if(add > _memSize - 1) {
     return -1;
   }
-  if (_cacheOn) {
-      return _cache->load(add, val, 1);
+  std::string tmp = "lb" + std::to_string(add);
+  if (busy && tmp != request) {
+    return 0;
+  } else if (!busy) {
+    request = tmp;
+    busy = true;
+    int flag = -1;
+    if (_config.cacheOn) {
+        flag = _caches[0]->load(add, &buf8, 1);
+    } else {
+        flag = _mainMemory->load(add, &buf8, 1);
+    }
+    if(flag == -1) {
+      busy = false;
+      return -1;
+    }
+    countdown = flag;
+  }
+  if (countdown > 0) {
+    --countdown;
+  }
+  if (countdown == 0) {
+    *val = buf8;
+    busy = false;
+    return 1;
   } else {
-      return _mainMemory->load(add, val, 1);
+    return 0;
   }
 }
 
 int MemSys::storeWord(uint32_t add, uint32_t val) {
     if(add + 3 > _memSize - 1 || add%4 != 0) {
+      return -1;
+    }
+    std::string tmp = "sw" + std::to_string(add);
+    if (busy && tmp != request) {
+      return 0;
+    } else if (!busy) {
+      request = tmp;
+      busy = true;
+      uint8_t blk[4];
+      blk[3] = val & 0xff;
+      val >>= 8;
+      blk[2] = val & 0xff;
+      val >>= 8;
+      blk[1] = val & 0xff;
+      val >>=8;
+      blk[0] = val;
+      int flag = -1;
+      if (_config.cacheOn) {
+          flag = _caches[0]->store(add, blk, 4);
+      } else {
+          flag = _mainMemory->store(add, blk, 4);
+      }
+      if(flag == -1) {
+        busy = false;
+        return -1;
+      }
+      countdown = flag;
+    }
+    if (countdown > 0) {
+      --countdown;
+    }
+    if (countdown == 0) {
+      busy = false;
+      return 1;
+    } else {
+      return 0;
+    }
+}
+
+int MemSys::storeByte(uint32_t add, uint8_t val) {
+    if(add > _memSize - 1) {
+      return -1;
+    }
+    std::string tmp = "sb" + std::to_string(add);
+    if (busy && tmp != request) {
+      return 0;
+    } else if (!busy) {
+      request = tmp;
+      busy = true;
+      int flag = -1;
+      if (_config.cacheOn) {
+          flag = _caches[0]->store(add, &val, 1);
+      } else {
+          flag = _mainMemory->store(add, &val, 1);
+      }
+      if(flag == -1) {
+        busy = false;
+        return -1;
+      }
+      countdown = flag;
+    }
+    if (countdown > 0) {
+      --countdown;
+    }
+    if (countdown == 0) {
+      busy = false;
+      return 1;
+    } else {
+      return 0;
+    }
+}
+
+int MemSys::directWriteByte(uint32_t add, uint8_t val) {
+    if(add > _config._memSize - 1) {
+      return -1;
+    }
+    return _mainMemory->store(add, &val, 1);
+}
+
+int MemSys::directWriteWord(uint32_t add, uint32_t val) {
+    if(add + 3 > _config._memSize - 1 || add%4 != 0) {
       return -1;
     }
     uint8_t tmp[4];
@@ -51,44 +172,27 @@ int MemSys::storeWord(uint32_t add, uint32_t val) {
     tmp[1] = val & 0xff;
     val >>=8;
     tmp[0] = val;
-
-    if(_cacheOn) {
-        return _cache->store(add, tmp, 4);
-    } else {
-        return _mainMemory->store(add, tmp, 4);
-    }
+    return _mainMemory->store(add, tmp, 4);
 }
 
-int MemSys::storeByte(uint32_t add, uint8_t val) {
-    if(add > _memSize - 1) {
-      return -1;
-    }
-    if(_cacheOn) {
-        return _cache->store(add, &val, 1);
-    } else {
-        return _mainMemory->store(add, &val, 1);
-    }
+void resetCache() {
+  int n = _caches.size();
+  for (int i = 0; i < n; ++i) {
+    _caches[i]->reset();
+  }
+  return;
 }
 
-int MemSys::directStoreByte(uint32_t add, uint8_t val) {
-    if(add > _memSize - 1) {
-      return -1;
-    }
-    return _mainMemory->store(add, &val, 1);
-}
-
-void MemSys::dump(std::string filename) {
-  std::fstream output(filename, std::fstream::out);
-  if(_cacheOn) {
-    output<<"cache:\n";
-    output<<"valid dirty lru tag data...\n";
-    Cache *cur = _cache;
-    while(cur != nullptr){
-      output<<cur->dump();
-      output<<"\n";
-      cur = (Cache*) cur->nextLevel;
+std::string MemSys::dump() {
+  std::string res;
+  if(_config._cacheOn) {
+    res += "cache:\n";
+    int n = _caches.size();
+    for (int i = 0; i < n; ++i) {
+      res += _caches[i]->dump();
     }
   }
-  output<<"memory:\n";
-  output<<_mainMemory->dump();
+  res += "\nmemory:\n";
+  res += _mainMemory->dump();
+  return res;
 }

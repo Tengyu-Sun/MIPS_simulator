@@ -13,7 +13,6 @@
 #include "storage.h"
 
 class Memory : public Storage {
-    Q_OBJECT
  public:
     Memory(uint32_t size, int cycle_);
     ~Memory();
@@ -22,8 +21,6 @@ class Memory : public Storage {
     std::string dump();
     uint32_t _size;
     uint8_t* _data;  //byte-addressable
- signals:
-    void update(uint8_t *data, uint32_t add, int len);
 };
 
 #endif /* defined(__MIPS_Simulator__Memory__) */
