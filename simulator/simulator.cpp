@@ -68,13 +68,17 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     missLb = new QLabel(tr("0"));
 
     //row 2
-    ccsa = new QScrollArea;
+//    ccsa = new QScrollArea;
     ccGroup = new QGroupBox(tr("Cache"));
     QGridLayout *ccLayout = new QGridLayout;
-    QGroupBox *tmpGroup = new QGroupBox;
-    QGridLayout *tmpLayout = new QGridLayout;
+    cacheViewTW = new QTabWidget;
+    ccLayout->addWidget(cacheViewTW);
+    //CacheView *cv = new CacheView(8, 2, 4);
+    cacheViewTW->addTab(new CacheView(8, 2, 4), "level 0");
+//    QGroupBox *tmpGroup = new QGroupBox;
+//    QGridLayout *tmpLayout = new QGridLayout;
 //    cacheView = new QLabel*[_memsys->_config.cacheSize];
-//    //cacheData = new int[_memsys->_cacheSize];
+//
 
 //    for(int i = 0; i < _memsys->_cacheSize; ++i) {
 //        std::string lb = std::to_string(i)+":";
@@ -86,12 +90,12 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 //        tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
 //        tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
 //    }
-    tmpGroup->setLayout(tmpLayout);
-    tmpGroup->setMinimumWidth(250);
-    ccsa->setWidget(tmpGroup);
-    ccLayout->addWidget(new QLabel("index:"), 0, 0);
-    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1, Qt::AlignHCenter);
-    ccLayout->addWidget(ccsa, 1, 0, 1, 2);
+//    tmpGroup->setLayout(tmpLayout);
+//    tmpGroup->setMinimumWidth(250);
+//    ccsa->setWidget(tmpGroup);
+//    ccLayout->addWidget(new QLabel("index:"), 0, 0);
+//    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1, Qt::AlignHCenter);
+//    ccLayout->addWidget(ccsa, 1, 0, 1, 2);
     ccGroup->setLayout(ccLayout);
     ccGroup->setVisible(_memsys->_config.cacheOn);
 
@@ -109,13 +113,14 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     memLayout->addWidget(valLE, 0, 3);
     memLayout->addWidget(loadPB, 0, 4);
     memLayout->addWidget(storePB, 0, 5);
-    memLayout->addWidget(cacheOnPB, 1, 0);
-    memLayout->addWidget(new QLabel(tr("hit:")), 1, 1);
-    memLayout->addWidget(hitLb, 1, 2);
-    memLayout->addWidget(new QLabel(tr("miss:")), 1, 3);
-    memLayout->addWidget(missLb, 1, 4);
+    memLayout->addWidget(new QLabel("Cache:"), 1, 0);
+    memLayout->addWidget(cacheOnPB, 1, 1);
+    memLayout->addWidget(new QLabel(tr("total hit:")), 1, 2);
+    memLayout->addWidget(hitLb, 1, 3);
+    memLayout->addWidget(new QLabel(tr("total miss:")), 1, 4);
+    memLayout->addWidget(missLb, 1, 5);
     memLayout->addWidget(ccGroup, 2, 0, 1, 4);
-    memLayout->addWidget(mmGroup, 2, 4, 1, 2);
+    memLayout->addWidget(mmGroup, 2, 4, 1, 3);
     memGroup->setLayout(memLayout);
 
     QWidget *cw = new QWidget;

@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "configdialog.h"
 #include "memoryview.h"
+#include "cacheview.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
@@ -58,9 +59,11 @@ private:
     MemoryView *mv;
     QGridLayout *mvLayout;
 
-    QScrollArea *ccsa;
+    QTabWidget *cacheViewTW;
+    CacheView *cv;
+//    QScrollArea *ccsa;
     QGroupBox *ccGroup;
-    QLabel **cacheView;
+//    QLabel **cacheView;
 
     MemSys *_memsys;
     CPU *_cpu;
