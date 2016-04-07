@@ -11,41 +11,8 @@
 
 #include "storage.h"
 
-struct Cacheline {
-    int tag;
-    int lru;
-    uint8_t *data;
-    bool valid;
-    bool dirty;
-    Cacheline() {
-      valid = false;
-      dirty = false;
-      tag = 0;
-      lru = -1;
-      data = nullptr;
-    }
-    ~Cacheline() {
-      delete[] data;
-    }
-};
-
-enum class ReplacePolicy {RANDOM, LRU};
-enum class WritePolicy {WRITEBACK, WRITETROUGH};
-
-struct Position {
-  int idx;
-  int way;
-  Position() {
-    idx = -1;
-    way = -1;
-  }
-  Position(int i, int j) {
-    idx = i;
-    way = j;
-  }
-};
-
 class Cache : public Storage {
+    Q_OBJECT
  public:
     Cache(int indexsize, int linesize, int ways, int cycle_, ReplacePolicy rpolicy_, WritePolicy wpolicy_, Storage* nextLevel_);
     ~Cache();
@@ -67,6 +34,10 @@ class Cache : public Storage {
     int getLRUNumber(int idx);
     int genRandomNumber(int ways);
     void visitLRU(uint32_t add);
+signals:
+    void updateLine(Cacheline** data, int idx, int way);
+    void updateHit(int hit);
+    void updateMiss(int miss);
 };
 
 #endif /* defined(__MIPS_Simulator__Cache__) */

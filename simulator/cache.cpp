@@ -8,13 +8,10 @@ Cache::Cache(int indexsize, int linesize, int ways, int cycle_, ReplacePolicy rp
   _indexsize = indexsize;
   _linesize = linesize;
   _ways = ways;
-  //_cachesize = indexsize*ways;
   cycle = cycle_;
   nextLevel = nextLevel_;
   hit = 0;
   miss = 0;
-  //missReady = false;
-//  buf = nullptr;
   rpolicy = rpolicy_;
   wpolicy = wpolicy_;
   _cachelines = new Cacheline*[_indexsize];
@@ -35,18 +32,18 @@ Cache::~Cache() {
 }
 
 int Cache::load(uint32_t add, uint8_t *blk, int len) {
-  int t = 0;
+  int t = cycle;
 
   uint32_t als = (add/_linesize)*_linesize;
   uint32_t ale = ((add+len-1)/_linesize)*_linesize;
   uint8_t *tmp = new uint8_t[ale-als+_linesize];
 
-  bool missed = false;
+
   for (uint32_t j = als; j <= ale; j = j+_linesize) {
     Position candidate = inCache(j);
     if(candidate.idx == -1) {// there is a miss
       ++miss;
-      missed = true;
+      emit updateMiss(miss);
       if(nextLevel != nullptr) {
         uint8_t* tmpblk = new uint8_t[_linesize];
         int flag = nextLevel->load(j, tmpblk, _linesize);
@@ -75,14 +72,15 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
           _cachelines[eline.idx][eline.way].lru = _ways;
         }
         delete[] tmpblk;
-        //emit updateCacheline(_cachelines, eline);
+        emit updateLine(_cachelines, eline.idx, eline.way);
       } else {
         delete[] tmp;
         return -1;
       }
     } else {
       ++hit;
-      //emit updateHit(hit);
+
+      emit updateHit(hit);
       for (int i = 0; i < _linesize; ++i) {
         tmp[j-als+i] = _cachelines[candidate.idx][candidate.way].data[i];
       }
@@ -97,11 +95,10 @@ int Cache::load(uint32_t add, uint8_t *blk, int len) {
   }
   delete[] tmp;
   return t;
-
 }
 
 int Cache::store(uint32_t add, uint8_t *blk, int len) {
-  int t = 0;
+  int t = cycle;
   uint32_t als = (add/_linesize)*_linesize;
   uint32_t ale = ((add+len-1)/_linesize)*_linesize;
 
@@ -110,7 +107,8 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
     Position candidate = inCache(j);
     if(candidate.idx != -1) {
       ++hit;
-      //emit updateHit(hit);
+      
+      emit updateHit(hit);
     //  if (add+i > j) {
       while(add-j+i < _linesize && i < len) {
         _cachelines[candidate.idx][candidate.way].data[add-j+i] = blk[i];
@@ -136,10 +134,10 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
         t += flag;
         _cachelines[candidate.idx][candidate.way].dirty = false;
       }
-      //emit updateCacheline(_cachelines, candidate);
+      emit updateLine(_cachelines, candidate.idx, candidate.way);
     } else {
       ++miss;
-      //emit updateMiss(miss);
+      emit updateMiss(miss);
       uint8_t* tmpblk = nullptr;
       int flag = 0;
       if (add+i > j || add+len-1 < j+_linesize-1) {
@@ -263,13 +261,13 @@ int Cache::store(uint32_t add, uint8_t *blk, int len) {
         t += flag;
         _cachelines[eline.idx][eline.way].dirty = false;
       }
+      emit updateLine(_cachelines, eline.idx, eline.way);
     }
     if (rpolicy == ReplacePolicy::LRU) {
       visitLRU(j);
     }
   }
   return t;
-
 }
 
 Position Cache::inCache(uint32_t add) {// if the address is valid and exists in the cache, return a pointer to the cacheline.
@@ -398,11 +396,11 @@ void Cache::visitLRU(uint32_t add) {
         for(int j = 0; j < _ways; ++j) {
           if (_cachelines[idx][j].valid == true && _cachelines[idx][j].lru < _cachelines[idx][i].lru) {
             (_cachelines[idx][j].lru)++;
-            //emit updateCacheline(_cachelines, idx+j);
+            emit updateLine(_cachelines, idx, j);
           }
         }
         _cachelines[idx][i].lru = 0;
-        //emit updateCacheline(_cachelines, idx+i);
+        emit updateLine(_cachelines, idx, i);
         break;
       }
   }

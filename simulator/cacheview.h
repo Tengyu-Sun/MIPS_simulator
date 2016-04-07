@@ -5,6 +5,8 @@
 #include <QtWidgets>
 #include <string>
 #include <iostream>
+#include "cache.h"
+
 class CacheView : public QWidget {
   Q_OBJECT
 public:
@@ -45,6 +47,38 @@ public:
         ccLayout->addWidget(ccsa, 2, 0, 1, 4);
         setLayout(ccLayout);
     }
+    ~CacheView() {
+        delete hitLb;
+        delete missLb;
+        for (int i = 0; i < _indexsize; ++i) {
+            for (int j = 0; j < _ways; ++j) {
+                delete cacheView[i*_ways+j];
+            }
+        }
+        delete ccsa;
+    }
+
+ public slots:
+    void lineUpdate(Cacheline** data, int idx, int way) {
+        //std::cout<<"cache update "<<idx<<std::endl;
+        std::string cv = "";
+        cv += std::to_string(data[idx][way].tag) + " | " + std::to_string((int)data[idx][way].valid)
+                + " | " + std::to_string((int)data[idx][way].dirty) + " | " + std::to_string(data[idx][way].lru)
+                + " | ";
+        for (int k = 0; k < _linesize; ++k) {
+                cv += std::to_string((int)(data[idx][way].data[k])) + " ";
+        }
+        cacheView[idx*_ways+way]->setText(cv.c_str());
+    }
+
+    void hitUpdate(int hit) {
+        hitLb->setText(std::to_string(hit).c_str());
+    }
+
+    void missUpdate(int miss) {
+        missLb->setText(std::to_string(miss).c_str());
+    }
+private:
     QLabel *hitLb;
     QLabel *missLb;
     QScrollArea *ccsa;

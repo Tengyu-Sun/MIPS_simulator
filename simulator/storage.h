@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <string>
 #include <QObject>
+#include "commons.h"
 
 class Storage : public QObject {
     Q_OBJECT

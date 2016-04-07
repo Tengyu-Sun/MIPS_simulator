@@ -8,23 +8,6 @@
 #include <map>
 #include <QObject>
 
-struct CacheSettings {
-  int linesize;
-  int indexsize;
-  int ways;
-  int cycle;
-  ReplacePolicy rpolicy;
-  WritePolicy wpolicy;
-};
-
-struct MemSysConfig {
-  uint32_t memSize;
-  int memCycle;
-  int cacheLevel;
-  bool cacheOn;
-  std::vector<CacheSettings> cacheSettings;
-};
-
 class MemSys : public QObject {
     Q_OBJECT
  public:
@@ -47,6 +30,9 @@ class MemSys : public QObject {
   int directWriteWord(uint32_t add, uint32_t val);
   std::string dump();
   void resetCache();
+  void fresh() {
+      emit memNotify(_mainMemory->_data, 0, _config.memSize);
+  }
 
   MemSysConfig _config;
   std::vector<Cache*> _caches;
@@ -54,9 +40,15 @@ class MemSys : public QObject {
 
 signals:
   void memNotify(uint8_t *data, uint32_t add, int len);
+  void cacheLineNotify(int level, Cacheline** data, int idx, int way);
+  void cacheHitNotify(int level, int hit);
+  void cacheMissNotify(int level, int miss);
 
 private slots:
   void memChange(uint8_t *data, uint32_t add, int len);
+  void cacheLineChange(Cacheline** data, int idx, int way);
+  void cacheHitChange(int hit);
+  void cacheMissChange(int miss);
 
 private:
   std::string request;

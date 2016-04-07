@@ -27,11 +27,17 @@ void MemSys::init(MemSysConfig config) {
       _config.cacheSettings[_config.cacheLevel-1].linesize, _config.cacheSettings[_config.cacheLevel-1].ways,
       _config.cacheSettings[_config.cacheLevel-1].cycle, _config.cacheSettings[_config.cacheLevel-1].rpolicy,
        _config.cacheSettings[_config.cacheLevel-1].wpolicy, _mainMemory);
+    QObject::connect(_caches[_config.cacheLevel-1], &Cache::updateLine, this, &MemSys::cacheLineChange);
+    QObject::connect(_caches[_config.cacheLevel-1], &Cache::updateHit, this, &MemSys::cacheHitChange);
+    QObject::connect(_caches[_config.cacheLevel-1], &Cache::updateMiss, this, &MemSys::cacheMissChange);
     for (int i = _config.cacheLevel-2; i >= 0; --i) {
       _caches[i] = new Cache(_config.cacheSettings[i].indexsize,
         _config.cacheSettings[i].linesize, _config.cacheSettings[i].ways,
         _config.cacheSettings[i].cycle, _config.cacheSettings[i].rpolicy,
          _config.cacheSettings[i].wpolicy, _caches[i+1]);
+      QObject::connect(_caches[i], &Cache::updateLine, this, &MemSys::cacheLineChange);
+      QObject::connect(_caches[i], &Cache::updateHit, this, &MemSys::cacheHitChange);
+      QObject::connect(_caches[i], &Cache::updateMiss, this, &MemSys::cacheMissChange);
     }
   }
   //std::cout<<"index "<<_config.cacheSettings[_config.cacheLevel-1].indexsize<<std::endl;
@@ -229,4 +235,46 @@ std::string MemSys::dump() {
 
 void MemSys::memChange(uint8_t *data, uint32_t add, int len) {
     emit memNotify(data, add, len);
+}
+
+void MemSys::cacheHitChange(int hit) {
+    Cache* sender = (Cache*)QObject::sender();
+    int level = -1;
+    for (int i = 0; i < _caches.size(); ++i) {
+        if (_caches[i] == sender) {
+            level = i;
+            break;
+        }
+    }
+    if (level >= 0) {
+        emit cacheHitNotify(level, hit);
+    }
+}
+
+void MemSys::cacheMissChange(int miss) {
+    Cache* sender = (Cache*)QObject::sender();
+    int level = -1;
+    for (int i = 0; i < _caches.size(); ++i) {
+        if (_caches[i] == sender) {
+            level = i;
+            break;
+        }
+    }
+    if (level >= 0) {
+       emit cacheMissNotify(level, miss);
+    }
+}
+
+void MemSys::cacheLineChange(Cacheline **data, int idx, int way) {
+    Cache* sender = (Cache*)QObject::sender();
+    int level = -1;
+    for (int i = 0; i < _caches.size(); ++i) {
+        if (_caches[i] == sender) {
+            level = i;
+            break;
+        }
+    }
+    if (level >= 0) {
+       emit cacheLineNotify(level, data, idx, way);
+    }
 }

@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     MemSys *memsys = new MemSys;
     MemSysConfig config;
     config.cacheLevel = 1;
-    config.cacheOn = false;
+    config.cacheOn = true;
     config.memCycle = 100;
     config.memSize = 1024;
     config.cacheSettings = std::vector<CacheSettings>();
@@ -25,15 +25,15 @@ int main(int argc, char *argv[]) {
     cs.wpolicy = WritePolicy::WRITEBACK;
     config.cacheSettings.push_back(cs);
     memsys->init(config);
-
     FPU *fpu = new FPU(10);
     VU* vu = new VU(5);
     CPU *cpu = new CPU(memsys, fpu, vu);
     Simulator w(cpu, memsys);
     QObject::connect(memsys, &MemSys::memNotify, &w, &Simulator::memUpdate);
-//    QObject::connect(cache, &Cache::updateHit, &w, &Simulator::cacheHitUpdate);
-//    QObject::connect(cache, &Cache::updateMiss, &w, &Simulator::cacheMissUpdate);
-//    QObject::connect(cache, &Cache::updateCacheline, &w, &Simulator::cacheUpadate);
+    QObject::connect(memsys, &MemSys::cacheHitNotify, &w, &Simulator::cacheHitUpdate);
+    QObject::connect(memsys, &MemSys::cacheMissNotify, &w, &Simulator::cacheMissUpdate);
+    QObject::connect(memsys, &MemSys::cacheLineNotify, &w, &Simulator::cacheLineUpadate);
+    memsys->fresh();
     w.show();
     return a.exec();
 }

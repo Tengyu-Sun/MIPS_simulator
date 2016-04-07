@@ -32,7 +32,8 @@ HEADERS  += simulator.h \
     storage.h \
     configdialog.h \
     memoryview.h \
-    cacheview.h
+    cacheview.h \
+    commons.h
 
 CONFIG += c++11
 

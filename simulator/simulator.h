@@ -17,9 +17,9 @@ public:
     ~Simulator();
 public slots:
     void memUpdate(uint8_t *data, uint32_t add, int len);
-    void cacheUpadate(Cacheline* data, int idx);
-    void cacheHitUpdate(int hit);
-    void cacheMissUpdate(int miss);
+    void cacheLineUpadate(int level, Cacheline** data, int idx, int way);
+    void cacheHitUpdate(int level, int hit);
+    void cacheMissUpdate(int level, int miss);
 
 private slots:
     void memOpen();
@@ -35,11 +35,6 @@ private slots:
     void memsysInit(MemSysConfig config);
 
 private:
-//    QMenu *memMenu;
-//    QAction *openAct;
-//    QAction *importAct;
-//    QAction *saveAct;
-//    QAction *configAct;
 
     ConfigDialog *configDL;
 
@@ -50,8 +45,6 @@ private:
 
     QLineEdit *addLE;
     QLineEdit *valLE;
-//    QPushButton *loadPB;
-//    QPushButton *storePB;
     QPushButton *cacheOnPB;
     QLabel *hitLb;
     QLabel *missLb;
@@ -60,10 +53,8 @@ private:
     QGridLayout *mvLayout;
 
     QTabWidget *cacheViewTW;
-    CacheView *cv;
-//    QScrollArea *ccsa;
     QGroupBox *ccGroup;
-//    QLabel **cacheView;
+
 
     MemSys *_memsys;
     CPU *_cpu;

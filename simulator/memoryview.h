@@ -40,7 +40,7 @@ public:
 
 public slots:
     void update(uint8_t *data, uint32_t add, int len) {
-        for (int i = add; i<=add+len; ++i) {
+        for (int i = add; i<add+len; ++i) {
             memView[i]->setText(std::to_string((int)data[i]).c_str());
         }
     }

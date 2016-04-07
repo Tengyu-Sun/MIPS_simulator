@@ -68,34 +68,17 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     missLb = new QLabel(tr("0"));
 
     //row 2
-//    ccsa = new QScrollArea;
     ccGroup = new QGroupBox(tr("Cache"));
     QGridLayout *ccLayout = new QGridLayout;
     cacheViewTW = new QTabWidget;
     ccLayout->addWidget(cacheViewTW);
-    //CacheView *cv = new CacheView(8, 2, 4);
-    cacheViewTW->addTab(new CacheView(8, 2, 4), "level 0");
-//    QGroupBox *tmpGroup = new QGroupBox;
-//    QGridLayout *tmpLayout = new QGridLayout;
-//    cacheView = new QLabel*[_memsys->_config.cacheSize];
-//
+    for (int i = 0; i < _memsys->_config.cacheLevel; ++i) {
+       std::string l = "level " + std::to_string(i);
+       cacheViewTW->addTab(new CacheView(_memsys->_config.cacheSettings[i].indexsize,
+         _memsys->_config.cacheSettings[i].ways, _memsys->_config.cacheSettings[i].linesize), l.c_str());
+    }
 
-//    for(int i = 0; i < _memsys->_cacheSize; ++i) {
-//        std::string lb = std::to_string(i)+":";
-//        std::string cv = "0 | 0 | 0 | 0 | ";
-//        for (int k = 0; k < _memsys->_lineSize; ++k) {
-//            cv += " 0 ";
-//        }
-//        cacheView[i] = new QLabel(cv.c_str());
-//        tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-//        tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
-//    }
-//    tmpGroup->setLayout(tmpLayout);
-//    tmpGroup->setMinimumWidth(250);
-//    ccsa->setWidget(tmpGroup);
-//    ccLayout->addWidget(new QLabel("index:"), 0, 0);
-//    ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1, Qt::AlignHCenter);
-//    ccLayout->addWidget(ccsa, 1, 0, 1, 2);
+
     ccGroup->setLayout(ccLayout);
     ccGroup->setVisible(_memsys->_config.cacheOn);
 
@@ -131,6 +114,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
     setCentralWidget(cw);
 
+
 }
 
 void Simulator::memOpen() {
@@ -154,13 +138,6 @@ void Simulator::memOpen() {
             } while(_memsys->loadByte(add, &val) == 0);
            // std::cout<<std::endl;
             std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
-//            if(_memsys->_cacheOn) {
-//                int h = _memsys->getHit();
-//                int m = _memsys->getMiss();
-//                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-//                hitLb->setText(std::to_string(h).c_str());
-//                missLb->setText(std::to_string(m).c_str());
-//            }
         } else if (line[0] == 'S') {
             int p = 2;
             int nl = line.size();
@@ -176,13 +153,6 @@ void Simulator::memOpen() {
             } while(_memsys->storeByte(add, val) == 0);
 
             std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
-//            if(_memsys->_cacheOn) {
-//                int h = _memsys->getHit();
-//                int m = _memsys->getMiss();
-//                std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-//                hitLb->setText(std::to_string(h).c_str());
-//                missLb->setText(std::to_string(m).c_str());
-//            }
         } else {
             return;
            // std::cout<<"unrecognized command: "<<line<<std::endl;
@@ -211,13 +181,6 @@ void Simulator::memLoad() {
        std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->loadByte(add, &val) == 0);
     std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
-//    if(_memsys->_cacheOn) {
-//        int h = _memsys->getHit();
-//        int m = _memsys->getMiss();
-//        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-//        hitLb->setText(std::to_string(h).c_str());
-//        missLb->setText(std::to_string(m).c_str());
-//    }
 }
 
 void Simulator::memStore() {
@@ -239,13 +202,6 @@ void Simulator::memStore() {
       std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->storeByte(add, val) == 0);
     std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
-//    if(_memsys->_cacheOn) {
-//        int h = _memsys->getHit();
-//        int m = _memsys->getMiss();
-//        std::cout<<"hit: "<<h<<" miss: "<<m<<std::endl;
-//        hitLb->setText(std::to_string(h).c_str());
-//        missLb->setText(std::to_string(m).c_str());
-//    }
 }
 
 void Simulator::memImport() {
@@ -262,17 +218,6 @@ void Simulator::memImport() {
        if (flag == -1) {
            std::cout<<"memImport error: "<<add<<" "<<ins<<std::endl;
        }
-//       uint8_t tmp = ins & 0xff;
-//       while(_memsys->directStoreByte(add+3, tmp) != 1);
-//       ins >>= 8;
-//       tmp = ins & 0xff;
-//       while(_memsys->directStoreByte(add+2, tmp) != 1);
-//       ins >>= 8;
-//       tmp = ins & 0xff;
-//       while(_memsys->directStoreByte(add+1, tmp) != 1);
-//       ins >>= 8;
-//       tmp = ins & 0xff;
-//       while(_memsys->directStoreByte(add, tmp) != 1);
        add = add + 4;
        ins = 0;
        input>>ins;
@@ -291,71 +236,17 @@ void Simulator::memsysInit(MemSysConfig config) {
     delete mv;
     mv = new MemoryView(_memsys->_config.memSize);
     mvLayout->addWidget(mv, 0, 0);
-    // Memory *memory = new Memory(memsize, memcycle);
-    // delete _memsys->_mainMemory;
-    // _memsys->_mainMemory = memory;
-    // _memsys->_memSize = memory->_size;
-    // QGroupBox *tmpGroup2 = new QGroupBox;
-    // QGridLayout *tmpLayout2 = new QGridLayout;
-    // delete[] memView;
-    // memView = new QLabel*[_memsys->_memSize];
-    // //memData = new int[_memsys->_memSize];
-    // for(int i = 0; i < _memsys->_memSize; ++i) {
-    //     std::string lb = std::to_string(i)+":";
-    //     memView[i] = new QLabel(tr("0"));
-    //     tmpLayout2->addWidget(new QLabel(lb.c_str()), i, 0);
-    //     tmpLayout2->addWidget(memView[i], i, 1);
-    // }
-    // tmpGroup2->setLayout(tmpLayout2);
-    // tmpGroup2->setMinimumWidth(150);
-    // mmsa->setWidget(tmpGroup2);
-    //
-    // Cache *cache = nullptr;
-    // if (level > 0) {
-    //     Storage* next = memory;
-    //     cache = new Cache(indexsize, linesize, ways, cachecycle, policy, next);
-    //     --level;
-    //     while(level > 0) {
-    //         next = cache;
-    //         cache = new Cache(indexsize, linesize, ways, cachecycle, policy, next);
-    //         --level;
-    //     }
-    // }
-    //
-    // QObject::connect(memory, &Memory::update, this, &Simulator::memUpdate);
-    // delete _memsys->_cache;
-    // _memsys->_cache = cache;
-    // if (cache != nullptr) {
-    //     _memsys->_cacheSize = cache->_cachesize;
-    //     _memsys->_lineSize = cache->_linesize;
-    //     _memsys->_cacheOn = true;
-    //     QObject::connect(cache, &Cache::updateHit, this, &Simulator::cacheHitUpdate);
-    //     QObject::connect(cache, &Cache::updateMiss, this, &Simulator::cacheMissUpdate);
-    //     QObject::connect(cache, &Cache::updateCacheline, this, &Simulator::cacheUpadate);
-    //     QGroupBox *tmpGroup = new QGroupBox;
-    //     QGridLayout *tmpLayout = new QGridLayout;
-    //     cacheView = new QLabel*[_memsys->_cacheSize];
-    //
-    //     for(int i = 0; i < _memsys->_cacheSize; ++i) {
-    //         std::string lb = std::to_string(i)+":";
-    //         std::string cv = "0 | 0 | 0 | 0 | ";
-    //         for (int k = 0; k < _memsys->_lineSize; ++k) {
-    //             cv += " 0 ";
-    //         }
-    //         cacheView[i] = new QLabel(cv.c_str());
-    //         tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-    //         tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
-    //     }
-    //     tmpGroup->setLayout(tmpLayout);
-    //     tmpGroup->setMinimumWidth(250);
-    //     ccsa->setWidget(tmpGroup);
-    //
-    //     cacheOnPB->setText(tr("ON"));
-    //     hitLb->setText(tr("0"));
-    //     missLb->setText(tr("0"));
-    //     ccGroup->setVisible(_memsys->_cacheOn);
-    // }
-
+    int n = cacheViewTW->count();
+    for (int i = 0; i < n; ++i) {
+        CacheView *d =  (CacheView*) cacheViewTW->widget(i);
+        cacheViewTW->removeTab(i);
+        delete d;
+    }
+    for (int i = 0; i < _memsys->_config.cacheLevel; ++i) {
+       std::string l = "level " + std::to_string(i);
+       cacheViewTW->addTab(new CacheView(_memsys->_config.cacheSettings[i].indexsize,
+         _memsys->_config.cacheSettings[i].ways, _memsys->_config.cacheSettings[i].linesize), l.c_str());
+    }
 }
 
 void Simulator::clkReset() {
@@ -371,6 +262,7 @@ void Simulator::cacheOnOFF() {
     if (_memsys->_config.cacheOn){
         cacheOnPB->setText(tr("ON"));
         _memsys->resetCache();
+        //TODO: reset cacheview
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     } else {
@@ -402,25 +294,25 @@ void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
     mv->update(data, add, len);
 }
 
-void Simulator::cacheUpadate(Cacheline *data, int idx) {
-    std::cout<<"cache update "<<idx<<std::endl;
-    std::string cv = "";
-//    cv += std::to_string(data[idx].tag) + " | " + std::to_string((int)data[idx].valid)
-//            + " | " + std::to_string((int)data[idx].dirty) + " | " + std::to_string(data[idx].lru)
-//            + " | ";
-//    for (int k = 0; k < _memsys->_lineSize; ++k) {
-//            cv += std::to_string((int)(data[idx].data[k])) + " ";
-//    }
-//    cacheView[idx]->setText(cv.c_str());
-
+void Simulator::cacheLineUpadate(int level, Cacheline** data, int idx, int way) {
+    CacheView *c = (CacheView*)cacheViewTW->widget(level);
+    c->lineUpdate(data, idx, way);
 }
 
-void Simulator::cacheHitUpdate(int hit) {
-    hitLb->setText(std::to_string(hit).c_str());
+void Simulator::cacheHitUpdate(int level, int hit) {
+    CacheView *c = (CacheView*)cacheViewTW->widget(level);
+    c->hitUpdate(hit);
+    //std::cout<<hit<<std::endl;
+    int th = std::stoi(hitLb->text().toStdString()) + 1;
+    std::cout<<th<<std::endl;
+    hitLb->setText(std::to_string(th).c_str());
 }
 
-void Simulator::cacheMissUpdate(int miss) {
-    missLb->setText(std::to_string(miss).c_str());
+void Simulator::cacheMissUpdate(int level, int miss) {
+    CacheView *c = (CacheView*)cacheViewTW->widget(level);
+    c->missUpdate(miss);
+    int tm = std::stoi(missLb->text().toStdString()) + 1;
+    missLb->setText(std::to_string(tm).c_str());
 }
 
 Simulator::~Simulator() {

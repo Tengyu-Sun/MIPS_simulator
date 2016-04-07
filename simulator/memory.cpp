@@ -7,6 +7,9 @@ Memory::Memory(uint32_t size, int cycle_) {
   nextLevel = nullptr;
   _size = size;
   _data = (uint8_t*) calloc(_size, sizeof(uint8_t));  //new uint8_t[size];
+  // for (int i = 0; i < size; ++i) { test
+  //   _data[i] = i;
+  // }
 }
 
 Memory::~Memory() {
