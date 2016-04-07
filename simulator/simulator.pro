@@ -30,7 +30,9 @@ HEADERS  += simulator.h \
     fpu.h \
     vu.h \
     storage.h \
-    configdialog.h
+    configdialog.h \
+    memoryview.h \
+    cacheview.h
 
 CONFIG += c++11
 

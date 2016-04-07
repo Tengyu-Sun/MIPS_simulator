@@ -47,7 +47,7 @@ struct Position {
 
 class Cache : public Storage {
  public:
-    Cache(int indexsize, int linesize, int ways, int cycle_, ReplacePolicy rpolicy_, WritePolicy wploicy_, Storage* nextLevel_);
+    Cache(int indexsize, int linesize, int ways, int cycle_, ReplacePolicy rpolicy_, WritePolicy wpolicy_, Storage* nextLevel_);
     ~Cache();
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t* blk, int len);

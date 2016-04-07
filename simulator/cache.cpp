@@ -32,7 +32,6 @@ Cache::~Cache() {
     delete[] _cachelines[i];
   }
   delete[] _cachelines;
-  //delete[] buf;
 }
 
 int Cache::load(uint32_t add, uint8_t *blk, int len) {

@@ -25,8 +25,19 @@ struct MemSysConfig {
   std::vector<CacheSettings> cacheSettings;
 };
 
-class MemSys {
+class MemSys : public QObject {
+    Q_OBJECT
  public:
+  MemSys() {
+    _mainMemory = nullptr;
+    _caches = std::vector<Cache*>();
+  }
+  ~MemSys() {
+      delete _mainMemory;
+      for (int i = 0; i < _caches.size(); ++i) {
+          delete _caches[i];
+      }
+  }
   void init(MemSysConfig config);
   int loadWord(uint32_t add, uint32_t *val);
   int storeWord(uint32_t add, uint32_t val);
@@ -40,6 +51,13 @@ class MemSys {
   MemSysConfig _config;
   std::vector<Cache*> _caches;
   Memory *_mainMemory;
+
+signals:
+  void memNotify(uint8_t *data, uint32_t add, int len);
+
+private slots:
+  void memChange(uint8_t *data, uint32_t add, int len);
+
 private:
   std::string request;
   int countdown;

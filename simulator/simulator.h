@@ -7,6 +7,7 @@
 #include "memsys.h"
 #include "cpu.h"
 #include "configdialog.h"
+#include "memoryview.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
@@ -19,7 +20,6 @@ public slots:
     void cacheHitUpdate(int hit);
     void cacheMissUpdate(int miss);
 
-
 private slots:
     void memOpen();
     void memImport();
@@ -31,14 +31,14 @@ private slots:
     void cacheOnOFF();
     void cpuRun();
     void cpuStep();
-    void memsysConfig(int indexsize, int linesize, int ways, int cachecycle, int policy, int level, int memsize, int memcycle);
+    void memsysInit(MemSysConfig config);
 
 private:
-    QMenu *memMenu;
-    QAction *openAct;
-    QAction *importAct;
-    QAction *saveAct;
-    QAction *configAct;
+//    QMenu *memMenu;
+//    QAction *openAct;
+//    QAction *importAct;
+//    QAction *saveAct;
+//    QAction *configAct;
 
     ConfigDialog *configDL;
 
@@ -49,15 +49,14 @@ private:
 
     QLineEdit *addLE;
     QLineEdit *valLE;
-    QPushButton *loadPB;
-    QPushButton *storePB;
+//    QPushButton *loadPB;
+//    QPushButton *storePB;
     QPushButton *cacheOnPB;
     QLabel *hitLb;
     QLabel *missLb;
 
-
-    QScrollArea *mmsa;
-    QLabel **memView;
+    MemoryView *mv;
+    QGridLayout *mvLayout;
 
     QScrollArea *ccsa;
     QGroupBox *ccGroup;

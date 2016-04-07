@@ -8,25 +8,25 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     _memsys = memsys;
 
     //menu
-
-    openAct = new QAction(tr("open"), this);
+    QAction *openAct = new QAction(tr(" open "), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
-    saveAct = new QAction(tr("save"), this);
+    QAction *saveAct = new QAction(tr(" save "), this);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(memSave()));
-    importAct = new QAction(tr("import"), this);
+    QAction *importAct = new QAction(tr(" import "), this);
     connect(importAct, SIGNAL(triggered()), this, SLOT(memImport()));
-    configAct = new QAction(this);
-    configAct->setText("memsys config");
+    QAction *configAct = new QAction(this);
+    configAct->setText(" configs ");
     connect(configAct, SIGNAL(triggered()), this, SLOT(memConfig()));
-
-    memMenu = menuBar()->addMenu(tr("Memory"));
+    QMenu *memMenu = menuBar()->addMenu(tr("Memory"));
     memMenu->addAction(openAct);
     memMenu->addAction(importAct);
     memMenu->addAction(saveAct);
     memMenu->addAction(configAct);
 
+    //config dialog
     configDL = new ConfigDialog();
-    connect(configDL, &ConfigDialog::memsysConfig, this, &Simulator::memsysConfig);
+    connect(configDL, &ConfigDialog::memsysConfig, this, &Simulator::memsysInit);
+
     //cpu group
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
     QLabel *ccLb = new QLabel(tr("clock cycle:"));
@@ -53,14 +53,14 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     addLE->setMaximumWidth(80);
     valLE = new QLineEdit;
     valLE->setMaximumWidth(80);
-    loadPB = new QPushButton(tr("Load"));
+    QPushButton *loadPB = new QPushButton(tr("Load"));
     connect(loadPB, SIGNAL(clicked()), this, SLOT(memLoad()));
-    storePB = new QPushButton(tr("Store"));
+    QPushButton *storePB = new QPushButton(tr("Store"));
     connect(storePB, SIGNAL(clicked()), this, SLOT(memStore()));
 
     //row 1
     cacheOnPB = new QPushButton(tr("ON"));
-    if (!_memsys->_cacheOn){
+    if (!_memsys->_config.cacheOn){
       cacheOnPB->setText(tr("OFF"));
     }
     connect(cacheOnPB, SIGNAL(clicked()), this, SLOT(cacheOnOFF()));
@@ -73,19 +73,19 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     QGridLayout *ccLayout = new QGridLayout;
     QGroupBox *tmpGroup = new QGroupBox;
     QGridLayout *tmpLayout = new QGridLayout;
-    cacheView = new QLabel*[_memsys->_cacheSize];
-    //cacheData = new int[_memsys->_cacheSize];
+//    cacheView = new QLabel*[_memsys->_config.cacheSize];
+//    //cacheData = new int[_memsys->_cacheSize];
 
-    for(int i = 0; i < _memsys->_cacheSize; ++i) {
-        std::string lb = std::to_string(i)+":";
-        std::string cv = "0 | 0 | 0 | 0 | ";
-        for (int k = 0; k < _memsys->_lineSize; ++k) {
-            cv += " 0 ";
-        }
-        cacheView[i] = new QLabel(cv.c_str());
-        tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
-        tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
-    }
+//    for(int i = 0; i < _memsys->_cacheSize; ++i) {
+//        std::string lb = std::to_string(i)+":";
+//        std::string cv = "0 | 0 | 0 | 0 | ";
+//        for (int k = 0; k < _memsys->_lineSize; ++k) {
+//            cv += " 0 ";
+//        }
+//        cacheView[i] = new QLabel(cv.c_str());
+//        tmpLayout->addWidget(new QLabel(lb.c_str()), i, 0);
+//        tmpLayout->addWidget(cacheView[i], i, 1, 1, 2);
+//    }
     tmpGroup->setLayout(tmpLayout);
     tmpGroup->setMinimumWidth(250);
     ccsa->setWidget(tmpGroup);
@@ -93,31 +93,14 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     ccLayout->addWidget(new QLabel("tag | valid | dirty | lru | data"), 0, 1, Qt::AlignHCenter);
     ccLayout->addWidget(ccsa, 1, 0, 1, 2);
     ccGroup->setLayout(ccLayout);
-    ccGroup->setVisible(_memsys->_cacheOn);
+    ccGroup->setVisible(_memsys->_config.cacheOn);
 
-
-    mmsa = new QScrollArea;
+    //main memory
+    mv = new MemoryView(_memsys->_config.memSize);
     QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
-    QGridLayout *mmLayout = new QGridLayout;
-    QGroupBox *tmpGroup2 = new QGroupBox;
-    QGridLayout *tmpLayout2 = new QGridLayout;
-
-    memView = new QLabel*[_memsys->_memSize];
-    //memData = new int[_memsys->_memSize];
-    for(int i = 0; i < _memsys->_memSize; ++i) {
-        std::string lb = std::to_string(i)+":";
-        memView[i] = new QLabel(tr("0"));
-        tmpLayout2->addWidget(new QLabel(lb.c_str()), i, 0);
-        tmpLayout2->addWidget(memView[i], i, 1);
-    }
-    tmpGroup2->setLayout(tmpLayout2);
-    tmpGroup2->setMinimumWidth(150);
-    mmsa->setWidget(tmpGroup2);
-    mmLayout->addWidget(new QLabel("index:"), 0, 0);
-    mmLayout->addWidget(new QLabel("data"), 0, 1);
-    mmLayout->addWidget(mmsa, 1, 0, 1, 2);
-    mmGroup->setLayout(mmLayout);
-
+    mvLayout = new QGridLayout;
+    mvLayout->addWidget(mv, 0, 0);
+    mmGroup->setLayout(mvLayout);
 
     QGridLayout *memLayout = new QGridLayout;
     memLayout->addWidget(new QLabel(tr("address:")), 0, 0);
@@ -204,7 +187,9 @@ void Simulator::memOpen() {
 }
 
 void Simulator::memSave() {
-    _memsys->dump("/Users/blade/workspace/cs535/output.txt");
+    std::fstream out("/Users/blade/workspace/cs535/output.txt");
+    out<<_memsys->dump();
+    out.close();
 }
 
 void Simulator::memLoad() {
@@ -265,19 +250,24 @@ void Simulator::memImport() {
     uint32_t ins = 0;
     int add = 0;
     input>>ins;
+    int flag = 0;
     while(input){
        //std::cout<<ins<<std::endl;
-       uint8_t tmp = ins & 0xff;
-       while(_memsys->directStoreByte(add+3, tmp) != 1);
-       ins >>= 8;
-       tmp = ins & 0xff;
-       while(_memsys->directStoreByte(add+2, tmp) != 1);
-       ins >>= 8;
-       tmp = ins & 0xff;
-       while(_memsys->directStoreByte(add+1, tmp) != 1);
-       ins >>= 8;
-       tmp = ins & 0xff;
-       while(_memsys->directStoreByte(add, tmp) != 1);
+       flag =  _memsys->directWriteWord(add, ins);
+       if (flag == -1) {
+           std::cout<<"memImport error: "<<add<<" "<<ins<<std::endl;
+       }
+//       uint8_t tmp = ins & 0xff;
+//       while(_memsys->directStoreByte(add+3, tmp) != 1);
+//       ins >>= 8;
+//       tmp = ins & 0xff;
+//       while(_memsys->directStoreByte(add+2, tmp) != 1);
+//       ins >>= 8;
+//       tmp = ins & 0xff;
+//       while(_memsys->directStoreByte(add+1, tmp) != 1);
+//       ins >>= 8;
+//       tmp = ins & 0xff;
+//       while(_memsys->directStoreByte(add, tmp) != 1);
        add = add + 4;
        ins = 0;
        input>>ins;
@@ -290,8 +280,12 @@ void Simulator::memConfig() {
     configDL->exec();
 }
 
-void Simulator::memsysConfig(int indexsize, int linesize, int ways, int cachecycle, int policy, int level, int memsize, int memcycle) {
-
+void Simulator::memsysInit(MemSysConfig config) {
+    _memsys->init(config);
+    mvLayout->removeWidget(mv);
+    delete mv;
+    mv = new MemoryView(_memsys->_config.memSize);
+    mvLayout->addWidget(mv, 0, 0);
     // Memory *memory = new Memory(memsize, memcycle);
     // delete _memsys->_mainMemory;
     // _memsys->_mainMemory = memory;
@@ -368,8 +362,8 @@ void Simulator::clkReset() {
 }
 
 void Simulator::cacheOnOFF() {
-    _memsys->_cacheOn = !_memsys->_cacheOn;
-    if (_memsys->_cacheOn){
+    _memsys->_config.cacheOn = !_memsys->_config.cacheOn;
+    if (_memsys->_config.cacheOn){
         cacheOnPB->setText(tr("ON"));
         _memsys->resetCache();
         hitLb->setText(tr("0"));
@@ -380,7 +374,7 @@ void Simulator::cacheOnOFF() {
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     }
-    ccGroup->setVisible(_memsys->_cacheOn);
+    ccGroup->setVisible(_memsys->_config.cacheOn);
 }
 
 void Simulator::cpuRun() {
@@ -400,21 +394,19 @@ void Simulator::cpuStep() {
 }
 
 void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
-    for (int i=add; i<=add+len; ++i) {
-        memView[i]->setText(std::to_string((int)data[i]).c_str());
-    }
+    mv->update(data, add, len);
 }
 
 void Simulator::cacheUpadate(Cacheline *data, int idx) {
     std::cout<<"cache update "<<idx<<std::endl;
     std::string cv = "";
-    cv += std::to_string(data[idx].tag) + " | " + std::to_string((int)data[idx].valid)
-            + " | " + std::to_string((int)data[idx].dirty) + " | " + std::to_string(data[idx].lru)
-            + " | ";
-    for (int k = 0; k < _memsys->_lineSize; ++k) {
-            cv += std::to_string((int)(data[idx].data[k])) + " ";
-    }
-    cacheView[idx]->setText(cv.c_str());
+//    cv += std::to_string(data[idx].tag) + " | " + std::to_string((int)data[idx].valid)
+//            + " | " + std::to_string((int)data[idx].dirty) + " | " + std::to_string(data[idx].lru)
+//            + " | ";
+//    for (int k = 0; k < _memsys->_lineSize; ++k) {
+//            cv += std::to_string((int)(data[idx].data[k])) + " ";
+//    }
+//    cacheView[idx]->setText(cv.c_str());
 
 }
 

@@ -2,15 +2,45 @@
 #include <fstream>
 #include <iostream>
 
-void init(MemSysConfig config) {
+void MemSys::init(MemSysConfig config) {
   busy = false;
   request = "";
+  countdown = 0;
+  buf32 = 0;
+  buf8 = 0;
+  _config = config;
+  if(_mainMemory != nullptr) {
+    delete _mainMemory;
+    _mainMemory = nullptr;
+  }
+  if(_caches.size() > 0) {
+    for (int i = 0; i < _caches.size(); ++i) {
+        delete _caches[i];
+    }
+    _caches = std::vector<Cache*>();
+  }
+  _mainMemory = new Memory(_config.memSize, _config.memCycle);
+  QObject::connect(_mainMemory, &Memory::notify, this, &MemSys::memChange);
+  if (_config.cacheLevel > 0) {
+    _caches = std::vector<Cache*>(_config.cacheLevel);
+    _caches[_config.cacheLevel-1] = new Cache(_config.cacheSettings[_config.cacheLevel-1].indexsize,
+      _config.cacheSettings[_config.cacheLevel-1].linesize, _config.cacheSettings[_config.cacheLevel-1].ways,
+      _config.cacheSettings[_config.cacheLevel-1].cycle, _config.cacheSettings[_config.cacheLevel-1].rpolicy,
+       _config.cacheSettings[_config.cacheLevel-1].wpolicy, _mainMemory);
+    for (int i = _config.cacheLevel-2; i >= 0; --i) {
+      _caches[i] = new Cache(_config.cacheSettings[i].indexsize,
+        _config.cacheSettings[i].linesize, _config.cacheSettings[i].ways,
+        _config.cacheSettings[i].cycle, _config.cacheSettings[i].rpolicy,
+         _config.cacheSettings[i].wpolicy, _caches[i+1]);
+    }
+  }
+  //std::cout<<"index "<<_config.cacheSettings[_config.cacheLevel-1].indexsize<<std::endl;
   return;
 }
 
 int MemSys::loadWord(uint32_t add, uint32_t* val) {
-  if(add+3 > _memSize - 1 || add%4 != 0) {
-    std::cout<<add<<" "<<_memSize<<std::endl;
+  if(add+3 > _config.memSize - 1 || add%4 != 0) {
+    std::cout<<add<<" "<<_config.memSize<<std::endl;
     return -1;
   }
   std::string tmp = "lw" + std::to_string(add);
@@ -46,7 +76,7 @@ int MemSys::loadWord(uint32_t add, uint32_t* val) {
 }
 
 int MemSys::loadByte(uint32_t add, uint8_t* val) {
-  if(add > _memSize - 1) {
+  if(add > _config.memSize - 1) {
     return -1;
   }
   std::string tmp = "lb" + std::to_string(add);
@@ -80,7 +110,7 @@ int MemSys::loadByte(uint32_t add, uint8_t* val) {
 }
 
 int MemSys::storeWord(uint32_t add, uint32_t val) {
-    if(add + 3 > _memSize - 1 || add%4 != 0) {
+    if(add + 3 > _config.memSize - 1 || add%4 != 0) {
       return -1;
     }
     std::string tmp = "sw" + std::to_string(add);
@@ -121,7 +151,7 @@ int MemSys::storeWord(uint32_t add, uint32_t val) {
 }
 
 int MemSys::storeByte(uint32_t add, uint8_t val) {
-    if(add > _memSize - 1) {
+    if(add > _config.memSize - 1) {
       return -1;
     }
     std::string tmp = "sb" + std::to_string(add);
@@ -154,14 +184,14 @@ int MemSys::storeByte(uint32_t add, uint8_t val) {
 }
 
 int MemSys::directWriteByte(uint32_t add, uint8_t val) {
-    if(add > _config._memSize - 1) {
+    if(add > _config.memSize - 1) {
       return -1;
     }
     return _mainMemory->store(add, &val, 1);
 }
 
 int MemSys::directWriteWord(uint32_t add, uint32_t val) {
-    if(add + 3 > _config._memSize - 1 || add%4 != 0) {
+    if(add + 3 > _config.memSize - 1 || add%4 != 0) {
       return -1;
     }
     uint8_t tmp[4];
@@ -175,7 +205,7 @@ int MemSys::directWriteWord(uint32_t add, uint32_t val) {
     return _mainMemory->store(add, tmp, 4);
 }
 
-void resetCache() {
+void MemSys::resetCache() {
   int n = _caches.size();
   for (int i = 0; i < n; ++i) {
     _caches[i]->reset();
@@ -185,7 +215,7 @@ void resetCache() {
 
 std::string MemSys::dump() {
   std::string res;
-  if(_config._cacheOn) {
+  if(_config.cacheOn) {
     res += "cache:\n";
     int n = _caches.size();
     for (int i = 0; i < n; ++i) {
@@ -195,4 +225,8 @@ std::string MemSys::dump() {
   res += "\nmemory:\n";
   res += _mainMemory->dump();
   return res;
+}
+
+void MemSys::memChange(uint8_t *data, uint32_t add, int len) {
+    emit memNotify(data, add, len);
 }

@@ -11,9 +11,10 @@
 
 #include <cstdint>
 #include <string>
-//#include <QObject>
+#include <QObject>
 
-class Storage {
+class Storage : public QObject {
+    Q_OBJECT
   public:
     virtual ~Storage() {}
     int cycle;

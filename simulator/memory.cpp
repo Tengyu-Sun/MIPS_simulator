@@ -7,7 +7,6 @@ Memory::Memory(uint32_t size, int cycle_) {
   nextLevel = nullptr;
   _size = size;
   _data = (uint8_t*) calloc(_size, sizeof(uint8_t));  //new uint8_t[size];
-
 }
 
 Memory::~Memory() {
@@ -32,6 +31,7 @@ int Memory::store(uint32_t add, uint8_t *blk, int len) {
       for (int i = 0; i < len; ++i){
         _data[add+i] = blk[i];
       }
+      emit notify(_data, add, len);
       return cycle;
     }
 }

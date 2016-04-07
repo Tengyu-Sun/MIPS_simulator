@@ -1,9 +1,5 @@
 #include "configdialog.h"
 
-
-
-
-
 ConfigDialog::ConfigDialog() {
     QPushButton *okPB = new QPushButton(tr("Ok"));
     connect(okPB, SIGNAL(clicked()), this, SLOT(memsysUpdate()));
@@ -96,7 +92,21 @@ void ConfigDialog::memsysUpdate() {
         memcycle = 0;
     }
 
-    emit memsysConfig(indexsize, linesize, ways, cachecycle, policy, level, memsize, memcycle);
+    MemSysConfig config;
+    config.cacheLevel = 1;
+    config.cacheOn = false;
+    config.memCycle = memcycle;
+    config.memSize = memsize;
+    config.cacheSettings = std::vector<CacheSettings>();
+    CacheSettings cs;
+    cs.cycle = 5;
+    cs.indexsize = 8;
+    cs.linesize = 4;
+    cs.ways = 2;
+    cs.rpolicy = ReplacePolicy::LRU;
+    cs.wpolicy = WritePolicy::WRITEBACK;
+    config.cacheSettings.push_back(cs);
+    emit memsysConfig(config);
     this->accept();
 }
 
