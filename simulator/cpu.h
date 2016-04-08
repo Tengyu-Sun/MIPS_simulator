@@ -37,6 +37,7 @@ public:
   CPU(MemSys* memsys, FPU* fpu, VU* vu);
   void run();
   void step();
+  void reset();
   bool err;
   uint32_t pc;
   bool clear;

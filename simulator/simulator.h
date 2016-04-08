@@ -55,7 +55,6 @@ private:
     QTabWidget *cacheViewTW;
     QGroupBox *ccGroup;
 
-
     MemSys *_memsys;
     CPU *_cpu;
 };

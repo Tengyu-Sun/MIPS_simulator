@@ -17,7 +17,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     QAction *configAct = new QAction(this);
     configAct->setText(" configs ");
     connect(configAct, SIGNAL(triggered()), this, SLOT(memConfig()));
-    QMenu *memMenu = menuBar()->addMenu(tr("Memory"));
+    QMenu *memMenu = menuBar()->addMenu(tr("Memory System"));
     memMenu->addAction(openAct);
     memMenu->addAction(importAct);
     memMenu->addAction(saveAct);
@@ -68,7 +68,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     missLb = new QLabel(tr("0"));
 
     //row 2
-    ccGroup = new QGroupBox(tr("Cache"));
+    ccGroup = new QGroupBox(tr("cache"));
     QGridLayout *ccLayout = new QGridLayout;
     cacheViewTW = new QTabWidget;
     ccLayout->addWidget(cacheViewTW);
@@ -250,10 +250,8 @@ void Simulator::memsysInit(MemSysConfig config) {
 }
 
 void Simulator::clkReset() {
-    _cpu->clk = 0;
-    _cpu->err = false;
-    _cpu->clear = true;
-    _cpu->pc = 0;
+
+    _cpu->reset();
     clkLb->setText(std::to_string(_cpu->clk).c_str());
 }
 
@@ -263,11 +261,19 @@ void Simulator::cacheOnOFF() {
         cacheOnPB->setText(tr("ON"));
         _memsys->resetCache();
         //TODO: reset cacheview
+        for (int i = 0; i < cacheViewTW->count(); ++i) {
+            CacheView *tmp = (CacheView*) cacheViewTW->widget(i);
+            tmp->reset();
+        }
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     } else {
         cacheOnPB->setText(tr("OFF"));
         _memsys->resetCache();
+        for (int i = 0; i < cacheViewTW->count(); ++i) {
+            CacheView *tmp = (CacheView*) cacheViewTW->widget(i);
+            tmp->reset();
+        }
         hitLb->setText(tr("0"));
         missLb->setText(tr("0"));
     }
@@ -277,6 +283,9 @@ void Simulator::cacheOnOFF() {
 void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
     while(!_cpu->err) {
+//        if (_cpu->clk>450) {
+//            break;
+//        }
       _cpu->step();
       clkLb->setText(std::to_string(_cpu->clk).c_str());
     }

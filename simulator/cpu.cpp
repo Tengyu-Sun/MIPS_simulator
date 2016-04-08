@@ -18,20 +18,20 @@ CPU::CPU(MemSys* memsys, FPU* fpu = nullptr, VU* vu = nullptr){
     pipe[i] = nullptr;
   }
   clear = true;
-  piped = true;
+  piped = false;
 }
 
 void CPU::ifc() {
   if (pipe[0] == nullptr && (clear || piped)) {
     pipe[0] = new Instruction();
-    pipe[0]->add = pc;
-    pipe[0]->stage = 0;
-    pc = pc + 4;
     if (piped) {
       if (pipe[3]!= nullptr && pipe[3]->type == 3 && pipe[3]->cond) {
         pc = pipe[3]->aluoutput;
       }
     }
+    pipe[0]->add = pc;
+    pipe[0]->stage = 0;
+    pc = pc + 4;
     pipe[0]->npc = pc;
     pipe[0]->dst = -1;
     clear = false;
@@ -330,6 +330,22 @@ void CPU::exc() {
                   break;
           }
         }
+        if (pipe[2]->cond) {
+          std::cout<<"branch taken"<<std::endl;
+          if (pipe[1] != nullptr) {
+              delete pipe[1];
+              pipe[1] = nullptr;
+          } else if (pipe[0] != nullptr) {
+              if (_memsys->isBusy()) {
+                std::string r = "lw" + std::to_string(pipe[0]->add);
+                if (r == _memsys->getRequest()) {
+                  _memsys->clear();
+                }
+              }
+              delete pipe[0];
+              pipe[0] = nullptr;
+          }
+        }
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 4) {
@@ -432,6 +448,7 @@ void CPU::mem() {
         int flag = 0;
         if (pipe[3]->opcode == 8) {
           flag = _memsys->storeByte(pipe[3]->aluoutput, (uint8_t)(pipe[3]->B & 0xff));
+          //std::cout<<"mem sb "<<flag<<" "<<(int)(pipe[3]->B & 0xff)<<std::endl;
         } else if (pipe[3]->opcode == 9) {
           flag = _memsys->storeWord(pipe[3]->aluoutput, (uint32_t)(pipe[3]->B));
         } else if (pipe[3]->opcode == 0 || pipe[3]->opcode == 1) {
@@ -446,12 +463,12 @@ void CPU::mem() {
         } else if (pipe[3]->opcode == 2 || pipe[3]->opcode == 4) {
           uint32_t tmp;
           int flag = _memsys->loadWord(pipe[3]->aluoutput, &tmp);
-          if (flag == 1 ) {
+          if (flag == 1) {
             pipe[3]->lmd = tmp;
           }
         }
         //std::cout<<"flag "<<flag<<std::endl;
-        if (flag > 0 ) {
+        if (flag == 1 ) {
           pipe[3]->stage = 4;
           std::cout<<"pc: "<<pc<<std::endl;
         }
@@ -637,11 +654,11 @@ bool CPU::opReady(int rd, int a) {
       }
     } else {
       switch(type) {
-        case 0: pipe[1]->B = gpr[pipe[1]->rd1];
+        case 0: pipe[1]->B = gpr[pipe[1]->rd2];
                 break;
-        case 1: pipe[1]->fB = fpr[pipe[1]->rd1];
+        case 1: pipe[1]->fB = fpr[pipe[1]->rd2];
                 break;
-        case 2: pipe[1]->vB = vr[pipe[1]->rd1];
+        case 2: pipe[1]->vB = vr[pipe[1]->rd2];
                 break;
       }
     }
@@ -683,4 +700,18 @@ void CPU::step() {
 
   ++clk;
   return;
+}
+
+void CPU::reset() {
+    clk = 0;
+    err = false;
+    clear = true;
+    pc = 0;
+    for (int i= 0; i < 5; ++i) {
+        if (pipe[i] != nullptr) {
+            delete pipe[i];
+            pipe[i] = nullptr;
+        }
+    }
+    _memsys->clear();
 }

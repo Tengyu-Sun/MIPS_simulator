@@ -12,8 +12,8 @@ int main(int argc, char *argv[]) {
     MemSys *memsys = new MemSys;
     MemSysConfig config;
     config.cacheLevel = 1;
-    config.cacheOn = true;
-    config.memCycle = 100;
+    config.cacheOn = false;
+    config.memCycle = 10;
     config.memSize = 1024;
     config.cacheSettings = std::vector<CacheSettings>();
     CacheSettings cs;

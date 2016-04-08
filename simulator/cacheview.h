@@ -20,17 +20,17 @@ public:
         _ways = ways;
         int cacheSize = indexsize * ways;
         cacheView = new QLabel*[cacheSize];
-        for(int i = 0; i < indexsize; ++i) {
-            for (int j = 0; j < ways; ++j) {
+        for(int i = 0; i < _indexsize; ++i) {
+            for (int j = 0; j < _ways; ++j) {
                 std::string lb = std::to_string(i)+", "+std::to_string(j)+": ";
                 std::string cv = "0 | 0 | 0 | 0 | ";
                 for (int k = 0; k < linesize; ++k) {
                     cv += " 0 ";
                 }
               //  std::cout<<"cacheview "<<i<<" "<<j<<" "<<cv<<std::endl;
-                cacheView[i*ways+j] = new QLabel(cv.c_str());
-                tmpLayout->addWidget(new QLabel(lb.c_str()), i*ways+j, 0);
-                tmpLayout->addWidget(cacheView[i*ways+j], i*ways+j, 1, 1, 2);
+                cacheView[i*_ways+j] = new QLabel(cv.c_str());
+                tmpLayout->addWidget(new QLabel(lb.c_str()), i*_ways+j, 0);
+                tmpLayout->addWidget(cacheView[i*_ways+j], i*ways+j, 1, 1, 2);
             }
         }
         tmpGroup->setLayout(tmpLayout);
@@ -56,6 +56,20 @@ public:
             }
         }
         delete ccsa;
+    }
+    void reset() {
+        for(int i = 0; i < _indexsize; ++i) {
+            for (int j = 0; j < _ways; ++j) {
+
+                std::string cv = "0 | 0 | 0 | 0 | ";
+                for (int k = 0; k < _linesize; ++k) {
+                    cv += " 0 ";
+                }
+                cacheView[i*_ways+j]->setText(cv.c_str());
+            }
+        }
+        hitLb->setText("0");
+        missLb->setText("0");
     }
 
  public slots:

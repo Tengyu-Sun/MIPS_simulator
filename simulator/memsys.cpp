@@ -157,6 +157,7 @@ int MemSys::storeWord(uint32_t add, uint32_t val) {
 }
 
 int MemSys::storeByte(uint32_t add, uint8_t val) {
+    //std::cout<<"sb "<<add<<" "<<(int)val<<std::endl;
     if(add > _config.memSize - 1) {
       return -1;
     }

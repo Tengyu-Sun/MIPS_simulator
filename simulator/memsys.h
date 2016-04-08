@@ -33,6 +33,17 @@ class MemSys : public QObject {
   void fresh() {
       emit memNotify(_mainMemory->_data, 0, _config.memSize);
   }
+  void clear() {
+      busy = false;
+  }
+
+  bool isBusy() {
+      return busy;
+  }
+
+  std::string getRequest() {
+      return request;
+  }
 
   MemSysConfig _config;
   std::vector<Cache*> _caches;
