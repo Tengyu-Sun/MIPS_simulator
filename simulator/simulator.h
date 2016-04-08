@@ -9,6 +9,7 @@
 #include "configdialog.h"
 #include "memoryview.h"
 #include "cacheview.h"
+#include "cpuview.h"
 
 class Simulator : public QMainWindow {
     Q_OBJECT
@@ -28,20 +29,18 @@ private slots:
     void memLoad();
     void memStore();
     void memConfig();
-    void clkReset();
     void cacheOnOFF();
+    void memsysInit(MemSysConfig config);
+    void clkReset();
     void cpuRun();
     void cpuStep();
-    void memsysInit(MemSysConfig config);
+    void cpuPipeSet(bool p);
 
 private:
 
     ConfigDialog *configDL;
 
-    QLabel *clkLb;
-    QPushButton *clkResetPB;
-    QPushButton *runPB;
-    QPushButton *stepPB;
+    CPUView *cpuView;
 
     QLineEdit *addLE;
     QLineEdit *valLE;

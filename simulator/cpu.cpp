@@ -18,7 +18,7 @@ CPU::CPU(MemSys* memsys, FPU* fpu = nullptr, VU* vu = nullptr){
     pipe[i] = nullptr;
   }
   clear = true;
-  piped = false;
+  piped = true;
 }
 
 void CPU::ifc() {
@@ -712,6 +712,11 @@ void CPU::reset() {
             delete pipe[i];
             pipe[i] = nullptr;
         }
+    }
+    for (int i = 0; i < 16; ++i) {
+        gpr[i] = 0;
+        fpr[i] = 0;
+        vr[i] = 0;
     }
     _memsys->clear();
 }

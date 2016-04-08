@@ -37,6 +37,11 @@ public:
   CPU(MemSys* memsys, FPU* fpu, VU* vu);
   void run();
   void step();
+  void setPipeline(bool p) {
+      piped = p;
+      reset();
+  }
+
   void reset();
   bool err;
   uint32_t pc;

@@ -29,21 +29,14 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
     //cpu group
     QGroupBox *cpuGroup = new QGroupBox(tr("CPU"));
-    QLabel *ccLb = new QLabel(tr("clock cycle:"));
-    clkLb = new QLabel(tr("0"));
-    clkResetPB = new QPushButton(tr("Reset"));
-    runPB = new QPushButton(tr("Run"));
-    stepPB = new QPushButton(tr("Step"));
-    connect(clkResetPB, SIGNAL(clicked()), this, SLOT(clkReset()));
-    connect(runPB, SIGNAL(clicked()), this, SLOT(cpuRun()));
-    connect(stepPB, SIGNAL(clicked()), this, SLOT(cpuStep()));
     QGridLayout *cpuLayout = new QGridLayout;
-    cpuLayout->addWidget(ccLb, 0, 0);
-    cpuLayout->addWidget(clkLb, 0, 1);
-    cpuLayout->addWidget(clkResetPB, 1, 0);
-    cpuLayout->addWidget(runPB, 2, 0);
-    cpuLayout->addWidget(stepPB, 2, 1);
+    cpuView = new CPUView();
+    cpuLayout->addWidget(cpuView);
     cpuGroup->setLayout(cpuLayout);
+    QObject::connect(cpuView, &CPUView::cpuReset, this, &Simulator::clkReset);
+    QObject::connect(cpuView, &CPUView::cpuRun, this, &Simulator::cpuRun);
+    QObject::connect(cpuView, &CPUView::cpuStep, this, &Simulator::cpuStep);
+    QObject::connect(cpuView, &CPUView::cpuPipelineSet, this, &Simulator::cpuPipeSet);
 
     //memory system group
     QGroupBox *memGroup = new QGroupBox(tr("Memory System"));
@@ -133,7 +126,7 @@ void Simulator::memOpen() {
             uint8_t val = 0;
             do {
                _cpu->clk++;
-               clkLb->setText(std::to_string(_cpu->clk).c_str());
+               //clkLb->setText(std::to_string(_cpu->clk).c_str());
                //std::cout<<clk<<" ";
             } while(_memsys->loadByte(add, &val) == 0);
            // std::cout<<std::endl;
@@ -148,7 +141,7 @@ void Simulator::memOpen() {
             int val = std::stoi(line.substr(p+1));
             do {
               _cpu->clk++;
-              clkLb->setText(std::to_string(_cpu->clk).c_str());
+              //clkLb->setText(std::to_string(_cpu->clk).c_str());
               //std::cout<<clk<<" ";
             } while(_memsys->storeByte(add, val) == 0);
 
@@ -177,7 +170,7 @@ void Simulator::memLoad() {
     uint8_t val = 0;
     do {
        _cpu->clk++;
-       clkLb->setText(std::to_string(_cpu->clk).c_str());
+       //clkLb->setText(std::to_string(_cpu->clk).c_str());
        std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->loadByte(add, &val) == 0);
     std::cout<<"load "<<add<<": "<<(int)val<<std::endl;
@@ -198,7 +191,7 @@ void Simulator::memStore() {
     }
     do {
       _cpu->clk++;
-      clkLb->setText(std::to_string(_cpu->clk).c_str());
+      //clkLb->setText(std::to_string(_cpu->clk).c_str());
       std::cout<<_cpu->clk<<std::endl;
     } while(_memsys->storeByte(add, val) == 0);
     std::cout<<"store "<<add<<" "<<(int)val<<std::endl;
@@ -250,9 +243,7 @@ void Simulator::memsysInit(MemSysConfig config) {
 }
 
 void Simulator::clkReset() {
-
     _cpu->reset();
-    clkLb->setText(std::to_string(_cpu->clk).c_str());
 }
 
 void Simulator::cacheOnOFF() {
@@ -283,11 +274,8 @@ void Simulator::cacheOnOFF() {
 void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
     while(!_cpu->err) {
-//        if (_cpu->clk>450) {
-//            break;
-//        }
       _cpu->step();
-      clkLb->setText(std::to_string(_cpu->clk).c_str());
+      cpuView->clkUpdate(_cpu->clk);
     }
 }
 
@@ -295,8 +283,12 @@ void Simulator::cpuStep() {
     if (!_cpu->err) {
         std::cout<<"Step"<<std::endl;
         _cpu->step();
-        clkLb->setText(std::to_string(_cpu->clk).c_str());
+        cpuView->clkUpdate(_cpu->clk);
     }
+}
+
+void Simulator::cpuPipeSet(bool p) {
+    _cpu->setPipeline(p);
 }
 
 void Simulator::memUpdate(uint8_t *data, uint32_t add, int len) {
