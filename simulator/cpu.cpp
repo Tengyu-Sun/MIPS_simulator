@@ -40,7 +40,6 @@ void CPU::ifc() {
   if (pipe[0] != nullptr) {
     if (pipe[0]->stage == 0) {
       int flag = _memsys->loadWord(pipe[0]->add, &(pipe[0]->ins));
-
       if (flag == -1) {
         std::cout<<"error fectching instructions"<<std::endl;
         err = true;
@@ -125,17 +124,13 @@ void CPU::idc() {
           bool tmp2 = opReady(32+pipe[1]->rd2, 2);
 
           //   pipe[1]->vA = vr[pipe[1]->rd1];
-
-
           //   pipe[1]->vB = vr[pipe[1]->rd2];
 
           ready = tmp1 && tmp2;
         } else if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
           //std::cout<<pipe[1]->rd1<<std::endl;
-
             //pipe[1]->A = gpr[pipe[1]->rd1];
             ready = opReady(pipe[1]->rd1, 1);
-
         } else if (pipe[1]->opcode == 10 || pipe[1]->opcode == 11 || pipe[1]->opcode == 12) {
             //pipe[1]->vA = vr[pipe[1]->rd1];
           ready = opReady(32+pipe[1]->rd1, 1);
@@ -293,7 +288,6 @@ void CPU::exc() {
           default: std::cout<<"exc: type 2 error opcode "<<pipe[2]->opcode<<std::endl;
                 return;
         }
-
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 3) {
@@ -478,14 +472,14 @@ void CPU::mem() {
       } else if (pipe[3]->type == 3) {
         if (pipe[3]->opcode == 0) {
           err = true;
-          delete pipe[3];  //TODO clear pipe or not?
+          delete pipe[3];  //TODO: clear pipe?
           pipe[3] = nullptr;
           std::cout<<"break"<<std::endl;
           return;
         }
         if (pipe[3]->cond) {
           if (!piped){
-            pc = pipe[3]->aluoutput; //
+            pc = pipe[3]->aluoutput;
           }
         }
         pipe[3]->stage = 4;
@@ -514,37 +508,48 @@ void CPU::wbc() {
       if (pipe[4]->type == 1) {
         if (pipe[4]->opcode == 0 || pipe[4]->opcode == 1 || pipe[4]->opcode == 2) {
           gpr[pipe[4]->rd2] = pipe[4]->lmd;
+          emit gprNotify(pipe[4]->rd2, pipe[4]->lmd);
           std::cout<<"wbc: "<<gpr[pipe[4]->rd2]<<std::endl;
         } else if (pipe[4]->opcode == 4) {
           float *tmp = (float*)(&pipe[4]->lmd);
           fpr[pipe[4]->rd2] = *tmp;
+          emit fprNotify(pipe[4]->rd2, *tmp);
           std::cout<<"wbc: "<<fpr[pipe[4]->rd2]<<std::endl;
         }
       } else if (pipe[4]->type == 2) {
         if (pipe[4]->opcode > 18) {
           gpr[pipe[4]->rd2] = pipe[4]->aluoutput;
+          emit gprNotify(pipe[4]->rd2, pipe[4]->aluoutput);
           std::cout<<"wbc: "<<gpr[pipe[4]->rd2]<<std::endl;
         } else {
           gpr[pipe[4]->rd3] = pipe[4]->aluoutput;
+          emit gprNotify(pipe[4]->rd3, pipe[4]->aluoutput);
           std::cout<<"wbc: "<<gpr[pipe[4]->rd3]<<std::endl;
         }
       } else if (pipe[4]->type == 4) {
         if (pipe[4]->opcode < 4) {
           fpr[pipe[4]->rd3] = pipe[4]->fpuoutput;
+          emit fprNotify(pipe[4]->rd3, pipe[4]->fpuoutput);
         } else if (pipe[4]->opcode == 4) {
           gpr[pipe[4]->rd3] = pipe[4]->aluoutput;
+          emit gprNotify(pipe[4]->rd3, pipe[4]->aluoutput);
         } else if (pipe[4]->opcode == 5) {
           fpr[pipe[4]->rd2] = pipe[4]->fpuoutput;
+          emit fprNotify(pipe[4]->rd2, pipe[4]->fpuoutput);
         } else if (pipe[4]->opcode == 6) {
           gpr[pipe[4]->rd2] = pipe[4]->aluoutput;
+          emit gprNotify(pipe[4]->rd2, pipe[4]->aluoutput);
         }
       } else if (pipe[4]->type == 6) {
         if (pipe[4]->opcode < 11) {
           vr[pipe[4]->rd3] = pipe[4]->vuoutput;
+          emit vrNotify(pipe[4]->rd3, pipe[4]->vuoutput);
         } else if (pipe[4]->opcode == 11 || pipe[4]->opcode == 12) {
           gpr[pipe[4]->rd2] = pipe[4]->aluoutput;
+          emit gprNotify(pipe[4]->rd2, pipe[4]->aluoutput);
         } else if (pipe[4]->opcode == 13 || pipe[4]->opcode == 14) {
           vr[pipe[4]->rd2] = pipe[4]->vuoutput;
+          emit vrNotify(pipe[4]->rd2, pipe[4]->vuoutput);
         }
       }
       pipe[4]->stage = 5;

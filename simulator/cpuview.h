@@ -10,8 +10,8 @@ class CPUView : public QWidget {
   Q_OBJECT
 public:
     CPUView() {
-        QLabel *ccLb = new QLabel(tr("clock cycle:"));
         clkLb = new QLabel(tr("0"));
+        pcLB = new QLabel("0");
         QPushButton *clkResetPB = new QPushButton(tr("reset"));
         QPushButton *runPB = new QPushButton(tr("run"));
         QPushButton *stepPB = new QPushButton(tr("step"));
@@ -21,9 +21,7 @@ public:
         connect(runPB, SIGNAL(clicked()), this, SLOT(run()));
         connect(stepPB, SIGNAL(clicked()), this, SLOT(step()));
         connect(pipedPB, SIGNAL(clicked()), this, SLOT(pipelineSet()));
-        QGridLayout *cpuLayout = new QGridLayout;
-        cpuLayout->addWidget(ccLb, 0, 0);
-        cpuLayout->addWidget(clkLb, 0, 1);
+        QScrollArea *tmpSA  = new QScrollArea;
         QGroupBox *tmpGB = new QGroupBox;
         QGridLayout *tmpLayout = new QGridLayout;
         tmpLayout->addWidget(new QLabel("GPR:"), 0, 0);
@@ -38,7 +36,13 @@ public:
             tmpLayout->addWidget(vrLB[i], 2, i+1);
         }
         tmpGB->setLayout(tmpLayout);
-        cpuLayout->addWidget(tmpGB, 1, 0, 3, 4);
+        tmpSA->setWidget(tmpGB);
+        QGridLayout *cpuLayout = new QGridLayout;
+        cpuLayout->addWidget(new QLabel(tr("clock cycle:")), 0, 0);
+        cpuLayout->addWidget(clkLb, 0, 1);
+        cpuLayout->addWidget(new QLabel("pc:"), 0, 2);
+        cpuLayout->addWidget(pcLB, 0, 3);
+        cpuLayout->addWidget(tmpSA, 1, 0, 2, 4);
         cpuLayout->addWidget(new QLabel("pipeline:"), 4, 0);
         cpuLayout->addWidget(pipedPB, 4, 1);
         cpuLayout->addWidget(runPB, 5, 0);
@@ -47,6 +51,7 @@ public:
         setLayout(cpuLayout);
     }
     QLabel *clkLb;
+    QLabel *pcLB;
     QPushButton *pipedPB;
     QLabel *gprLB[16];
     QLabel *fprLB[16];
@@ -60,6 +65,9 @@ signals:
 public slots:
     void clkUpdate(int clk) {
         clkLb->setText(std::to_string(clk).c_str());
+    }
+    void pcUpdate(uint32_t pc) {
+        pcLB->setText(std::to_string(pc).c_str());
     }
     void gprUpdate(int idx, uint32_t val) {
         gprLB[idx]->setText(std::to_string(val).c_str());

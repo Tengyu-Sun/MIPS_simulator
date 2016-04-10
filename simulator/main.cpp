@@ -29,10 +29,7 @@ int main(int argc, char *argv[]) {
     VU* vu = new VU(5);
     CPU *cpu = new CPU(memsys, fpu, vu);
     Simulator w(cpu, memsys);
-    QObject::connect(memsys, &MemSys::memNotify, &w, &Simulator::memUpdate);
-    QObject::connect(memsys, &MemSys::cacheHitNotify, &w, &Simulator::cacheHitUpdate);
-    QObject::connect(memsys, &MemSys::cacheMissNotify, &w, &Simulator::cacheMissUpdate);
-    QObject::connect(memsys, &MemSys::cacheLineNotify, &w, &Simulator::cacheLineUpadate);
+
     memsys->fresh();
     w.show();
     return a.exec();

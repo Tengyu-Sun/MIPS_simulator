@@ -2,6 +2,7 @@
 #define __MIPS_Simulator__CPU__
 
 #include <cstdint>
+#include <QObject>
 #include "memsys.h"
 #include "fpu.h"
 #include "vu.h"
@@ -31,7 +32,8 @@ struct Instruction {
   int dst; //gpr:0-15 fpr:16-31 vr:32-47
 };
 
-class CPU {
+class CPU : public QObject {
+    Q_OBJECT
 public:
   uint64_t clk;
   CPU(MemSys* memsys, FPU* fpu, VU* vu);
@@ -41,12 +43,15 @@ public:
       piped = p;
       reset();
   }
-
   void reset();
   bool err;
   uint32_t pc;
   bool clear;
   bool piped;
+signals:
+  void gprNotify(int idx, uint32_t val);
+  void fprNotify(int idx, float val);
+  void vrNotify(int idx, uint64_t val);
 private:
   uint32_t gpr[16];  //general purpose register
   float fpr[16];  //floating point register

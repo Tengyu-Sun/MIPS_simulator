@@ -16,11 +16,6 @@ class Simulator : public QMainWindow {
 public:
     Simulator(CPU* cpu, MemSys *memsys, QWidget *parent = 0);
     ~Simulator();
-public slots:
-    void memUpdate(uint8_t *data, uint32_t add, int len);
-    void cacheLineUpadate(int level, Cacheline** data, int idx, int way);
-    void cacheHitUpdate(int level, int hit);
-    void cacheMissUpdate(int level, int miss);
 
 private slots:
     void memOpen();
@@ -31,13 +26,16 @@ private slots:
     void memConfig();
     void cacheOnOFF();
     void memsysInit(MemSysConfig config);
+    void memUpdate(uint8_t *data, uint32_t add, int len);
+    void cacheLineUpadate(int level, Cacheline** data, int idx, int way);
+    void cacheHitUpdate(int level, int hit);
+    void cacheMissUpdate(int level, int miss);
     void clkReset();
     void cpuRun();
     void cpuStep();
     void cpuPipeSet(bool p);
 
 private:
-
     ConfigDialog *configDL;
 
     CPUView *cpuView;

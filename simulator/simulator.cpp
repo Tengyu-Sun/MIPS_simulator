@@ -6,6 +6,10 @@
 Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     _cpu = cpu;
     _memsys = memsys;
+    QObject::connect(_memsys, &MemSys::memNotify, this, &Simulator::memUpdate);
+    QObject::connect(_memsys, &MemSys::cacheHitNotify, this, &Simulator::cacheHitUpdate);
+    QObject::connect(_memsys, &MemSys::cacheMissNotify, this, &Simulator::cacheMissUpdate);
+    QObject::connect(_memsys, &MemSys::cacheLineNotify, this, &Simulator::cacheLineUpadate);
 
     //menu
     QAction *openAct = new QAction(tr(" open "), this);
@@ -37,7 +41,9 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     QObject::connect(cpuView, &CPUView::cpuRun, this, &Simulator::cpuRun);
     QObject::connect(cpuView, &CPUView::cpuStep, this, &Simulator::cpuStep);
     QObject::connect(cpuView, &CPUView::cpuPipelineSet, this, &Simulator::cpuPipeSet);
-
+    QObject::connect(_cpu, &CPU::gprNotify, cpuView, &CPUView::gprUpdate);
+    QObject::connect(_cpu, &CPU::fprNotify, cpuView, &CPUView::fprUpdate);
+    QObject::connect(_cpu, &CPU::vrNotify, cpuView, &CPUView::vrUpdate);
     //memory system group
     QGroupBox *memGroup = new QGroupBox(tr("Memory System"));
 
@@ -276,6 +282,7 @@ void Simulator::cpuRun() {
     while(!_cpu->err) {
       _cpu->step();
       cpuView->clkUpdate(_cpu->clk);
+      cpuView->pcUpdate(_cpu->pc);
     }
 }
 
@@ -284,6 +291,7 @@ void Simulator::cpuStep() {
         std::cout<<"Step"<<std::endl;
         _cpu->step();
         cpuView->clkUpdate(_cpu->clk);
+        cpuView->pcUpdate(_cpu->pc);
     }
 }
 
