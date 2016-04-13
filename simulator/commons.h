@@ -52,5 +52,28 @@ struct MemSysConfig {
   std::vector<CacheSettings> cacheSettings;
 };
 
-
+struct Instruction {
+  uint32_t add;
+  uint32_t npc;
+  uint32_t ins;
+  int type;
+  int opcode;
+  int rd1;
+  uint32_t A;
+  uint64_t vA;
+  float fA;
+  int rd2;
+  uint32_t B;
+  uint64_t vB;
+  float fB;
+  int rd3;
+  int imm;
+  int stage;
+  uint32_t aluoutput;
+  float fpuoutput;
+  uint64_t vuoutput;
+  uint32_t lmd;
+  bool cond;
+  int dst; //gpr:0-15 fpr:16-31 vr:32-47
+};
 #endif

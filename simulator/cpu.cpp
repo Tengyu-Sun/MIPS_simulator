@@ -49,8 +49,8 @@ void CPU::ifc() {
         std::cout<<"instruction fectched "<<pipe[0]->ins<<std::endl;
       }
     }
-    if (pipe[0]->stage == 1){
-      if (pipe[1] == nullptr){
+    if (pipe[0]->stage == 1) {
+      if (pipe[1] == nullptr) {
         pipe[1] = pipe[0];
         pipe[0] = nullptr;
       }

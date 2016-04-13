@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 
+
 Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(parent) {
     _cpu = cpu;
     _memsys = memsys;
@@ -11,6 +12,8 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     QObject::connect(_memsys, &MemSys::cacheMissNotify, this, &Simulator::cacheMissUpdate);
     QObject::connect(_memsys, &MemSys::cacheLineNotify, this, &Simulator::cacheLineUpadate);
 
+    timer = new QTimer;
+    connect(timer, SIGNAL(timeout()), this, SLOT(cpuEachRun()));
     //menu
     QAction *openAct = new QAction(tr(" open "), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
@@ -112,7 +115,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     cw->setLayout(layout);
 
     setCentralWidget(cw);
-
+    setMinimumSize(1000, 600);
 
 }
 
@@ -279,10 +282,23 @@ void Simulator::cacheOnOFF() {
 
 void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
-    while(!_cpu->err) {
+    if (timer->isActive()) {
+        timer->stop();
+    } else {
+        timer->start(100);
+
+    }
+
+}
+
+void Simulator::cpuEachRun() {
+    if(!_cpu->err) {
       _cpu->step();
       cpuView->clkUpdate(_cpu->clk);
       cpuView->pcUpdate(_cpu->pc);
+      cpuView->pipeUpdate(_cpu->pipe);
+    } else {
+       timer->stop();
     }
 }
 
@@ -292,6 +308,7 @@ void Simulator::cpuStep() {
         _cpu->step();
         cpuView->clkUpdate(_cpu->clk);
         cpuView->pcUpdate(_cpu->pc);
+        cpuView->pipeUpdate(_cpu->pipe);
     }
 }
 

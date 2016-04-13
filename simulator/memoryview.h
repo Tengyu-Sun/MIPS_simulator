@@ -17,18 +17,21 @@ public:
         QGridLayout *tmpLayout2 = new QGridLayout;
         memView = new QLabel*[_size];
         for(int i = 0; i < _size; ++i) {
-            std::string lb = std::to_string(i)+":";
+            if (i%4 == 0) {
+                 std::string lb = std::to_string(i)+":";
+                 tmpLayout2->addWidget(new QLabel(lb.c_str()), i/4, 0);
+            }
             memView[i] = new QLabel(tr("0"));
-            tmpLayout2->addWidget(new QLabel(lb.c_str()), i, 0);
-            tmpLayout2->addWidget(memView[i], i, 1);
+            tmpLayout2->addWidget(memView[i], i/4, 1+i%4);
         }
         tmpGroup2->setLayout(tmpLayout2);
-        tmpGroup2->setMinimumWidth(150);
+        tmpGroup2->setMinimumWidth(220);
         mmsa->setWidget(tmpGroup2);
         mmLayout->addWidget(new QLabel("index:"), 0, 0);
-        mmLayout->addWidget(new QLabel("data"), 0, 1);
-        mmLayout->addWidget(mmsa, 1, 0, 1, 2);
+        mmLayout->addWidget(new QLabel("data"), 0, 1, 1, 4);
+        mmLayout->addWidget(mmsa, 1, 0, 1, 5);
         setLayout(mmLayout);
+        //setMinimumWidth(400);
     }
     ~MemoryView() {
         for (int i = 0; i < _size; ++i) {

@@ -5,6 +5,7 @@
 #include <QtWidgets>
 #include <string>
 #include <iostream>
+#include "commons.h"
 
 class CPUView : public QWidget {
   Q_OBJECT
@@ -13,7 +14,7 @@ public:
         clkLb = new QLabel(tr("0"));
         pcLB = new QLabel("0");
         QPushButton *clkResetPB = new QPushButton(tr("reset"));
-        QPushButton *runPB = new QPushButton(tr("run"));
+        runPB = new QPushButton(tr("run"));
         QPushButton *stepPB = new QPushButton(tr("step"));
         pipedPB = new QPushButton("on");
         piped = true;
@@ -21,38 +22,57 @@ public:
         connect(runPB, SIGNAL(clicked()), this, SLOT(run()));
         connect(stepPB, SIGNAL(clicked()), this, SLOT(step()));
         connect(pipedPB, SIGNAL(clicked()), this, SLOT(pipelineSet()));
-        QScrollArea *tmpSA  = new QScrollArea;
+        //QScrollArea *tmpSA  = new QScrollArea;
         QGroupBox *tmpGB = new QGroupBox;
         QGridLayout *tmpLayout = new QGridLayout;
-        tmpLayout->addWidget(new QLabel("GPR:"), 0, 0);
-        tmpLayout->addWidget(new QLabel("FPR:"), 1, 0);
-        tmpLayout->addWidget(new QLabel("VR:"), 2, 0);
-        for (int i = 0; i < 16; ++i) {
+        tmpLayout->addWidget(new QLabel("GPR:"), 0, 0, 2, 1);
+        tmpLayout->addWidget(new QLabel("FPR:"), 2, 0, 2, 1);
+        tmpLayout->addWidget(new QLabel("VR:"), 4, 0, 2, 1);
+        for (int i = 0; i < 8; ++i) {
             gprLB[i] = new QLabel("0");
+            gprLB[i+8] = new QLabel("0");
             fprLB[i] = new QLabel("0.0");
+            fprLB[i+8] = new QLabel("0.0");
             vrLB[i] = new QLabel("0");
+            vrLB[i+8] = new QLabel("0");
             tmpLayout->addWidget(gprLB[i], 0, i+1);
-            tmpLayout->addWidget(fprLB[i], 1, i+1);
-            tmpLayout->addWidget(vrLB[i], 2, i+1);
+            tmpLayout->addWidget(gprLB[i+8], 1, i+1);
+            tmpLayout->addWidget(fprLB[i], 2, i+1);
+            tmpLayout->addWidget(fprLB[i+8], 3, i+1);
+            tmpLayout->addWidget(vrLB[i], 4, i+1);
+            tmpLayout->addWidget(vrLB[i+8], 5, i+1);
         }
         tmpGB->setLayout(tmpLayout);
-        tmpSA->setWidget(tmpGB);
+       // tmpSA->setWidget(tmpGB);
+        QGroupBox *pipGroup = new QGroupBox;
+        QGridLayout *pipLayout = new QGridLayout;
+        for (int i = 0; i < 5; ++i) {
+            insLB[i] = new QLabel("...");
+            std::string s = "stage "+std::to_string(i+1)+":";
+            pipLayout->addWidget(new QLabel(s.c_str()), i, 0);
+            pipLayout->addWidget(insLB[i], i, 1);
+        }
+        pipGroup->setLayout(pipLayout);
         QGridLayout *cpuLayout = new QGridLayout;
         cpuLayout->addWidget(new QLabel(tr("clock cycle:")), 0, 0);
         cpuLayout->addWidget(clkLb, 0, 1);
         cpuLayout->addWidget(new QLabel("pc:"), 0, 2);
         cpuLayout->addWidget(pcLB, 0, 3);
-        cpuLayout->addWidget(tmpSA, 1, 0, 2, 4);
+        cpuLayout->addWidget(tmpGB, 1, 0, 1, 4);
         cpuLayout->addWidget(new QLabel("pipeline:"), 4, 0);
         cpuLayout->addWidget(pipedPB, 4, 1);
-        cpuLayout->addWidget(runPB, 5, 0);
-        cpuLayout->addWidget(stepPB, 5, 1);
-        cpuLayout->addWidget(clkResetPB, 5, 2);
+        cpuLayout->addWidget(pipGroup, 5, 0, 1, 4);
+        cpuLayout->addWidget(runPB, 6, 0);
+        cpuLayout->addWidget(stepPB, 6, 1);
+        cpuLayout->addWidget(clkResetPB, 6, 2);
         setLayout(cpuLayout);
+
     }
     QLabel *clkLb;
     QLabel *pcLB;
+    QLabel *insLB[5];
     QPushButton *pipedPB;
+    QPushButton *runPB;
     QLabel *gprLB[16];
     QLabel *fprLB[16];
     QLabel *vrLB[16];
@@ -78,6 +98,22 @@ public slots:
     void vrUpdate(int idx, uint64_t val) {
         vrLB[idx]->setText(std::to_string(val).c_str());
     }
+    void pipeUpdate(Instruction** pipe) {
+        if (pipe[0] != nullptr) {
+            std::string fins = "fetch ins at: "+std::to_string(pipe[0]->add);
+            insLB[0]->setText(fins.c_str());
+        } else {
+            insLB[0]->setText("...");
+        }
+        for (int i = 1; i < 5; ++i) {
+            if (pipe[i] != nullptr) {
+                insLB[i]->setText(std::to_string(pipe[i]->ins).c_str());
+            } else {
+                insLB[i]->setText("...");
+            }
+        }
+    }
+
 private slots:
     void reset() {
         clkLb->setText("0");
@@ -85,6 +121,13 @@ private slots:
     }
     void run() {
         emit cpuRun();
+        if (runPB->text() == "run") {
+            runPB->setText("stop");
+        } else {
+            runPB->setText("run");
+        }
+
+
     }
     void step() {
         emit cpuStep();

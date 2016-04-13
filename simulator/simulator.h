@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QObject>
 #include <QtWidgets>
+#include <QTimer>
 #include "memsys.h"
 #include "cpu.h"
 #include "configdialog.h"
@@ -32,6 +33,7 @@ private slots:
     void cacheMissUpdate(int level, int miss);
     void clkReset();
     void cpuRun();
+    void cpuEachRun();
     void cpuStep();
     void cpuPipeSet(bool p);
 
@@ -54,6 +56,7 @@ private:
 
     MemSys *_memsys;
     CPU *_cpu;
+    QTimer *timer;
 };
 
 #endif // SIMULATOR_H
