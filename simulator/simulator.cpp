@@ -285,8 +285,7 @@ void Simulator::cpuRun() {
     if (timer->isActive()) {
         timer->stop();
     } else {
-        timer->start(100);
-
+        timer->start(50);
     }
 
 }
