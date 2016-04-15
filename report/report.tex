@@ -1,0 +1,78 @@
+\documentclass{sig-alternate}
+\usepackage[]{algorithm2e}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{paralist}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage{amsmath,amssymb}
+\usepackage{url}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{algpseudocode}
+\usepackage{epstopdf}
+\usepackage{dsfont,pifont}
+\usepackage{bbm}
+\usepackage{booktabs}
+\usepackage[english]{babel}
+\usepackage{framed}
+\usepackage{multicol,multirow}
+\usepackage{CJK}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\newcommand{\subparagraph}{}
+
+
+%\graphicspath{{./figure/}}
+
+
+\begin{document}
+\title{Design and implementation of a MIPS simulator}
+\numberofauthors{2} 
+\author{
+\alignauthor {Wei Hong \\\email{weihong@cs.umass.edu}} 
+\alignauthor {Tengyu Sun \\\email{tsun@cs.umass.edu}} 
+\and
+\affaddr{Department of Computer Science, University of Massachusetts} \\ \affaddr{Amherst, MA 01003} \\
+}
+
+\date{\today}
+\maketitle
+\section{Introduction}
+
+brief introduction 
+
+\section{Design}
+
+design doc
+
+\section{Implementation}
+\subsection{Memory and cache system}
+We use a hierarchical structure to build the memory-cache system. We define an abstract class called Storage. Both caches and memory inherits from this parent class. The Storage class contains an integer field defining the number of cycles it needs to execute an instruction, an integer for counting down cycles, a pointer that references to next level of storage object if any, the length of the memory blocks been assigned and the starting address of the memory blocks, and the idle flag indicates if the storage is ready for use. The load method takes three arguments: 32-bit integer address, a pointer to the  blocks in a cache line and the length of the memory blocks to be read. It writes the content in the blocks into the same size of blocks starting at the starting address. The load method takes the same three arguments as the store method. Instead of writing the blocks into this level of storage, it takes the content from this level of storage from the starting address, and writes them into the blocks of the upper level of storage. The dump method converts and concatenates the content in the storage into a string. 
+\subsubsection{Memory}
+The memory class inherits from the storage class, it implements the methods inherited from the Storage class straightforwardly. The pointer to the next level is set to null pointer. (update?)
+\subsubsection{Cache}
+We designed and implemented a multiple-way associative cache with write allocate, LRU/Random policies. 
+\paragraph{Cache line}
+The Cache class also inherits from the Storage class. It consists of multiple cache lines as the basic building stones. The cache line is defined using a struct. It has a boolean field called valid that indicates if this cache line is valid, a boolean field called dirty that indicates if the content in the cache line is newer than that in the lower level storage. The lru field indicates its priority in LRU caching. It also contains a pointer reference an array of 8-bytes integers.
+
+\paragraph{Cache functions}
+\subparagraph{Write policy}
+\\
+% multiple-way associative cache with write allocate, LRU 
+\subparagraph{Eviction policy}
+
+
+\subsection{Instruction set architecture}
+\subsection{Pipeline}
+\subsection{Assembler and benchmarks}
+\subsection{User interface}
+\subsection{Performance evaluation}
+\section{Summary}
+
+
+
+\end{document}
