@@ -16,11 +16,13 @@ public:
         QPushButton *clkResetPB = new QPushButton(tr("reset"));
         runPB = new QPushButton(tr("run"));
         QPushButton *stepPB = new QPushButton(tr("step"));
+        QPushButton *exePB = new QPushButton(tr("exe"));
         pipedPB = new QPushButton("on");
         piped = true;
         connect(clkResetPB, SIGNAL(clicked()), this, SLOT(reset()));
         connect(runPB, SIGNAL(clicked()), this, SLOT(run()));
         connect(stepPB, SIGNAL(clicked()), this, SLOT(step()));
+        connect(exePB, SIGNAL(clicked()), this, SLOT(exe()));
         connect(pipedPB, SIGNAL(clicked()), this, SLOT(pipelineSet()));
         //QScrollArea *tmpSA  = new QScrollArea;
         QGroupBox *tmpGB = new QGroupBox;
@@ -63,8 +65,9 @@ public:
         cpuLayout->addWidget(pipedPB, 4, 1);
         cpuLayout->addWidget(pipGroup, 5, 0, 1, 4);
         cpuLayout->addWidget(runPB, 6, 0);
-        cpuLayout->addWidget(stepPB, 6, 1);
-        cpuLayout->addWidget(clkResetPB, 6, 2);
+        cpuLayout->addWidget(exePB, 6, 1);
+        cpuLayout->addWidget(stepPB, 6, 2);
+        cpuLayout->addWidget(clkResetPB, 6, 3);
         setLayout(cpuLayout);
 
     }
@@ -79,6 +82,7 @@ public:
     bool piped;
 signals:
     void cpuRun();
+    void cpuExe();
     void cpuStep();
     void cpuReset();
     void cpuPipelineSet(bool p);
@@ -113,6 +117,9 @@ public slots:
             }
         }
     }
+    void resetrunPB() {
+       runPB->setText("run");
+    }
 
 private slots:
     void reset() {
@@ -126,8 +133,9 @@ private slots:
         } else {
             runPB->setText("run");
         }
-
-
+    }
+    void exe() {
+        emit cpuExe();
     }
     void step() {
         emit cpuStep();

@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
   }
   std::string filename(argv[1]);
   std::fstream input(filename, std::fstream::in);
-  std::fstream output(filename.substr(0,filename.size()-4)+".out", std::fstream::out);
+  std::fstream output(filename.substr(0,filename.size()-4)+".out", std::fstream::out | std::fstream::binary);
   std::string line;
   map<string, int> symbol_map;
   first_pass(input, symbol_map);
@@ -246,8 +246,14 @@ int main(int argc, char* argv[]) {
       para.push_back(line.substr(s, line.size()-s));
     }
     uint32_t code = encoding(opcode, para, symbol_map, line_num);
-    output<<code<<endl;
-    std::cout<<line<<" "<<code<<endl;
+    //output<<code<<endl;
+    uint8_t buf[4];
+    buf[3] = code & 0xff;
+    buf[2] = (code>>8) & 0xff;
+    buf[1] = (code>>16) & 0xff;
+    buf[0] = (code>>24) & 0xff;
+    output.write((char*)buf, 4);
+    std::cout<<line<<" "<<code<<" "<<(uint32_t)buf[0]<<" "<<(uint32_t)buf[1]<<" "<<(uint32_t)buf[2]<<" "<<(uint32_t)buf[3]<<endl;
   }
   return 0;
 }

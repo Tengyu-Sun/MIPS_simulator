@@ -21,6 +21,7 @@ public:
 private slots:
     void memOpen();
     void memImport();
+    void memClear();
     void memSave();
     void memLoad();
     void memStore();
@@ -34,6 +35,7 @@ private slots:
     void clkReset();
     void cpuRun();
     void cpuEachRun();
+    void cpuExe();
     void cpuStep();
     void cpuPipeSet(bool p);
 

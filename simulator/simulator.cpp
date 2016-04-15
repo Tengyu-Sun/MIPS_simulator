@@ -21,12 +21,15 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     connect(saveAct, SIGNAL(triggered()), this, SLOT(memSave()));
     QAction *importAct = new QAction(tr(" import "), this);
     connect(importAct, SIGNAL(triggered()), this, SLOT(memImport()));
+    QAction *clearAct = new QAction(tr(" clear "), this);
+    connect(clearAct, SIGNAL(triggered()), this, SLOT(memClear()));
     QAction *configAct = new QAction(this);
     configAct->setText(" configs ");
     connect(configAct, SIGNAL(triggered()), this, SLOT(memConfig()));
     QMenu *memMenu = menuBar()->addMenu(tr("Memory System"));
     memMenu->addAction(openAct);
     memMenu->addAction(importAct);
+    memMenu->addAction(clearAct);
     memMenu->addAction(saveAct);
     memMenu->addAction(configAct);
 
@@ -42,6 +45,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     cpuGroup->setLayout(cpuLayout);
     QObject::connect(cpuView, &CPUView::cpuReset, this, &Simulator::clkReset);
     QObject::connect(cpuView, &CPUView::cpuRun, this, &Simulator::cpuRun);
+    QObject::connect(cpuView, &CPUView::cpuExe, this, &Simulator::cpuExe);
     QObject::connect(cpuView, &CPUView::cpuStep, this, &Simulator::cpuStep);
     QObject::connect(cpuView, &CPUView::cpuPipelineSet, this, &Simulator::cpuPipeSet);
     QObject::connect(_cpu, &CPU::gprNotify, cpuView, &CPUView::gprUpdate);
@@ -209,10 +213,13 @@ void Simulator::memStore() {
 void Simulator::memImport() {
     std::string filename = QFileDialog::getOpenFileName(this,tr("Import Memory"),
                "/Users/blade/workspace/cs535/MIPS_simulator/asm").toStdString();
-    std::fstream input(filename);
+    std::fstream input(filename, std::fstream::in | std::fstream::binary);
     uint32_t ins = 0;
     int add = 0;
-    input>>ins;
+    uint8_t buf[4];
+    input.read((char*)buf, 4);
+    ins = (buf[0]<<24) | ((uint32_t)buf[1]<<16) | ((uint32_t)buf[2]<<8) | ((uint32_t)buf[3]);
+    //input>>ins;
     int flag = 0;
     while(input){
        //std::cout<<ins<<std::endl;
@@ -222,7 +229,9 @@ void Simulator::memImport() {
        }
        add = add + 4;
        ins = 0;
-       input>>ins;
+       input.read((char*)buf, 4);
+       ins = (buf[0]<<24) | ((uint32_t)buf[1]<<16) | ((uint32_t)buf[2]<<8) | ((uint32_t)buf[3]);
+       //input>>ins;
     }
     input.close();
     return;
@@ -280,12 +289,22 @@ void Simulator::cacheOnOFF() {
     ccGroup->setVisible(_memsys->_config.cacheOn);
 }
 
+void Simulator::cpuExe() {
+    std::cout<<"Execute"<<std::endl;
+    while(!_cpu->err) {
+        _cpu->step();
+        cpuView->clkUpdate(_cpu->clk);
+        cpuView->pcUpdate(_cpu->pc);
+        cpuView->pipeUpdate(_cpu->pipe);
+    }
+}
+
 void Simulator::cpuRun() {
     std::cout<<"Run"<<std::endl;
     if (timer->isActive()) {
         timer->stop();
     } else {
-        timer->start(50);
+        timer->start(10);
     }
 
 }
@@ -298,6 +317,7 @@ void Simulator::cpuEachRun() {
       cpuView->pipeUpdate(_cpu->pipe);
     } else {
        timer->stop();
+       cpuView->resetrunPB();
     }
 }
 
@@ -338,6 +358,11 @@ void Simulator::cacheMissUpdate(int level, int miss) {
     c->missUpdate(miss);
     int tm = std::stoi(missLb->text().toStdString()) + 1;
     missLb->setText(std::to_string(tm).c_str());
+}
+
+void Simulator::memClear() {
+    _memsys->resetMem();
+    _memsys->fresh();
 }
 
 Simulator::~Simulator() {
