@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="CPP_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/memcache/main.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Memory.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Globals.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Memory.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Globals.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Cache.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Memcache.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Cache.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/memcache/Memcache.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memory.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/storage.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cache.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/simulator.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cacheview.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memsys.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cache.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/configdialog.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memcache.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/configdialog.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cpuview.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memsys.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/vu.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memory.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/commons.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/memoryview.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/fpu.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/main.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/simulator.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/fpu.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/vu.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cpu.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/simulator/cpu.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/asm/exchange_sort.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/asm/matrix_mulplication.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/asm/asm.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/asm/disasm.cpp" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/GenTestCases/GenTestCases.cpp" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="Header Search Paths">
+        <CLASSES>
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+        </CLASSES>
+        <SOURCES>
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include-fixed" />
+          <root url="file:///usr/lib/gcc/x86_64-linux-gnu/5/include" />
+          <root url="file:///usr/include" />
+          <root url="file:///usr/local/include" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
