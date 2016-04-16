@@ -27,8 +27,19 @@ public:
         tmpGroup2->setLayout(tmpLayout2);
         tmpGroup2->setMinimumWidth(220);
         mmsa->setWidget(tmpGroup2);
+        decRB = new QRadioButton("dec");
+        decRB->setChecked(true);
+        connect(decRB, SIGNAL(toggled(bool)), this, SLOT(format()));
+        QRadioButton *hexRB = new QRadioButton("hex");
+        QGroupBox *rbGroup = new QGroupBox;
+        QHBoxLayout *rbLayout = new QHBoxLayout;
+        rbLayout->addWidget(decRB);
+        rbLayout->addWidget(hexRB);
+        rbGroup->setLayout(rbLayout);
+
         mmLayout->addWidget(new QLabel("index:"), 0, 0);
-        mmLayout->addWidget(new QLabel("data"), 0, 1, 1, 4);
+        mmLayout->addWidget(new QLabel("data"), 0, 1, 1, 3);
+        mmLayout->addWidget(rbGroup, 0, 4);
         mmLayout->addWidget(mmsa, 1, 0, 1, 5);
         setLayout(mmLayout);
         //setMinimumWidth(400);
@@ -44,12 +55,37 @@ public:
 public slots:
     void update(uint8_t *data, uint32_t add, int len) {
         for (int i = add; i<add+len; ++i) {
-            memView[i]->setText(std::to_string((int)data[i]).c_str());
+            char buf[50];
+            if (decRB->isChecked()) {
+                sprintf(buf, "%d", (int)data[i]);
+            } else {
+                sprintf(buf, "%x", (int)data[i]);
+            }
+            memView[i]->setText(buf);
         }
     }
+    void format() {
+       if (decRB->isChecked()) {
+           for (int i = 0; i < _size; ++i) {
+               int data = std::stoi(memView[i]->text().toStdString(), nullptr, 16);
+               char buf[50];
+               sprintf(buf, "%d", data);
+               memView[i]->setText(buf);
+           }
+       } else {
+           for (int i = 0; i < _size; ++i) {
+               int data = std::stoi(memView[i]->text().toStdString(), nullptr, 10);
+               char buf[50];
+               sprintf(buf, "%x", data);
+               memView[i]->setText(buf);
+           }
+       }
+    }
+
 private:
     QScrollArea *mmsa;
     QLabel **memView;
+    QRadioButton *decRB;
     int _size;
 };
 

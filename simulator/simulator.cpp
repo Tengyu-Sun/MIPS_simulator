@@ -119,7 +119,7 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     cw->setLayout(layout);
 
     setCentralWidget(cw);
-    setMinimumSize(1000, 600);
+    setMinimumSize(1200, 650);
 
 }
 
