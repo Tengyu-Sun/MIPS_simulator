@@ -19,11 +19,16 @@ public:
         for(int i = 0; i < _size; ++i) {
             if (i%4 == 0) {
                  std::string lb = std::to_string(i)+":";
-                 tmpLayout2->addWidget(new QLabel(lb.c_str()), i/4, 0);
+                 QPushButton *bkPB = new QPushButton(lb.c_str());
+                 bkPB->setCheckable(true);
+                 bkPB->setMaximumWidth(60);
+                 connect(bkPB, SIGNAL(clicked()), this, SLOT(breakPoint()));
+                 tmpLayout2->addWidget(bkPB, i/4, 0);
             }
             memView[i] = new QLabel(tr("0"));
             tmpLayout2->addWidget(memView[i], i/4, 1+i%4);
         }
+
         tmpGroup2->setLayout(tmpLayout2);
         tmpGroup2->setMinimumWidth(220);
         mmsa->setWidget(tmpGroup2);
@@ -80,6 +85,20 @@ public slots:
                memView[i]->setText(buf);
            }
        }
+    }
+
+signals:
+    void addBreakPoint(uint32_t pc);
+    void clearBreakPoint(uint32_t pc);
+private slots:
+    void breakPoint() {
+         QPushButton *s = (QPushButton*)QObject::sender();
+         uint32_t pc = std::stoi(s->text().toStdString());
+         if (s->isChecked()) {
+            emit addBreakPoint(pc);
+         } else {
+           emit clearBreakPoint(pc);
+         }
     }
 
 private:

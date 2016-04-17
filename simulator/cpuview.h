@@ -124,7 +124,17 @@ public slots:
 private slots:
     void reset() {
         clkLb->setText("0");
+        pcLB->setText("0");
+        for (int i = 0; i < 16; ++i) {
+            gprLB[i]->setText("0");
+            fprLB[i]->setText("0.0");
+            vrLB[i]->setText("0");
+        }
+        for (int i = 0; i< 5; ++i) {
+             insLB[i]->setText("...");
+        }
         emit cpuReset();
+
     }
     void run() {
         emit cpuRun();

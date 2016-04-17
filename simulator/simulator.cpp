@@ -14,6 +14,9 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(cpuEachRun()));
+    breakpoints = std::map<uint32_t, bool>();
+//    breakpoints[8] = true;
+//    breakpoints[100] = true;
     //menu
     QAction *openAct = new QAction(tr(" open "), this);
     connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
@@ -90,6 +93,8 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
 
     //main memory
     mv = new MemoryView(_memsys->_config.memSize);
+    connect(mv, SIGNAL(addBreakPoint(uint32_t)), this, SLOT(addBreakPoint(uint32_t)));
+    connect(mv, SIGNAL(clearBreakPoint(uint32_t)), this, SLOT(clearBreakPoint(uint32_t)));
     QGroupBox *mmGroup = new QGroupBox(tr("Main Memory"));
     mvLayout = new QGridLayout;
     mvLayout->addWidget(mv, 0, 0);
@@ -292,10 +297,26 @@ void Simulator::cacheOnOFF() {
 void Simulator::cpuExe() {
     std::cout<<"Execute"<<std::endl;
     while(!_cpu->err) {
+        bool bkp = false;
+        uint32_t bk_pc = 0;
+        if (breakpoints.count(_cpu->pc) > 0) {
+            if (breakpoints[_cpu->pc]) {
+                breakpoints[_cpu->pc] = false;
+                timer->stop();
+                cpuView->resetrunPB();
+                return;
+            } else {
+                bkp = true;
+                bk_pc = _cpu->pc;
+            }
+        }
         _cpu->step();
         cpuView->clkUpdate(_cpu->clk);
         cpuView->pcUpdate(_cpu->pc);
         cpuView->pipeUpdate(_cpu->pipe);
+        if (bkp && bk_pc != _cpu->pc) {
+            breakpoints[bk_pc] = true;
+        }
     }
 }
 
@@ -304,12 +325,25 @@ void Simulator::cpuRun() {
     if (timer->isActive()) {
         timer->stop();
     } else {
-        timer->start(10);
+        timer->start(5);
     }
 
 }
 
 void Simulator::cpuEachRun() {
+    bool bkp = false;
+    uint32_t bk_pc = 0;
+    if (breakpoints.count(_cpu->pc) > 0) {
+        if (breakpoints[_cpu->pc]) {
+            breakpoints[_cpu->pc] = false;
+            timer->stop();
+            cpuView->resetrunPB();
+            return;
+        } else {
+            bkp = true;
+            bk_pc = _cpu->pc;
+        }
+    }
     if(!_cpu->err) {
       _cpu->step();
       cpuView->clkUpdate(_cpu->clk);
@@ -319,15 +353,32 @@ void Simulator::cpuEachRun() {
        timer->stop();
        cpuView->resetrunPB();
     }
+    if (bkp && bk_pc != _cpu->pc) {
+        breakpoints[bk_pc] = true;
+    }
 }
 
 void Simulator::cpuStep() {
+    bool bkp = false;
+    uint32_t bk_pc = 0;
+    if (breakpoints.count(_cpu->pc) > 0) {
+        if (breakpoints[_cpu->pc]) {
+            breakpoints[_cpu->pc] = false;
+            return;
+        } else {
+            bkp = true;
+            bk_pc = _cpu->pc;
+        }
+    }
     if (!_cpu->err) {
         std::cout<<"Step"<<std::endl;
         _cpu->step();
         cpuView->clkUpdate(_cpu->clk);
         cpuView->pcUpdate(_cpu->pc);
         cpuView->pipeUpdate(_cpu->pipe);
+    }
+    if (bkp && bk_pc != _cpu->pc) {
+        breakpoints[bk_pc] = true;
     }
 }
 
@@ -363,6 +414,18 @@ void Simulator::cacheMissUpdate(int level, int miss) {
 void Simulator::memClear() {
     _memsys->resetMem();
     _memsys->fresh();
+}
+
+void Simulator::addBreakPoint(uint32_t pc) {
+    breakpoints[pc] = true;
+   // std::cout<<"add bk: "<<pc<<std::endl;
+}
+
+void Simulator::clearBreakPoint(uint32_t pc) {
+    if (breakpoints.count(pc) > 0) {
+        breakpoints.erase(pc);
+    }
+   // std::cout<<"rm bk: "<<pc<<std::endl;
 }
 
 Simulator::~Simulator() {
