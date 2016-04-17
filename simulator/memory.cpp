@@ -16,6 +16,12 @@ Memory::~Memory() {
   free((void*)_data);
 }
 
+void Memory::reset() {
+    for (int i = 0; i < _size; ++i) {
+       _data[i] = 0;
+    }
+}
+
 int Memory::load(uint32_t add, uint8_t *blk, int len) {
   if(add + len > _size) {
       return -1;

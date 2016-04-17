@@ -191,7 +191,10 @@ void CPU::idc() {
           //pipe[1]->A = gpr[pipe[1]->rd1];
           ready = opReady(pipe[1]->rd1, 1);
         }
+      } else if (pipe[1]->type == 5){
+          ready = opReady(pipe[1]->rd1, 1);
       }
+
       if (ready) {
         std::cout<<"idc: type:"<<pipe[1]->type<<" opcode: "<<pipe[1]->opcode<<" rd1: "
         <<pipe[1]->rd1<<" rd2: "<<pipe[1]->rd2<<" rd3: "<<pipe[1]->rd3<<" imm: "<<pipe[1]->imm<<std::endl;
@@ -231,10 +234,13 @@ void CPU::exc() {
           pipe[2]->dst = pipe[2]->rd2;
         }
         switch (pipe[2]->opcode) {
-          case 0: pipe[2]->aluoutput = pipe[2]->A + pipe[2]->B;
-                  break;
-          case 1: pipe[2]->aluoutput = pipe[2]->A - pipe[2]->B;
-                  break;
+          case 0: {pipe[2]->aluoutput = pipe[2]->A + pipe[2]->B;
+                   uint64_t tmp = (uint64_t)pipe[2]->A + (uint64_t)pipe[2]->B;
+                   status = (tmp>>32) & 0x1;}//status = 1
+                   break;
+          case 1: {pipe[2]->aluoutput = pipe[2]->A - pipe[2]->B;
+                   status = ((int)(pipe[2]->A < pipe[2]->B)>>1);} //status = 2
+                   break;
           case 2: {int64_t tmp = ((int32_t)pipe[2]->A) * ((int32_t)pipe[2]->B);
                   pipe[2]->aluoutput = tmp & 0xffffffff;}
                   break;
@@ -277,10 +283,15 @@ void CPU::exc() {
                   break;
           case 18: pipe[2]->aluoutput = pipe[2]->A < pipe[2]->B;
                   break;
-          case 19: pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
-                  break;
-          case 20: pipe[2]->aluoutput = pipe[2]->A - pipe[2]->imm;
-                  break;
+          case 19: {pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
+                    int64_t tmp = (int64_t)pipe[2]->A + (int64_t)pipe[2]->imm;
+                    status = (tmp>>32) & 0x1;} // status = 1
+                    break;
+          case 20: {pipe[2]->aluoutput = pipe[2]->A - pipe[2]->imm;
+                    int64_t tmp = (int64_t)pipe[2]->A - (int64_t)pipe[2]->imm;
+                    status = (tmp>>32) & 0x1;
+                    status = status*2;} // status = 2
+                    break;
           case 21: pipe[2]->aluoutput = (int32_t)pipe[2]->A < (int32_t)pipe[2]->imm;
                   break;
           case 22: pipe[2]->aluoutput = pipe[2]->A < pipe[2]->imm;
@@ -373,6 +384,8 @@ void CPU::exc() {
           pipe[2]->stage = 3;
         }
       } else if (pipe[2]->type == 5) {
+        pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
+        //pipe[2]->dst = pipe[2]->rd2;
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 6) {
@@ -484,6 +497,13 @@ void CPU::mem() {
         }
         pipe[3]->stage = 4;
         std::cout<<"pc: "<<pc<<std::endl;
+      } else if (pipe[3]->type == 5) {
+        uint32_t tmp;
+        int flag = _memsys->loadWord(pipe[3]->aluoutput, &tmp);
+        if (flag == 1 ) {
+          pipe[3]->stage = 4;
+          std::cout<<"pc: "<<pc<<std::endl;
+        }
       } else {
         pipe[3]->stage = 4;
         std::cout<<"pc: "<<pc<<std::endl;

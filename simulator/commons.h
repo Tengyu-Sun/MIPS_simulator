@@ -1,5 +1,7 @@
 #ifndef __MIPS_Simulator__Commons__
 #define __MIPS_Simulator__Commons__
+#include <cstdint>
+#include <vector>
 
 struct Cacheline {
     int tag;
@@ -67,7 +69,7 @@ struct Instruction {
   uint64_t vB;
   float fB;
   int rd3;
-  int imm;
+  int32_t imm;
   int stage;
   uint32_t aluoutput;
   float fpuoutput;

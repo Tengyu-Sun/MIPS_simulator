@@ -30,6 +30,7 @@ class MemSys : public QObject {
   int directWriteWord(uint32_t add, uint32_t val);
   std::string dump();
   void resetCache();
+  void resetMem();
   void fresh() {
       emit memNotify(_mainMemory->_data, 0, _config.memSize);
   }

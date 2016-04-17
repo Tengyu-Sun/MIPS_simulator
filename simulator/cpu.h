@@ -33,7 +33,7 @@ private:
   uint32_t gpr[16];  //general purpose register
   float fpr[16];  //floating point register
   uint64_t vr[16];  //vector register
-  uint32_t status; //overflow?
+  uint32_t status; //overflow
 
   MemSys* _memsys;
   FPU* _fpu;

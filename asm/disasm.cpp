@@ -12,10 +12,10 @@
 #include<fstream>
 using namespace std;
 
-struct{
-    string opcode;
-    int type;
-} decoding;
+// struct{
+//     string opcode;
+//     int type;
+// } decoding;
 
 map<uint32_t, string> opcode_decode_map = {
     //data transfer
@@ -213,7 +213,8 @@ int main(int argc, char* argv[]) {
         if(line.size() == 0) {
             break;
         }
-        cout << decode(stoi(line)) <<endl;
+        cout<<line<<" "<<line.size()<<" ";
+        cout << decode(stol(line)) <<endl;
     }
     file.close();
 }

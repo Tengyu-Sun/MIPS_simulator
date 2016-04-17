@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QtWidgets>
 #include <QTimer>
+#include <map>
 #include "memsys.h"
 #include "cpu.h"
 #include "configdialog.h"
@@ -21,6 +22,7 @@ public:
 private slots:
     void memOpen();
     void memImport();
+    void memClear();
     void memSave();
     void memLoad();
     void memStore();
@@ -34,8 +36,11 @@ private slots:
     void clkReset();
     void cpuRun();
     void cpuEachRun();
+    void cpuExe();
     void cpuStep();
     void cpuPipeSet(bool p);
+    void addBreakPoint(uint32_t pc);
+    void clearBreakPoint(uint32_t pc);
 
 private:
     ConfigDialog *configDL;
@@ -57,6 +62,7 @@ private:
     MemSys *_memsys;
     CPU *_cpu;
     QTimer *timer;
+    std::map<uint32_t, bool> breakpoints;
 };
 
 #endif // SIMULATOR_H

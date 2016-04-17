@@ -19,6 +19,7 @@ class Memory : public Storage {
     ~Memory();
     int load(uint32_t add, uint8_t *blk, int len);
     int store(uint32_t add, uint8_t *blk, int len);
+    void reset();
     std::string dump();
     uint32_t _size;
     uint8_t* _data;  //byte-addressable

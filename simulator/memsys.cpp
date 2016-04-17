@@ -220,6 +220,10 @@ void MemSys::resetCache() {
   return;
 }
 
+void MemSys::resetMem() {
+    _mainMemory->reset();
+}
+
 std::string MemSys::dump() {
   std::string res;
   if(_config.cacheOn) {

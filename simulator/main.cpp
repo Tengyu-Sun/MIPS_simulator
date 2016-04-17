@@ -12,14 +12,14 @@ int main(int argc, char *argv[]) {
     MemSys *memsys = new MemSys;
     MemSysConfig config;
     config.cacheLevel = 1;
-    config.cacheOn = false;
-    config.memCycle = 10;
+    config.cacheOn = true;
+    config.memCycle = 100;
     config.memSize = 1024;
     config.cacheSettings = std::vector<CacheSettings>();
     CacheSettings cs;
     cs.cycle = 5;
     cs.indexsize = 8;
-    cs.linesize = 4;
+    cs.linesize = 16;
     cs.ways = 2;
     cs.rpolicy = ReplacePolicy::LRU;
     cs.wpolicy = WritePolicy::WRITEBACK;

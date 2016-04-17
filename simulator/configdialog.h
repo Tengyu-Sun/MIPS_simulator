@@ -38,7 +38,7 @@ public:
         indexSizeLE->setMaximumWidth(40);
         ccLayout->addWidget(indexSizeLE, 0, 1);
 
-        lineSizeLE = new QLineEdit("4");
+        lineSizeLE = new QLineEdit("16");
         lineSizeLE->setMaximumWidth(40);
         ccLayout->addWidget(lineSizeLE, 1, 1);
 
@@ -46,7 +46,7 @@ public:
         waysLE->setMaximumWidth(40);
         ccLayout->addWidget(waysLE, 2, 1);
 
-        cacheCycleLE = new QLineEdit("10");
+        cacheCycleLE = new QLineEdit("5");
         cacheCycleLE->setMaximumWidth(40);
         ccLayout->addWidget(cacheCycleLE, 3, 1);
 
