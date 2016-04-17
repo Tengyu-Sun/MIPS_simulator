@@ -385,7 +385,7 @@ void CPU::exc() {
         }
       } else if (pipe[2]->type == 5) {
         pipe[2]->aluoutput = pipe[2]->A + pipe[2]->imm;
-        pipe[2]->dst = pipe[2]->rd2;
+        //pipe[2]->dst = pipe[2]->rd2;
         std::cout<<"exc: "<<pipe[2]->aluoutput<<std::endl;
         pipe[2]->stage = 3;
       } else if (pipe[2]->type == 6) {
