@@ -253,11 +253,12 @@ void Simulator::memsysInit(MemSysConfig config) {
     mv = new MemoryView(_memsys->_config.memSize);
     mvLayout->addWidget(mv, 0, 0);
     int n = cacheViewTW->count();
-    for (int i = 0; i < n; ++i) {
+    for (int i = n-1; i >= 0; --i) {
         CacheView *d =  (CacheView*) cacheViewTW->widget(i);
         cacheViewTW->removeTab(i);
         delete d;
     }
+
     for (int i = 0; i < _memsys->_config.cacheLevel; ++i) {
        std::string l = "level " + std::to_string(i);
        cacheViewTW->addTab(new CacheView(_memsys->_config.cacheSettings[i].indexsize,

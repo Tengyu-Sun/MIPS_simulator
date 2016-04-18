@@ -100,15 +100,7 @@ void ConfigDialog::memsysUpdate() {
 
     config.memCycle = memcycle;
     config.memSize = memsize;
-//    config.cacheSettings = std::vector<CacheSettings>();
-//    CacheSettings cs;
-//    cs.cycle = 5;
-//    cs.indexsize = 8;
-//    cs.linesize = 4;
-//    cs.ways = 2;
-//    cs.rpolicy = ReplacePolicy::LRU;
-//    cs.wpolicy = WritePolicy::WRITEBACK;
-//    config.cacheSettings.push_back(cs);
+
     emit memsysConfig(config);
     this->accept();
 }
@@ -125,4 +117,9 @@ void ConfigDialog::addLevel() {
 
 void ConfigDialog::removeLevel() {
     cacheTW->removeTab(cacheTW->currentIndex());
+    int n = cacheTW->count();
+    for (int i = 0; i < n; ++i) {
+        std::string level = "level " + std::to_string(i);
+        cacheTW->setTabText(i, level.c_str());
+    }
 }

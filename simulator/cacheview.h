@@ -71,7 +71,7 @@ public:
         hitLb->setText("0");
         missLb->setText("0");
     }
-
+     int _indexsize;
  public slots:
     void lineUpdate(Cacheline** data, int idx, int way) {
         //std::cout<<"cache update "<<idx<<std::endl;
@@ -97,7 +97,7 @@ private:
     QLabel *missLb;
     QScrollArea *ccsa;
     QLabel **cacheView;
-    int _indexsize;
+
     int _linesize;
     int _ways;
 };
