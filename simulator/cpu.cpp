@@ -31,8 +31,10 @@ void CPU::ifc() {
     }
     pipe[0]->add = pc;
     pipe[0]->stage = 0;
-    pc = pc + 4;
-    pipe[0]->npc = pc;
+    pipe[0]->npc = pc + 4;
+    if (piped) {
+      pc = pc + 4;
+    }
     pipe[0]->dst = -1;
     clear = false;
     std::cout<<"fectch instructions at "<<pipe[0]->add<<std::endl;
@@ -127,7 +129,12 @@ void CPU::idc() {
           //   pipe[1]->vB = vr[pipe[1]->rd2];
 
           ready = tmp1 && tmp2;
-        } else if (pipe[1]->opcode == 13 || pipe[1]->opcode == 14) {
+        } else if (pipe[1]->opcode == 13 ) {
+          bool tmp1 = opReady(pipe[1]->rd1, 1);
+          bool tmp2 = opReady(32+pipe[1]->rd2, 2);
+          ready = tmp1 && tmp2;
+
+        } else if ( pipe[1]->opcode == 14) {
           //std::cout<<pipe[1]->rd1<<std::endl;
             //pipe[1]->A = gpr[pipe[1]->rd1];
             ready = opReady(pipe[1]->rd1, 1);
@@ -451,6 +458,9 @@ void CPU::exc() {
 void CPU::mem() {
   if (pipe[3] != nullptr) {
     if (pipe[3]->stage == 3) {
+      if (!piped) {
+        pc = pipe[3]->npc;
+      }
       if (pipe[3]->type == 1) {
         int flag = 0;
         if (pipe[3]->opcode == 8) {
