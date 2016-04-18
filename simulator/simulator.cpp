@@ -275,7 +275,7 @@ void Simulator::cacheOnOFF() {
     if (_memsys->_config.cacheOn){
         cacheOnPB->setText(tr("ON"));
         _memsys->resetCache();
-        //TODO: reset cacheview
+
         for (int i = 0; i < cacheViewTW->count(); ++i) {
             CacheView *tmp = (CacheView*) cacheViewTW->widget(i);
             tmp->reset();
@@ -326,7 +326,7 @@ void Simulator::cpuRun() {
     if (timer->isActive()) {
         timer->stop();
     } else {
-        timer->start(5);
+        timer->start(50);
     }
 
 }
