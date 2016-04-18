@@ -15,12 +15,11 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(cpuEachRun()));
     breakpoints = std::map<uint32_t, bool>();
-//    breakpoints[8] = true;
-//    breakpoints[100] = true;
+
     //menu
-    QAction *openAct = new QAction(tr(" open "), this);
-    connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
-    QAction *saveAct = new QAction(tr(" save "), this);
+    //QAction *openAct = new QAction(tr(" open "), this);
+    //connect(openAct, SIGNAL(triggered()), this, SLOT(memOpen()));
+    QAction *saveAct = new QAction(tr(" dump "), this);
     connect(saveAct, SIGNAL(triggered()), this, SLOT(memSave()));
     QAction *importAct = new QAction(tr(" import "), this);
     connect(importAct, SIGNAL(triggered()), this, SLOT(memImport()));
@@ -30,11 +29,12 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     configAct->setText(" configs ");
     connect(configAct, SIGNAL(triggered()), this, SLOT(memConfig()));
     QMenu *memMenu = menuBar()->addMenu(tr("Memory System"));
-    memMenu->addAction(openAct);
-    memMenu->addAction(importAct);
-    memMenu->addAction(clearAct);
-    memMenu->addAction(saveAct);
+    //memMenu->addAction(openAct);
     memMenu->addAction(configAct);
+    memMenu->addAction(saveAct);
+    memMenu->addAction(clearAct);
+    QMenu *proMenu = menuBar()->addMenu(tr("Program"));
+    proMenu->addAction(importAct);
 
     //config dialog
     configDL = new ConfigDialog();
@@ -101,12 +101,12 @@ Simulator::Simulator(CPU *cpu, MemSys* memsys, QWidget *parent) : QMainWindow(pa
     mmGroup->setLayout(mvLayout);
 
     QGridLayout *memLayout = new QGridLayout;
-    memLayout->addWidget(new QLabel(tr("address:")), 0, 0);
-    memLayout->addWidget(addLE, 0, 1);
-    memLayout->addWidget(new QLabel(tr("value:")), 0, 2);
-    memLayout->addWidget(valLE, 0, 3);
-    memLayout->addWidget(loadPB, 0, 4);
-    memLayout->addWidget(storePB, 0, 5);
+//    memLayout->addWidget(new QLabel(tr("address:")), 0, 0);
+//    memLayout->addWidget(addLE, 0, 1);
+//    memLayout->addWidget(new QLabel(tr("value:")), 0, 2);
+//    memLayout->addWidget(valLE, 0, 3);
+//    memLayout->addWidget(loadPB, 0, 4);
+//    memLayout->addWidget(storePB, 0, 5);
     memLayout->addWidget(new QLabel("Cache:"), 1, 0);
     memLayout->addWidget(cacheOnPB, 1, 1);
     memLayout->addWidget(new QLabel(tr("total hit:")), 1, 2);
