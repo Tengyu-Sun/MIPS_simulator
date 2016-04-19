@@ -268,6 +268,9 @@ void Simulator::memsysInit(MemSysConfig config) {
 
 void Simulator::clkReset() {
     _cpu->reset();
+    for (auto i=breakpoints.begin(); i!=breakpoints.end(); i++) {
+        i->second = true;
+    }
 }
 
 void Simulator::cacheOnOFF() {
