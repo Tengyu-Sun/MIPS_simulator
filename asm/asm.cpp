@@ -29,7 +29,7 @@ map<string, uint32_t> opcode_map = {
     {"modu",    0b1001000},
     {"and",     0b1001001},
     {"or",      0b1001010},
-    {"not",     0b1001011},
+    {"not",     0b1001011},//TODO
     {"xor",     0b1001100},
     {"rr",      0b1001101},
     {"srl",     0b1001110},
@@ -58,7 +58,7 @@ map<string, uint32_t> opcode_map = {
     {"witf",    0b0100101},
     {"wfti",    0b0100110},
     //cache
-    {"pref",    0b0110000},
+    {"pref",    0b0110000},//TODO cache encoding
     //simd
     {"move",    0b1101010},
     {"copys",   0b1101011},
@@ -136,9 +136,9 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     // the variable exists in the symbol map, it's a jump
     int offset = 0;
     if(symbol_map.find(para[0]) != symbol_map.end()) {
-	offset = symbol_map[para[0]] - line_num - 1;
+	     offset = symbol_map[para[0]] - line_num - 1;
     } else {
-	offset = stoi(para[0]);
+	     offset = stoi(para[0]);
     }
     std::cout<<opcode<<" "<<para[0]<<" "<<code<<" "<<offset<<endl;
     code <<= 25;
@@ -154,7 +154,7 @@ uint32_t encoding(string opcode, vector<string> para, map<string,int>& symbol_ma
     } else {
       int offset = 0;
       if(symbol_map.find(para[1]) != symbol_map.end()) {
-	 offset = symbol_map[para[1]] - line_num - 1;
+	       offset = symbol_map[para[1]] - line_num - 1;
        } else {
       	  offset = stoi(para[1]);
        }

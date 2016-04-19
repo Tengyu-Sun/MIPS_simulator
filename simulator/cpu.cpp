@@ -167,7 +167,7 @@ void CPU::idc() {
           ready = tmp1 && tmp2;
         }
       } else if (pipe[1]->type == 2) {
-        if (pipe[1]->opcode < 19) {
+        if (pipe[1]->opcode < 19 && pipe[1]->opcode != 11) {
           bool tmp1 = opReady(pipe[1]->rd1, 1);
           bool tmp2 = opReady(pipe[1]->rd2, 2);
           // if (tmp1) {
