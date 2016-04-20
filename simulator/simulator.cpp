@@ -173,7 +173,9 @@ void Simulator::memOpen() {
 }
 
 void Simulator::memSave() {
-    std::fstream out("/Users/blade/workspace/cs535/output.txt");
+    std::string filename =  QFileDialog::getSaveFileName(this,tr("Dump Memory"),
+               "/Users/blade/workspace/cs535/MIPS_simulator/").toStdString();
+    std::fstream out(filename, std::fstream::out);
     out<<_memsys->dump();
     out.close();
 }

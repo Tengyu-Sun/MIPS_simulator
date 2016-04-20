@@ -236,34 +236,40 @@ The \texttt{step} method calls each stage function in reverse order (from \textt
 \subsection{Assembler }
 The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is output in binary format to a file. 
 
-\subsection{User interface}
-The graphical interface is implemented in QT. A screenshot of the GUI is shown in Figure \ref{fig:gui}. The whole window is the \texttt{Simulator} class. It can be roughly divided into three parts. The left panel is for displaying CPU status which is implemented by \texttt{CPUView} class. Clock cycle, program counter, register files and pipeline can be seen here. There are also several buttons controlling the simulation. Pipeline \texttt{on}/\texttt{off} button can turn on/off the pipeline. \texttt{step} can simulate one clock cycle. \texttt{run} button executes the program at the speed of 100 millisecond one cycle. In this mode, you can see the changes in CPU or memory system easily. You can also stop the simulation whenever you want. \texttt{exe} button runs the program at full speed. Usually you can only see the final status of the program. \texttt{reset} button can clear the pipeline and register files and set the clock and pc to 0. The middle panel is for visualizing cache. It has tabs for switching between different level of caches and on the top, there is an \texttt{on}/\texttt{off} button for turning on/off cache. When the cache is turned off, the tab panel will become invisible. This part is implemented by \texttt{CacheView}. The final right part is \texttt{MemoryView} where you can observe memory data and also change the display format. At the scroll area, you can press the address button and add or remove a breakpoint to the program. If the button is pressed down (turn blue), it means it is a breakpoint.  
+\subsection{User interface and use guide}
+The graphical interface is implemented in QT. A screenshot of the GUI is shown in Figure \ref{fig:gui}. The main window is the \texttt{Simulator} class. It can be roughly divided into three parts. 
+
+The left panel is for displaying CPU status which is implemented by \texttt{CPUView} class. Clock cycle, program counter, register files and pipeline can be seen here. There are also several buttons controlling the simulation. Pipeline \texttt{on}/\texttt{off} button can turn on/off the pipeline. \texttt{step} can simulate one clock cycle. \texttt{run} button executes the program at the speed of 100 millisecond one cycle. In this mode, you can see the changes in CPU or memory system easily. You can also stop the simulation whenever you want. \texttt{exe} button runs the program at full speed. Usually you can only see the final status of the program. \texttt{reset} button can clear the pipeline and register files and set the clock and pc to 0. 
+
+The middle panel is for visualizing cache. It has tabs for switching between different level of caches and on the top, there is an \texttt{on}/\texttt{off} button for turning on/off cache. When the cache is turned off, the tab panel will become invisible. This part is implemented by \texttt{CacheView}. 
+
+Finally, the right part is \texttt{MemoryView} where you can observe memory data and also change the display format. At the scroll area, you can press the address button and add or remove a breakpoint to the program. If the button is pressed down (turn blue), it means it is a breakpoint. 
+
+You can change the memory system configuration using the \texttt{configs} menu. After click the menu, a dialog (Figure \ref{fig:conf}) will show up. New cache and memory configurations can be set here. This dialog is a class of \texttt{ConfigDialog} and is a component of \texttt{Simulator}. The \texttt{Memory System} also provides options to dump the memory data into a file or clear the memory. The \texttt{Program} provides a way to load program direct into memory. 
 
 \begin{figure*}
 \centering
 \includegraphics[width = 0.8\linewidth,keepaspectratio]{gui}
-\caption{GUI}
+\caption{GUI screen shot}
 \label{fig:gui}
 \end{figure*}
 
-\begin{figure*}
+\begin{figure}
 \centering
-\includegraphics[width = 0.5\linewidth,keepaspectratio]{config}
+\includegraphics[width = 0.8\linewidth,keepaspectratio]{config}
 \caption{Configuration Dialog}
 \label{fig:conf}
-\end{figure*}
-
-QT signal and slot
-Mediator
-model view 
+\end{figure}
 
 \subsection{Testing} 
+For memory system, we wrote a program generating sequential or 
 random, sequence access for memory
 small programs for CPU
 
 \section{Performance evaluation}
 \subsection{Benchmark}
-We implemented the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD.
+We designed the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD for performance evaluation. 
+
 \begin{algorithm}[]
 \SetAlgoLined
  l = length of A\;
@@ -314,8 +320,10 @@ Create vector v3 with size 8\;
 
 \subsection{Experiment result}
 
+
 \section{Summary}
+pipeline itself does not add much. memory is the bottle neck. a good cache will boost performance.
 
-
+good software engineer design is crucial. signal slots  add a mediator too many callback links.
 
 \end{document}
