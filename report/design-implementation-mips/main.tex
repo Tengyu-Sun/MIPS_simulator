@@ -43,7 +43,7 @@
 \date{\today}
 \maketitle
 \abstract
-In this report, we design a MIPS-like instruction set and implement a simulator for it. The simulator supports cached memory and pipelined execution. In order to evaluate performance, we design some benchmarks and compare the clock cycles under different simulator configurations.
+In this report, we design a MIPS-like instruction set and implement a simulator for it. The simulator supports cached memory and pipelined execution. In order to evaluate its performance, we design some benchmarks and compare the clock cycles under different simulator configurations.
 
 \section{Introduction}
 This report describes the design and implementation of a RISC instruction set and its simulator. The instruction set is a subset of the MIPS instruction set\footnote{\url{https://imgtec.com/mips/architectures/mips64/}} with some modifications for simplicity. It supports basic instructions such as data transfer, flow control, integer and floating point computations. It also supports the advanced feature SIMD. The simulator is implemented in C++ with QT for the GUI. The backbone consists a hierarchical multi-way associative memory cache system and a pipelined CPU architecture with a Floating Point Unit (FPU) and a Vector Unit (VU). A few benchmark programs including exchange sort and matrix multiplication are used to test the performance of the simulator. An assembler is implemented to bridge the assembly language and the instruction set architecture.
@@ -51,11 +51,11 @@ This report describes the design and implementation of a RISC instruction set an
 The report is structured as follow: in section 2, we will introduce the design of our instruction set and then in section 3, we describe the implementation of the simulator. In section 4, we report the performance evaluation results.  At last, we summary the report in section 5.
 
 \section{Instruction Set Design}
-The instruction set follows the RISC design strategy. It contains 6 types of instructions, namely data transfer, arithmetic and logic, control, floating point, cache and SIMD. The data types supported are 8-bit byte, 32-bit word integer and 32-bit single precision floating point. The memory is byte addressable and the byte ordering is big-endian. Word access requires alignment. 
+The instruction set follows the RISC design strategy. It contains 6 types of instructions, namely data transfer, arithmetic and logical, control, floating point, cache and SIMD. The data types supported are 8-bit byte, 32-bit word integer and 32-bit single precision floating point. The memory is byte addressable and the byte ordering is big-endian. Word access requires alignment. 
 
 There are 16 32-bit general purpose registers for integers (gpr[0] - gpr[15]), 16 32-bit registers for floating point (fpr[0] - fpr[15]), 16 64-bit vector registers for SIMD (vr[0] - v[15]). gpr[0] - gpr[15] and fpr[0] - fpr[15] can be accessed by load/store instructions. gpr[15] is usually used by flow control instructions as the default register for return address. vr[0] - vr[15] can hold 8 8-bit byte integers simultaneously. The vector element index starts from the most-significant bit, that is vr[i][0] is the higher 8 bits of vr[i]. There are also one 32-bit register for program counter (\$pc) and one 32-bit status register (\$status). \$pc cannot be directed accessed and can only be changed by special instructions.
 
-Instructions uses fixed length encoding. Each instruction is 32-bit long. The addressing mode are immediate and displacement. The Register index requires 4 bits and the immediate operand can have up to 17 bits. The operation code is 7-bit long. The first 3 bits are used for distinguishing types. Each instruction can have up to three operands. Like in MIPS, depending on the number of operands, there are three kinds of instructions. Format 1 only has an offset field which is up to 25 bits. Format 2 has two register operands and one immediate. Format 3 has three register operands. The instruction format is described in Table \ref{tab:if}. 
+Instructions use fixed length encoding. Each instruction is 32-bit long. The addressing mode are immediate and displacement. The Register index requires 4 bits and the immediate operand can have up to 17 bits. The operation code is 7-bit long. The first 3 bits are used for distinguishing 6 instruction types. Each instruction can have up to three operands. Like in MIPS, depending on the number of operands, there are three kinds of instructions. Format 1 only has an offset field which is up to 25 bits. Format 2 has two register operands and one immediate. Format 3 has three register operands. The instruction format is described in Table \ref{tab:if}. 
 
 \begin{table}
 \caption{Instruction Format}
@@ -73,13 +73,13 @@ Instructions uses fixed length encoding. Each instruction is 32-bit long. The ad
 \end{tabular}
 \end{table}
 
-The details about the instructions and its encoding are listed in Table \ref{tab:il}.
+The instruction set has 6 types. Type 1 Data transfer are in charge of loading/storing value from/to memory. Type 2 Arithmetic and logical are basic integer computation instructions. They can operate on register operand or immediate value in instructions. Type 3 Control instructions are jump and branching instructions. Also it also include break for debugging. Type 4 Floating point instructions perform floating point calculations and also integer conversion. Type 5 Cache instruction can preload a word into cache without writing to register files. Together with data transfer instructions, they are the only instruction types that can access memory. At last, Type 6 SIMD instructions can do vector operations and transfer values between integer registers and vector registers. Details about each instruction and its description are listed in Table \ref{tab:il}.
 
 \begin{table*}
 \caption{Instruction List}
 \label{tab:il}
 \centering
-\begin{tabular}{|c|l|c|l|l|}
+\begin{tabular}{|c|l|c|l|p{8cm}|}
 \hline
 Type & Instruction & Encoding & Format & Description \\
  \hline
@@ -89,7 +89,7 @@ Type & Instruction & Encoding & Format & Description \\
  & lw & 0010010 & lw \$1,\$2,im & load mem[\$1+im ... \$1+im+3] into gpr[\$2]\\ \cline{2-5}
  & sw & 0011001 & sw \$1,\$2,im & store gpr[\$2] into mem[\$1+im ... \$1+im+3]\\ \cline{2-5}
  & lsp & 0010100 & lsp \$1,\$2,im & load mem[\$1+im ... \$1+im+3] into fpr[\$2] \\ \hline
-\multirow{23}{*}{Arithmetic \& Logic} & add & 1000000 & add \$1,\$2,\$3 & gpr[\$3] = gpr[\$1] + gpr[\$2] \\ \cline{2-5}
+\multirow{23}{*}{Arithmetic \& Logical} & add & 1000000 & add \$1,\$2,\$3 & gpr[\$3] = gpr[\$1] + gpr[\$2] \\ \cline{2-5}
  & sub & 1000001 & sub \$1,\$2,\$3& gpr[\$3] = gpr[\$1] - gpr[\$2] \\ \cline{2-5}  
  & addi & 1010011 & addi \$1,\$2,im & gpr[\$2] = gpr[\$1] + im \\ \cline{2-5}
  & subi & 1010100 & subi \$1,\$2,im &  gpr[\$2] = gpr[\$1] - im \\ \cline{2-5}
@@ -150,45 +150,77 @@ Type & Instruction & Encoding & Format & Description \\
 
 \section{Simulator}
 \subsection{Overview}
-\subsection{Memory and cache system}
-We use a hierarchical structure to build the memory-cache system. We define an abstract class called Storage. Both caches and memory inherits from this parent class. The Storage class contains an integer field defining the number of cycles it needs to execute an instruction, an integer for counting down cycles, a pointer that references to next level of storage object if any, the length of the memory blocks been assigned and the starting address of the memory blocks, and the idle flag indicates if the storage is ready for use. The load method takes three arguments: 32-bit integer address, a pointer to the  blocks in a cache line and the length of the memory blocks to be read. It writes the content in the blocks into the same size of blocks starting at the address. The load method takes the same three arguments as the store method. Instead of writing the blocks into this level of storage, it takes the content from this level of storage from the starting address if any and writes them into the blocks of the upper level of storage. The dump method converts and concatenates the content in the storage into a string. 
+The simulator follows the classic Model View Control (MVC) design. A simplified UML of the simulator is shown in Figure \ref{fig:uml} which gives an overview of the architecture. A \texttt{simulator} class sits in the middle acting as a mediator for the rest classes. The model part consists of a \texttt{CPU} class and a \texttt{MemSys} class. The \texttt{CPU} class handles most of the instruction executions. It also contains a \texttt{FPU} and a \texttt{VU} for dealing with floating point and vector operations. The \texttt{MemSys} controls all the memory accesses. It has a \texttt{Cache} and a \texttt{Memory} as components. \texttt{Cache} and \texttt{Memory} are both inherited from the \texttt{Storage} class which makes memory hierarchies easy to implement. Three view classes \texttt{CPUView}, \texttt{CacheView} and \texttt{MemoryView} display the CPU, cache and memory status. The model-view communications use QT's signal and slot model instead of callback handles. This makes adding new interactions easier. Besides, \texttt{Simulator} also includes a \texttt{ConfigDialog} class which can change the system setting during runtime. We will introduce each part in detail in the next few sections. 
 
 \begin{figure*}
 \centering
-\includegraphics[width = 0.85\linewidth,keepaspectratio]{Cache_and_Memory.png}
+\includegraphics[width = 0.8\linewidth,keepaspectratio]{uml_simulator}
+\caption{Overview of simulator architecture}
+\label{fig:uml}
+\end{figure*}
+
+\subsection{Memory and cache system}
+We use a hierarchical structure to build the memory-cache system. First, we define an abstract class called \texttt{Storage}. Both \texttt{Cache} and \texttt{Memory} inherits from this base class. The \texttt{Storage} class contains an integer field \texttt{cycle} defining the number of cycles it needs to execute an instruction and a pointer \texttt{nextLevel} that references to the next level of storage object, if any. It also supports 3 methods \texttt{load}, \texttt{store} and \texttt{dump}. The \texttt{load} method takes a 32-bit integer address, a pointer to the buffer for storing loaded values and the length of the memory blocks to be read as the arguments. It copies the content in the memory starting at the address into the buffer of the same size. The \texttt{store} method takes the same three arguments as the \texttt{load} method. Instead of loading the blocks into the buffer, it takes the content from the buffer and writes them into the blocks from the starting address. The \texttt{dump} method converts and concatenates the content in the storage into a string for debugging. 
+
+An overview of the cache memory hierarchy is shown in Figure \ref{fig:cache_vs_memory}. 
+\begin{figure*}
+\centering
+\includegraphics[width = 0.8\linewidth,keepaspectratio]{Cache_and_Memory.png}
 \caption{Schematic of memory and cache implementation}
 \label{fig:cache_vs_memory}
 \end{figure*}
 
 \subsubsection{Memory}
-The memory class inherits from the storage class, it implements the methods inherited from the Storage class straightforwardly. The data is saved in an integer array. The pointer to the next level is set to a null pointer. 
+The \texttt{Memory} class inherits from the \texttt{Storage} class, it implements the methods inherited from the \texttt{Storage} class straight forwardly. The data is stored in an byte array so it is byte addressable. The pointer to the next level is set to be a null pointer. 
 
 \subsubsection{Cache}
-We designed and implemented a multiple-way associative cache with write back/through, LRU/Random policies. The cache class also inherits from the Storage class. It consists of multiple cache lines as the basic building stones.
-\paragraph{Cache line}
- The cache line is defined using a struct. It has a boolean field called valid that indicates if this cache line is empty or not, a boolean field called dirty that indicates if the content in the cache line is newer than that in the lower level storage. The lru field indicates its priority in the LRU caching mechanism. It also contains a pointer that references an array of 8-bytes integers that served as the data blocks.
+The \texttt{Cache} class we implemented supports multiple-way associativity with write back/through and LRU/Random policies. The \texttt{Cache} class also inherits from the \texttt{Storage} class. It consists of multiple cache lines as the basic building block.
 
-The cache consists of a two-dimensional array of cache lines. The rows correspond to indices of memory blocks, the columns correspond to the ways associated to the same index. Number of rows * Number of columns = the total size of cache. The size of the cache, number of ways and number of index can be set at the initialization stage.
+\paragraph{Cache line}
+ The cache line is defined using the struct \texttt{Cacheline}. It has a boolean field called \texttt{valid} that indicates if this cache line is empty or not, a boolean field \texttt{dirty} that indicates if the content in the cache line is newer than that in the lower level storage. The \texttt{lru} field indicates its priority in the LRU replacing mechanism. It also contains a pointer \texttt{data} referencing to an array of bytes that served as the data blocks.
+
+The cache consists of a two-dimensional array of \texttt{Cacheline}. The rows correspond to indices of memory blocks and the columns correspond to the ways associated to the same index. The total size of cache is the number of rows times the number of columns. The size of the cache, number of ways and number of index can be set at the initialization stage.
 
 \paragraph{Cache functions}
-The inCache method takes an address and return the cache line if the address exists in the cache or null pointer if not. Since the memory address starts from 0, it calculates the block index as (address / cache line size) and tag value as (address $\%$ cache line size). The block size corresponds to the index in the cache array. Then it iterates all ways of cache lines attached to that index to see if any tag matches the tag of this address. If there is any match, it returns the position of the cache line otherwise -1. 
+The \texttt{inCache} method takes an address and return the cache line position if the address exists in the cache or null if not. Since the memory address starts from 0, it calculates the block index as (address / cache line size) and tag value as (address $\%$ cache line size). The block index corresponds to the index in the cache array. Then it iterates all the ways of cache lines attached to that index to see if any tag matches the tag of this address. If there is any match, it returns the position of the cache line, otherwise null. 
 
-The evict method takes a requested address and return an empty cache line corresponding to that address. It looks up in the cache array and search for an empty line of that address, which means that the valid flag is  false. If such a line exists, it returns the line's position. If all lines are occupied, which means all valid flags is to true, it evicts a line according to the eviction policies. We implemented two eviction policies: (1) random eviction (2) LRU eviction. Under the former scenario, a random number between [0, number of ways - 1] is generated. If the dirty tag of this cache line is true, which means it contains newer value than the lower level of storage, it will be written to the lower level of storage. The cache line is emptied and the position of it is returned. The LRU is implemented as follows. Each cache line at a specific index is assigned a LRU number. When a line at this index is updated, its LRU number is set to 0, all others are incremented by 1. Then higher number means the less recent. 
+The \texttt{evict} method takes a requested address and return an clean cache line position corresponding to that address. It looks up in the cache line array and search for any empty lines of that address, which means that the valid flag is false. If such line exists, it returns its position. If all lines are occupied, which means all valid flags is true, it evicts a line according to the replace policies. We have implemented two replace policies: (1) random eviction (2) LRU eviction. Under the former scenario, a random number between $[0, \mathrm{number\ of\ ways} - 1]$ is generated. If the dirty bit of this cache line is true, which means it contains newer value than the lower level of storage, it will be evicted to the lower level of storage. Then the cache line is emptied and the position of it is returned. The LRU is implemented as follows. Each cache line at a specific index is assigned a LRU number. When a line at this index is updated, its LRU number is set to 0, all others are incremented by 1. Then higher number means the less recently used. 
 
-The load method allows us to read a block starting at a specific address in memory. It first checks if the address exists in the current cache by calling the inCache method. If the returned position is -1, there is a cache miss, it will call the the next level of storage, which can be another cache or the memory. The data will be passed along the hierarchical call chain. The newly loaded data have to be written into the cache. The available space is created by calling the evict method. If the returned position is not -1, there is a cache hit. The data in the current cache line is copied and passed up. 
+The \texttt{load} method allows us to read a block starting at a specific address in memory. It first checks if the address exists in the current cache level by calling the \texttt{inCache} method. If the returned position is null, there is a cache miss. It will call the the next level of storage's \texttt{load} method, which could be another cache or the memory. The data will be passed along the hierarchical call chain. The newly loaded data have to be written into the cache. An empty cache line is created by calling the \texttt{evict} method. If the returned position is not null, there is a cache hit. The data in the current cache line is loaded and passed up. 
 
-The store method allows us to write an array of data blocks into a specific address in memory. First it checks if the cache line corresponding to that address exists in the cache by calling inCache method. If yes, report a cache hit and copy the data blocks into the current level of cache. Two write policies are implemented:(1) write back (2) write through. In the former scenario, just set the dirty flag of the cache line be true, update the LRU numbers, we are all set. In the latter scenario, we still need to call the store method in the next level of storage. If the address doesn't have a corresponding cache line in the cache, report a cache miss. The load method is called to bring the data blocks at the address into cache. Then it's treated like a cache hit case. 
-
-
+The \texttt{store} method allows us to write an array of data blocks into a specific address in memory. First, it also checks if the cache line corresponding to the requested address exists in the cache by calling the \texttt{inCache} method. If yes, it reports a cache hit and copies the data blocks into the current level of cache. Two write policies are implemented: (1) write back (2) write through. In the former scenario, we just set the dirty flag of the cache line to be true, update the LRU numbers and done. In the latter scenario, we still need to call the \texttt{store} method in the next level of storage to pass the data down. If the address doesn't have a corresponding cache line in the cache, we have a cache miss. The \texttt{load} method is called to bring the data blocks from next level into the cache. Then it's treated as in the cache hit case. 
 % multiple-way associative cache with write allocate, LRU 
+ 
+\subsubsection{Memory system}
+The \texttt{MemSys} serves as a mediator between the cache-memory hierarchy and the CPU. Both \texttt{Memory} and \texttt{Cache} are encapsulated in it. The \texttt{MemSys} class exposes four method \texttt{loadWord}, \texttt{loadByte}, \texttt{storeWord}, \texttt{storeByte} for CPU fetching instructions or issuing load/store instruciton. It also keeps a \texttt{countdown} integer for CPU clocking. Each time CPU issues an request, it calculates the required cycles to complete that request and only return the result after that cycle has passed. Internally, \texttt{MemSys} uses a string \texttt{request} keeping the current serving request, if a different request comes in (possible under the pipeline mode), it will not response until it finishes its current serving request. That means this memory system has only one port and only allows a single access at a time. 
 
+The \texttt{MemSys} is also responsible for communication between the \texttt{Simulator} class. Whenever the \texttt{Memory} or \texttt{Cache} changes its internal status, it will emit a notifying signal to the \texttt{Simulator}, and \texttt{Simulator} will in turn call the update methods in the corresponding view. \texttt{Simulator} can talk to the \texttt{MemSys} to change its configuration. When a user modifies the memory system configuration in the \texttt{ConfigDialog} class, the \texttt{Simulator} will notify \texttt{MemSys} through signaling and \texttt{MemSys} will initialize a new setting of cache-memory hierarchy by calling the \texttt{init} method.
+
+\texttt{MemSys} provides one layer of indirection. It hides the implementation of the cache and memory and makes the interfaces between other classes easier to maintain. 
 
 \subsection{CPU}
-\subsection{Pipeline}
-\subsection{Assembler and benchmarks}
-The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes, in the first pass, it strip all the comments that starts with $\#$ symbol and store all labels into a label map, which has the value as the line number. In the second pass, it skips all label-only clause and replace the labels in other clauses with the relative line numbers. It supports type I, II and III instructions. 
-All opcodes can be looked up in a preloaded map. 
+keep pc clock cycle register files pipeline FPU VU
+step 
+\subsubsection{Pipeline}
+5 stage hazard resolve forwarding
+\subsubsection{FPU}
+set cycle floating point calculation 
+\subsubsection{VU}
+vector calculation
 
+\subsection{Assembler }
+The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes. In the first pass, it strip all the comments that starts with $\#$ symbol and store all labels into a label map, which use the line number as value. In the second pass, it replace the labels in other clauses with the relative line numbers and encoding the instructions according to a preloaded map for opcodes. The result is output in binary to a file. 
+
+\subsection{User interface}
+QT signal and slot
+Mediator
+model view 
+
+\subsection{Unit test?} 
+random, sequence access for memory
+
+\section{Performance evaluation}
+\subsection{Benchmark}
 We implemented the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD.
 \begin{algorithm}[]
 \SetAlgoLined
@@ -238,8 +270,8 @@ Create vector v3 with size 8\;
  \caption{2 by 2 Matrix multiplication with SIMD(left matrix L, right matrix R)}
 \end{algorithm}
 
-\subsection{User interface}
-\section{Performance evaluation}
+\subsection{Experiment result}
+
 \section{Summary}
 
 
