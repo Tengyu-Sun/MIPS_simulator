@@ -37,7 +37,6 @@ class MemSys : public QObject {
   void clear() {
       busy = false;
   }
-
   bool isBusy() {
       return busy;
   }
