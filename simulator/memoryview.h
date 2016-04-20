@@ -42,7 +42,7 @@ public:
         rbLayout->addWidget(hexRB);
         rbGroup->setLayout(rbLayout);
 
-        mmLayout->addWidget(new QLabel("index:"), 0, 0);
+        mmLayout->addWidget(new QLabel("address:"), 0, 0);
         mmLayout->addWidget(new QLabel("data"), 0, 1, 1, 3);
         mmLayout->addWidget(rbGroup, 0, 4);
         mmLayout->addWidget(mmsa, 1, 0, 1, 5);
