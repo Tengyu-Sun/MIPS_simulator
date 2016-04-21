@@ -43,12 +43,12 @@
 \date{\today}
 \maketitle
 \abstract
-In this report, we design a MIPS-like instruction set and implement a simulator for it. The simulator supports cached memory and pipelined execution. In order to evaluate its performance, we design some benchmarks and compare the clock cycles under different simulator configurations.
+In this report, we designed a MIPS-like instruction set and implemented a simulator for it. The simulator supports cached memory and pipelined instruction execution. In order to evaluate its performance, we designed some benchmarks and compared the clock cycles under various simulator configurations.
 
 \section{Introduction}
 This report describes the design and implementation of a RISC instruction set and its simulator. The instruction set is a subset of the MIPS instruction set\footnote{\url{https://imgtec.com/mips/architectures/mips64/}} with some modifications for simplicity. It supports basic instructions such as data transfer, flow control, integer and floating point computations. It also supports the advanced feature SIMD. The simulator is implemented in C++ with QT for the GUI. The backbone consists a hierarchical multi-way associative memory cache system and a pipelined CPU architecture with a Floating Point Unit (FPU) and a Vector Unit (VU). A few benchmark programs including exchange sort and matrix multiplication are used to test the performance of the simulator. An assembler is implemented to bridge the assembly language and the instruction set architecture.
 
-The report is structured as follow: in section 2, we will introduce the design of our instruction set and then in section 3, we describe the implementation of the simulator. In section 4, we report the performance evaluation results.  At last, we summary the report in section 5.
+The report is structured as follow: in section 2, we will introduce the design of our instruction set and then in section 3, we will describe the implementation of the simulator. In section 4, we will report the performance evaluation results.  At last, we will summarize the lesson being learned in section 5.
 
 \section{Instruction Set Design}
 The instruction set follows the RISC design strategy. It contains 6 types of instructions, namely data transfer, arithmetic and logical, control, floating point, cache and SIMD. The data types supported are 8-bit byte, 32-bit word integer and 32-bit single precision floating point. The memory is byte addressable and the byte ordering is big-endian. Word access requires alignment. 
@@ -234,7 +234,7 @@ The \texttt{step} method calls each stage function in reverse order (from \textt
 \texttt{VU} deals with vector operations. It also support multi-cycle calculation. Internally, vectors are saved as an array of bytes and computations are element wise. The separation of \texttt{VU} is also for future implementation of multi-issue.
 
 \subsection{Assembler }
-The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is output in binary format to a file. 
+The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is written in binary format into a file. 
 
 \subsection{User interface and use guide}
 The graphical interface is implemented in QT. A screenshot of the GUI is shown in Figure \ref{fig:gui}. The main window is the \texttt{Simulator} class. It can be roughly divided into three parts. 
@@ -261,14 +261,18 @@ You can change the memory system configuration using the \texttt{configs} menu. 
 \label{fig:conf}
 \end{figure}
 
-\subsection{Testing} 
-For memory system, we wrote a program generating sequential or 
-random, sequence access for memory
-small programs for CPU
+\subsection{Testing}
+We tested our simulator mainly through GUI. To test the memory system, we wrote a program generating sequential or random memory accessing instructions. Then we use a small drive program to read in these instructions and directly call the interface provided by \texttt{MemSys}. For sequence access, we precomputed the final cache-memory state manually and compare with the result produced by simulator. In this way, we found a bug in cache line eviction. For random access, since the result is hard to compute by hand, we only see if a large amount of random accesses will break the program. The simulator has passed this stress test.
+
+To test the assembler, we simply wrote a disassembler and to see the results converted from each side match. We also manually encoded the benchmark program exchange sort to see if the assembler works.
+ 
+To test the pipeline, we designed some small programs with data dependencies and branch hazards. We run the simulator step by step to see if it can handle the hazard correctly. In this way, we found some bug in implementing branch instructions.
 
 \section{Performance evaluation}
 \subsection{Benchmark}
 We designed the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD for performance evaluation. 
+
+The exchange sort uses the bubble sort algorithm (Algorithm 1). Core part is two level of \texttt{for} loop. We implement the \texttt{if} condition with \texttt{bgez} instruction and the \texttt{for} loop condition with \texttt{beq} instruction.
 
 \begin{algorithm}[]
 \SetAlgoLined
@@ -280,8 +284,10 @@ We designed the following benchmark programs: (1) Exchange sort (2) Matrix multi
         }{continue;}
     }
  }
- \caption{Exchange sort(integer array A)}
+\caption{Exchange sort (integer array A)}
 \end{algorithm}
+
+Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The \texttt{for} loops are also implemented in \texttt{beq} instruction. 
 
 \begin{algorithm}[]
 \SetAlgoLined
@@ -297,8 +303,10 @@ We designed the following benchmark programs: (1) Exchange sort (2) Matrix multi
     }
  }
  return res\;
- \caption{Matrix multiplication(left matrix L, right matrix R)}
+ \caption{Matrix multiplication (left matrix L, right matrix R)}
 \end{algorithm}
+
+Matrix multiplication with SIMD is a multiplication of two 2 by 2 matrix. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the matrix and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment result, we can see SIMD saves CPU cycles. 
 
 \begin{algorithm}[]
 \SetAlgoLined
@@ -311,7 +319,7 @@ Create vector v3 with size 8\;
  }
   \For{ i from 0 to 3}{
 	\For{ j from 0 to 3}{    	
-        	res[i][j] = v3[(i*2+j)*2] + v3[(i*2+j) + 1]\;
+        	res[i][j] = v3[(i*2+j)*2] + v3[(i*2+j)*2 + 1]\;
     }
  }
  return res\;
@@ -319,11 +327,103 @@ Create vector v3 with size 8\;
 \end{algorithm}
 
 \subsection{Experiment result}
+We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L0 cache is 5 cycle and L1 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
+
+From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is directed map. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L1 cache does not help much compared with expanding the L0 capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
+
+\begin{table}
+\caption{Cache Configurations}
+\label{tab:conf}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+ & level & index size & ways & line size & policy \\ \hline
+ 1 & 1& 4 & 1& 8& -\\
+\hline
+ 2 & 1& 4 & 1& 16 & -\\
+\hline
+ 3 & 1& 4 & 4& 8& LRU\\
+\hline
+ 4 & 1& 4 & 4& 8& Rand\\
+\hline
+ 5 & 1& 4 & 4& 16& LRU\\
+\hline
+ 6 & 1& 4 & 4& 32& LRU\\
+\hline
+ 7 & 2 & 4,16 & 1,2& 8,16& LRU\\
+\hline
+ 8 & 2 & 4,16 & 2,2& 8,16& LRU\\
+\hline
+ 9 & 2 & 4,16 & 1,2& 16,16& LRU\\
+\hline
+ 10 & 2 & 4,16 & 2,2& 16,32& LRU\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table*}
+\caption{Evaluation result}
+\label{tab:res}
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & Exchange Sort & Matrix Multiplication & Matrix Multiplication with SIMD \\
+ \hline
+baseline & 72451 & 22223 & 10414 \\
+\hline
+cache configure 1& 55696 & 14608& 6624 \\
+\hline
+cache configure 2 & 28796 & 7308 & 4824\\
+\hline
+cache configure 3 & 7496& 5308& 4924\\
+\hline
+cache configure 4 & 30596& 11408& 4824\\
+\hline
+cache configure 5& 6296& 3108 & 2824 \\
+\hline
+cache configure 6 & 5796 & 2408 & 1824 \\
+\hline
+cache configure 7 & 16416 & 5708 & 4004\\
+\hline
+cache configure 8 & 11336 & 5208 & 3724\\
+\hline
+cache configure 9 & 11036 & 4248 & 3644 \\
+\hline
+cache configure 10 & 6036 & 2848 & 2244 \\
+\hline
+pipeline &70847 & 21692&10178 \\
+\hline
+pipeline + cache configure 1 & 47592 & 15077 & 7788\\
+\hline 
+pipeline + cache configure 2 & 18492 & 7077 & 4688\\
+\hline
+pipeline + cache configure 3 & 5792 & 4677 & 4688\\
+\hline
+pipeline + cache configure 4 & 28092 & 10977 & 4588\\
+\hline
+pipeline + cache configure 5 & 4692 & 2477 & 2588\\
+\hline 
+pipeline + cache configure 6 & \textbf{4192}& \textbf{1877} & \textbf{1588}\\
+\hline
+pipeline + cache configure 7 & 13512& 5277& 4048\\
+\hline
+pipeline + cache configure 8 & 8452& 4477& 3508\\
+\hline
+pipeline + cache configure 9 & 7692& 3677& 3428\\
+\hline
+pipeline + cache configure 10 & 4432& 2297& 2008\\
+\hline
+\end{tabular}
+\end{table*}
 
 
 \section{Summary}
-pipeline itself does not add much. memory is the bottle neck. a good cache will boost performance.
+We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
 
-good software engineer design is crucial. signal slots  add a mediator too many callback links.
+For the experiment result, we learned that pipeline has to work with cache to provide better performance and memory is usually the bottle neck of the program. A good cache will help boost the performance a lot. 
+
+During the implementation of the simulator, we learned that having a good design at first is extremely important. For example, before adapting the signal and slot model and using simulator as a mediator, we used the callback function and let classes directly talk to each other. After many functions were added, the interaction between them became to0 complicated to maintain. But usually it is hard to have a good design at the beginning, so redesign early is also very helpful. 
+
+We also learned testing is hard and manually test is not practical and efficient. The memory is relatively easy to test because we can treat it like a black box. But cache and CPU is hard to use blackbox test. Manually writing test is time-consuming and makes it less efficient in debugging.
 
 \end{document}
