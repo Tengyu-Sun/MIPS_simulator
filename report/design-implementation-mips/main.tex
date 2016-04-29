@@ -293,56 +293,57 @@ We tested our three benchmarks under 10 cache configurations and with or without
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
- & Exchange Sort & Matrix Multiplication & Matrix Multiplication with SIMD \\
- \hline
-baseline & 72451 & 22223 & 10414 \\
+ Setting & Exchange Sort & Matrix Multiplication  & Matrix Multiplication with SIMD\\
+
+ & & ($4\times8 * 8 \times 4$) & ($4\times8 * 8 \times 4$) \\ \hline
+baseline & 72451 & 223956 & 48580 \\
 \hline
-cache configure 1& 55696 & 14608& 6624 \\
+cache configure 1& 55696 & 135996 & 35860 \\
 \hline
-cache configure 2 & 28796 & 7308 & 4824\\
+cache configure 2 & 28796 & 75696 & 23560\\
 \hline
-cache configure 3 & 7496& 5308& 4924\\
+cache configure 3 & 7496& 41596& 14460\\
 \hline
-cache configure 4 & 30596& 11408& 4824\\
+cache configure 4 & 30596& 123896& 32560\\
 \hline
-cache configure 5& 6296& 3108 & 2824 \\
+cache configure 5& 6296& 20096 & 7260 \\
 \hline
-cache configure 6 & 5796 & 2408 & 1824 \\
+cache configure 6 & 5796 & 17796 & 5260 \\
 \hline
-cache configure 7 & 16416 & 5708 & 4004\\
+cache configure 7 & 16416 & 43676 & 13360\\
 \hline
-cache configure 8 & 11336 & 5208 & 3724\\
+cache configure 8 & 11336 & 33456 & 11220\\
 \hline
-cache configure 9 & 11036 & 4248 & 3644 \\
+cache configure 9 & 11036 & 31616 & 10900 \\
 \hline
-cache configure 10 & 6036 & 2848 & 2244 \\
+cache configure 10 & 6036 & 21236 & 7160 \\
 \hline
-pipeline &70847 & 21692&10178 \\
+pipeline &70847 & 218620 & 47500 \\
 \hline
-pipeline + cache configure 1 & 47592 & 15077 & 7788\\
+pipeline + cache configure 1 & 47592 & 135960 & 34680\\
 \hline 
-pipeline + cache configure 2 & 18492 & 7077 & 4688\\
+pipeline + cache configure 2 & 18492 & 73960 & 23580\\
 \hline
-pipeline + cache configure 3 & 5792 & 4677 & 4688\\
+pipeline + cache configure 3 & 5792 & 34460 & 12380\\
 \hline
-pipeline + cache configure 4 & 28092 & 10977 & 4588\\
+pipeline + cache configure 4 & 28092 & 123560 & 30680\\
 \hline
-pipeline + cache configure 5 & 4692 & 2477 & 2588\\
+pipeline + cache configure 5 & 4692 & 14660 & 6080\\
 \hline 
-pipeline + cache configure 6 & \textbf{4192}& \textbf{1877} & \textbf{1588}\\
+pipeline + cache configure 6 & \textbf{4192}& \textbf{12560} & \textbf{4080}\\
 \hline
-pipeline + cache configure 7 & 13512& 5277& 4048\\
+pipeline + cache configure 7 & 13512& 39300& 12160\\
 \hline
-pipeline + cache configure 8 & 8452& 4477& 3508\\
+pipeline + cache configure 8 & 8452& 28900& 10140\\
 \hline
-pipeline + cache configure 9 & 7692& 3677& 3428\\
+pipeline + cache configure 9 & 7692& 26900& 9940\\
 \hline
-pipeline + cache configure 10 & 4432& 2297& 2008\\
+pipeline + cache configure 10 & 4432& 15420& 5800\\
 \hline
 \end{tabular}
 \end{table*}
 
-From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L2 cache does not help much compared with expanding the number capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
+From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 2  running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L2 cache does not help much compared with expanding the number capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
 
 \section{Summary}
 We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
