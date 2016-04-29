@@ -24,7 +24,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \newcommand{\subparagraph}{}
-
+\usepackage{float}
 \usepackage{multirow}
 \usepackage{tabularx}
 \graphicspath{{./figures/}}
@@ -46,20 +46,21 @@
 In this report, we designed a MIPS-like instruction set and implemented a simulator for it. The simulator supports cached memory and pipelined instruction execution. In order to evaluate its performance, we designed some benchmarks and compared the clock cycles under various simulator configurations.
 
 \section{Introduction}
-This report describes the design and implementation of a RISC instruction set and its simulator. The instruction set is a subset of the MIPS instruction set\footnote{\url{https://imgtec.com/mips/architectures/mips64/}} with some modifications for simplicity. It supports basic instructions such as data transfer, flow control, integer and floating point computations. It also supports the advanced feature SIMD. The simulator is implemented in C++ with QT for the GUI. The backbone consists a hierarchical multi-way associative memory cache system and a pipelined CPU architecture with a Floating Point Unit (FPU) and a Vector Unit (VU). A few benchmark programs including exchange sort and matrix multiplication are used to test the performance of the simulator. An assembler is implemented to bridge the assembly language and the instruction set architecture.
+This report describes the design and implementation of a RISC instruction set and its simulator. The instruction set is a subset of the MIPS instruction set\footnote{\url{https://imgtec.com/mips/architectures/mips64/}} with some modifications for simplicity. It supports basic instructions such as data transfer, control, integer and floating point computations as well as the advanced feature SIMD. The simulator is implemented in C++ with QT for the GUI. The backbone consists of a hierarchical multi-way associative memory cache system and a pipelined CPU architecture with a Floating Point Unit (FPU) and a Vector Unit (VU). A few benchmarks including exchange sort and matrix multiplication are used to test the performance of the simulator.
 
-The report is structured as follow: in section 2, we will introduce the design of our instruction set and then in section 3, we will describe the implementation of the simulator. In section 4, we will report the performance evaluation results.  At last, we will summarize the lesson being learned in section 5.
+The report is structured as follows: in section 2, we will introduce the design of our instruction set and in section 3, we will describe the implementation of the simulator. Then in section 4, we will report the performance evaluation results.  At last, we will summarize the lessons learned in section 5.
 
 \section{Instruction Set Design}
-The instruction set follows the RISC design strategy. It contains 6 types of instructions, namely data transfer, arithmetic and logical, control, floating point, cache and SIMD. The data types supported are 8-bit byte, 32-bit word integer and 32-bit single precision floating point. The memory is byte addressable and the byte ordering is big-endian. Word access requires alignment. 
+The instruction set follows the RISC design strategy. It contains 6 types of instructions, i.e., data transfer, arithmetic and logical, control, floating point, cache and SIMD. The data types supported are 8-bit byte, 32-bit word integer and 32-bit single precision floating point. The memory is byte addressable and the byte ordering is big-endian. Word access requires 4-byte alignment. 
 
-There are 16 32-bit general purpose registers for integers (gpr[0] - gpr[15]), 16 32-bit registers for floating point (fpr[0] - fpr[15]), 16 64-bit vector registers for SIMD (vr[0] - v[15]). gpr[0] - gpr[15] and fpr[0] - fpr[15] can be accessed by load/store instructions. gpr[15] is usually used by flow control instructions as the default register for return address. vr[0] - vr[15] can hold 8 8-bit byte integers simultaneously. The vector element index starts from the most-significant bit, that is vr[i][0] is the higher 8 bits of vr[i]. There are also one 32-bit register for program counter (\$pc) and one 32-bit status register (\$status). \$pc cannot be directed accessed and can only be changed by special instructions.
+There are 16 32-bit general purpose registers for integers (gpr[0] - gpr[15]), 16 32-bit registers for floating point (fpr[0] - fpr[15]), and 16 64-bit vector registers for SIMD (vr[0] - v[15]). general purpose and floating point registers can be accessed by load/store instructions. gpr[15] is usually used by flow control instructions as the default register for return address. vector registers can hold 8 8-bit byte integers simultaneously. The vector element index starts from the most-significant bit, that is vr[i][0] is the higher 8 bits of vr[i]. There are also one 32-bit register for program counter (\$pc) and one 32-bit status register (\$status). \$pc cannot be directly accessed and can only be changed by special instructions.
 
-Instructions use fixed length encoding. Each instruction is 32-bit long. The addressing mode are immediate and displacement. The Register index requires 4 bits and the immediate operand can have up to 17 bits. The operation code is 7-bit long. The first 3 bits are used for distinguishing 6 instruction types. Each instruction can have up to three operands. Like in MIPS, depending on the number of operands, there are three kinds of instructions. Format 1 only has an offset field which is up to 25 bits. Format 2 has two register operands and one immediate. Format 3 has three register operands. The instruction format is described in Table \ref{tab:if}. 
+Instructions use fixed length encoding. Each instruction is 32 bits long. The addressing modes are immediate and displacement. The register index requires 4 bits and the immediate operand can have up to 17 bits. The operation code is 7 bits long. The first 3 bits are used for distinguishing 6 instruction types. Each instruction can have up to three operands. Like in MIPS, depending on the number of operands, there are three kinds of instructions. Format 1 only has an offset field which is up to 25 bits. Format 2 has two register operands and one immediate. Format 3 has three register operands. The instruction format is described in Table \ref{tab:if}. 
 
-\begin{table}
+\begin{table}[!ht]
 \caption{Instruction Format}
 \label{tab:if}
+\centering
 \begin{tabular}{|c|c|c|c|c|c|}
 \hline
  Format & \multicolumn{5}{c|}{Field (32 bits)}\\
@@ -73,9 +74,286 @@ Instructions use fixed length encoding. Each instruction is 32-bit long. The add
 \end{tabular}
 \end{table}
 
-The instruction set has 6 types. Type 1 Data transfer are in charge of loading/storing value from/to memory. Type 2 Arithmetic and logical are basic integer computation instructions. They can operate on register operand or immediate value in instructions. Type 3 Control instructions are jump and branching instructions. Also it also include break for debugging. Type 4 Floating point instructions perform floating point calculations and also integer conversion. Type 5 Cache instruction can preload a word into cache without writing to register files. Together with data transfer instructions, they are the only instruction types that can access memory. At last, Type 6 SIMD instructions can do vector operations and transfer values between integer registers and vector registers. Details about each instruction and its description are listed in Table \ref{tab:il}.
+The instruction set has 6 types. Data transfer are in charge of loading/storing value from/to memory. Arithmetic and logical are basic integer computation instructions. They can operate on register operand or immediate value in instructions. Control are jump and branching instructions. It also includes breakpoint for debugging. Floating point instructions perform floating point calculations and also integer conversion. Cache instruction can preload a word into cache without affecting register files. At last, SIMD instructions can do vector operations and transfer values between integer registers and vector registers. Details about each instruction and its description are listed in Table \ref{tab:il}.
 
-\begin{table*}
+\section{Simulator}
+\subsection{Overview}
+The simulator follows the classic Model View Control (MVC) design. A simplified UML of the simulator is shown in Figure \ref{fig:uml} which gives an overview of the architecture. A \texttt{simulator} class sits in the middle acting as a coordinator for the rest of the classes. The model part consists of a \texttt{CPU} class and a \texttt{MemSys} class. The \texttt{CPU} class handles most of the instruction executions. It also contains a \texttt{FPU} and a \texttt{VU} for dealing with floating point and vector operations. The \texttt{MemSys} controls all the memory accesses. It has a \texttt{Cache} and a \texttt{Memory} as components. \texttt{Cache} and \texttt{Memory} are both inherited from the \texttt{Storage} class which makes memory hierarchies easy to implement. Three view classes \texttt{CPUView}, \texttt{CacheView} and \texttt{MemoryView} display the CPU, cache and memory status. The model-view communications use QT's signal and slot model instead of callback handlers. This makes adding new interactions easier. Besides, \texttt{Simulator} also includes a \texttt{ConfigDialog} class which can change the system setting during runtime. We will introduce each part in detail in the next few sections. 
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width = 0.7\linewidth,keepaspectratio]{uml_simulator}
+\caption{Overview of simulator architecture}
+\label{fig:uml}
+\end{figure*}
+
+\subsection{Memory and cache system}
+We use a hierarchical structure to build the memory-cache system. First, we define an abstract class called \texttt{Storage}. Both \texttt{Cache} and \texttt{Memory} inherits from this base class. The \texttt{Storage} class contains an integer field \texttt{cycle} defining the number of cycles it needs to execute an instruction and a pointer \texttt{nextLevel} that references to the next level of storage object, if any. It also supports 3 methods \texttt{load}, \texttt{store} and \texttt{dump}. The \texttt{load} method takes a 32-bit integer address, a pointer to the buffer for storing loaded values and the length of the memory blocks to be read as the arguments. It copies the content in the memory starting at the address into the buffer of the same size. The \texttt{store} method takes the same three arguments as the \texttt{load} method. Instead of loading the blocks into the buffer, it takes the content from the buffer and writes them into the blocks from the starting address. The \texttt{dump} method converts and concatenates the content in the storage into a string for debugging.  
+
+\subsubsection{Memory}
+The \texttt{Memory} class inherits from the \texttt{Storage} class, it implements the methods inherited from the \texttt{Storage} class straight forwardly. The data is stored in an byte array so it is byte addressable. The pointer to the next level is set to be a null pointer. 
+
+\subsubsection{Cache}
+An overview of the cache memory hierarchy is shown in Figure \ref{fig:cache_vs_memory}. The \texttt{Cache} class we implemented supports multiple-way associativity with write back/through and LRU/Random policies. The \texttt{Cache} class also inherits from the \texttt{Storage} class. It consists of multiple cache lines as the basic building block.
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width = 0.7\linewidth,keepaspectratio]{Cache_and_Memory.png}
+\caption{Schematic of memory and cache implementation}
+\label{fig:cache_vs_memory}
+\end{figure*}
+
+\paragraph{Cache line}
+ The cache line is defined using the struct \texttt{Cacheline}. It has a boolean field called \texttt{valid} that indicates if this cache line is empty or not, a boolean field \texttt{dirty} that indicates if the content in the cache line is newer than that in the lower level storage. The \texttt{lru} field indicates its priority in the LRU replacing mechanism. It also contains a pointer \texttt{data} referencing to an array of bytes that served as the data blocks.
+
+The cache consists of a two-dimensional array of \texttt{Cacheline}. The rows correspond to indices of memory blocks and the columns correspond to the ways associated to the same index. The total size of cache is the number of rows times the number of columns. The size of the cache, number of ways and number of index can be set at the initialization stage.
+
+\paragraph{Cache functions}
+The \texttt{inCache} method takes an address and returns the cache line position if the address exists in the cache or null if not. Since the memory address starts from 0, it calculates the block index as (address / cache line size) and tag value as (address $\%$ cache line size). The block index corresponds to the index in the cache array. Then it iterates all the ways of cache lines attached to that index to see if any tag matches the tag of this address. If there is any match, it returns the position of the cache line, otherwise null. 
+
+The \texttt{evict} method takes a requested address and returns a clean cache line position corresponding to that address. It looks up in the cache line array and searches for any empty lines of that address, which means that the valid flag is false. If such line exists, it returns its position. If all lines are occupied, which means all valid flags are true, it evicts a line according to the replace policies. We have implemented two replace policies: (1) random eviction (2) LRU eviction. Under the former scenario, a random number between $[0, \mathrm{number\ of\ ways} - 1]$ is generated. If the dirty bit of this cache line is true, which means it contains newer value than the lower level of storage, it will be evicted to the lower level of storage. Then the cache line is emptied and the position of it is returned. The LRU is implemented as follows. Each cache line at a specific index is assigned an LRU number. When a line at this index is updated, all other lines that have lower LRU numbers are incremented by 1. Then the visited line's LRU number is set to 0. The higher number means less recently used. 
+
+The \texttt{load} method allows us to read a block starting at a specific address in memory. It first checks if the address exists in the current cache level by calling the \texttt{inCache} method. If the returned position is null, there is a cache miss. It will call the the next level of storage's \texttt{load} method, which could be another cache or the memory. The data will be passed along the hierarchical call chain. The newly loaded data have to be written into the cache. An empty cache line is created by calling the \texttt{evict} method. If the returned position is not null, there is a cache hit. The data in the current cache line is loaded and passed up. 
+
+The \texttt{store} method allows us to write an array of data blocks into a specific address in memory. First, it also checks if the cache line corresponding to the requested address exists in the cache by calling the \texttt{inCache} method. If yes, it reports a cache hit and copies the data blocks into the current level of cache. Two write policies are implemented: (1) write back (2) write through. In the former scenario, we just set the dirty flag of the cache line to be true, update the LRU numbers and done. In the latter scenario, we still need to call the \texttt{store} method in the next level of storage to pass the data down. If the address doesn't have a corresponding cache line in the cache, we have a cache miss. The \texttt{load} method is called to bring the data blocks from next level into the cache. Then it's treated as in the cache hit case. 
+% multiple-way associative cache with write allocate, LRU 
+ 
+\subsubsection{Memory system}
+The \texttt{MemSys} acts as a mediator between the cache-memory hierarchy and the CPU. Both \texttt{Memory} and \texttt{Cache} are encapsulated in it. The \texttt{MemSys} class exposes four methods \texttt{loadWord}, \texttt{loadByte}, \texttt{storeWord}, \texttt{storeByte} for CPU fetching instructions or issuing load/store instruciton. It also keeps a \texttt{countdown} integer for CPU clocking. Each time CPU issues an request, it calculates the required cycles to complete that request and only return the result after that cycle has passed. Internally, \texttt{MemSys} uses a string \texttt{request} keeping the current serving request, if a different request comes in (possible under the pipeline mode), it will not respond until it finishes its current serving request. That means this memory system has only one port and only allows a single access at a time. 
+
+The \texttt{MemSys} is also responsible for communication between the \texttt{Simulator} class. Whenever the \texttt{Memory} or \texttt{Cache} changes its internal status, it will emit a notifying signal to the \texttt{Simulator}, and \texttt{Simulator} will in turn call the update methods in the corresponding view. \texttt{Simulator} can talk to the \texttt{MemSys} to change its configuration. When a user modifies the memory system configuration in the \texttt{ConfigDialog} class, the \texttt{Simulator} will notify \texttt{MemSys} through signaling and \texttt{MemSys} will initialize a new setting of cache-memory hierarchy by calling the \texttt{init} method.
+
+\texttt{MemSys} provides one layer of indirection. It hides the implementation of the cache and memory and makes the interfaces between other classes easier to maintain. 
+
+\subsection{CPU}
+The \texttt{CPU} class is where most of the simulation happens. This class keeps a \texttt{clk} field for clock cycle, a \texttt{pc} field for the program counter, and also the register files and pipeline states. It maintains a pointer to the \texttt{MemSys} for memory access and pointers to a \texttt{FPU} and a \texttt{VU} for special instructions. Besides, it can communicate with \texttt{Simulator} to notify the update of CPU status and get the commands from the user interface.
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.7\linewidth,keepaspectratio]{pipeline}
+\caption{Pipeline structure}
+\label{fig:pip}
+\end{figure}
+
+\begin{figure*}[!ht]
+\centering
+\includegraphics[width = 0.7\linewidth,keepaspectratio]{gui}
+\caption{GUI screenshot}
+\label{fig:gui}
+\end{figure*}
+
+\subsubsection{Pipeline}
+The \texttt{CPU} class uses a standard 5-stage MIPS pipeline. Every instruction can be completed in 5 cycles: instruction fetch cycle (ifc), instruction decode cycle (idc), execution cycle (exc), memory access cycle (mem) and write-back cycle (wbc). There are five methods \texttt{ifc}, \texttt{idc}, \texttt{exc}, \texttt{mem} and \texttt{wbc} implementing these cycles. The pipeline \texttt{pipe} is implemented as a array of length 5. Each position in the array corresponds to a execution stage (see Figure \ref{fig:pip}). Elements in the array are the structure \texttt{Instruction}. \texttt{Instruction} keeps information about the instruction being executed. It resembles the registers between pipeline stages in hardware. Some key fields are \texttt{opcode} for keeping instruction code, \texttt{rd1}, \texttt{rd2}, \texttt{rd3}, \texttt{imm} for storing operands, \texttt{stage} for indicating execution stage and \texttt{aluoutput}, \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd} for keeping execution cycle result. The execution of the instruction is simulated by passing the structure through the \texttt{pipe} array and filling its fields in different stages. 
+
+\paragraph{ifc}
+Fetch instructions from \texttt{MemSys} by calling \texttt{loadWord} method and create a \texttt{Instruction} instance. If in a pipelined execution mode, examine the instruction at \texttt{mem} stage to see if it is a branch. If it is a branch and it is taken, change the \texttt{pc} accordingly. Otherwise increase the \texttt{pc} by 4. If the next stage in \texttt{pipe} is empty, change its \texttt{stage} to 1 and pass the structure to the next stage.  
+
+\paragraph{idc}
+Decode the instruction. First extract the 7 bits to get the instruction opcode, and then decode the rest operands according to the format (Table \ref{tab:if}). After decoding, load operands from register files. If under the pipelining mode, we need to resolve potential data hazards. In the 5-stage pipeline setting, we only need consider read after write (RAW) hazard since the write back cycle is at the last stage and only one instruction can write at a time. Examine every instruction in the pipeline after idc stage and see if its destination register is one of the operands we need to read. If the instruction has finished its execution, we can forward the result in \texttt{aluoutput} (or \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd}) to the operand we need. Otherwise, we need to stall the pipeline, and wait for the operand to be ready. When the operands are ready, we can pass the instruction to the next stage.
+
+\paragraph{exc}
+Execute the instruction according to its opcode. If it only needs integer computation, we can finished the execution within the \texttt{CPU} class, otherwise, we need to forward the instruction to \texttt{FPU} or \texttt{VU} for special handling. In \texttt{CPU}, we can do data transfer, arithmetic and logical, control and cache instruction execution. If it is data transfer, we compute the memory address and store it in \texttt{aluoutput}. If it is arithmetic and logical, we save the computation result in \texttt{aluoutput}. And if it is control, we calculate the new \texttt{pc} address and put it in \texttt{aluoutput}. If it is floating point, we forward the instruction to \texttt{FPU} and wait for the result to store in \texttt{fpuoutput}. Similarly, SIMD instruction will be forwarded to \texttt{VU} and result saved in \texttt{vuoutput}. After computation, the instruction is passed to the mem stage.
+
+\paragraph{mem}
+This stage is only for data transfer instructions. If it is a load instruction, we load memory use the address stored in \texttt{aluoutput} and put it into \texttt{lmd}. If it is a store instruction, we store the value in operand to the address in \texttt{aluoutput}. Other type of instructions can directly pass this stage if the next stage is empty.
+
+\paragraph{wbc}
+Write \texttt{aluoutput} (or \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd}) to destination registers and destroy the \texttt{Instruction} structure.
+
+The \texttt{step} method calls each stage function in reverse order (from \texttt{wbc} to \texttt{ifc}) and increase the \texttt{clk} by 1 afterwards. This completes one step of simulation. To simulating the whole program, we can call \texttt{step} until there are no more instructions. 
+
+
+\subsubsection{FPU}
+\texttt{FPU} handles floating point operations. It can simulate multi-cycle floating point calculations. Internally, it has a \texttt{cycle} and \texttt{countdown} field. Like \texttt{MemSys}, it will only respond requests from \texttt{CPU} after certain number of cycles. Since it is separated from \texttt{CPU}, for future extension, the pipeline can support multi-issue easily. 
+
+\subsubsection{VU}
+\texttt{VU} deals with vector operations. It also support multi-cycle calculation. Internally, vectors are saved as an array of bytes and computations are element wise. The separation of \texttt{VU} is also for future implementation of multi-issue.
+
+\subsection{User interface and use guide}
+The graphical interface is implemented in QT. A screenshot of the GUI is shown in Figure \ref{fig:gui}. The main window is the \texttt{Simulator} class. It can be roughly divided into three parts. 
+
+The left panel is for displaying CPU status which is implemented by \texttt{CPUView} class. Clock cycle, program counter, register files and pipeline can be seen here. There are also several buttons controlling the simulation. Pipeline \texttt{on}/\texttt{off} button can turn on/off the pipeline. \texttt{step} can simulate one clock cycle. \texttt{run} button executes the program at the speed of 100 millisecond one cycle. In this mode, you can see the changes in CPU or memory system easily. You can also stop the simulation whenever you want. \texttt{exe} button runs the program at full speed. Usually you can only see the final status of the program. \texttt{reset} button can clear the pipeline and register files and set the clock and pc to 0. 
+
+The middle panel is for visualizing cache. It has tabs for switching between different level of caches and on the top, there is an \texttt{on}/\texttt{off} button for turning on/off cache. When the cache is turned off, the tab panel will become invisible. This part is implemented by \texttt{CacheView}. 
+
+Finally, the right part is \texttt{MemoryView} where you can observe memory data and also change the display format. At the scroll area, you can press the address button and add or remove a breakpoint to the program. If the button is pressed down (turn blue), it means it is a breakpoint. 
+
+You can change the memory system configuration using the \texttt{configs} menu. After click the menu, a dialog (Figure \ref{fig:conf}) will show up. New cache and memory configurations can be set here. This dialog is a class of \texttt{ConfigDialog} and is a component of \texttt{Simulator}. The \texttt{Memory System} also provides options to dump the memory data into a file or clear the memory. The \texttt{Program} provides a way to load program direct into memory. 
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 0.8\linewidth,keepaspectratio]{config}
+\caption{Configuration Dialog}
+\label{fig:conf}
+\end{figure}
+
+\subsection{Assembler }
+The assembler takes the instructions in assembly language and encodes them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is written in binary format into a file. 
+
+
+\subsection{Testing}
+We tested our simulator mainly through GUI. To test the memory system, we wrote a program generating sequential or random memory accessing instructions. Then we use a small drive program to read in these instructions and directly call the interface provided by \texttt{MemSys}. For sequence access, we precomputed the final cache-memory state manually and compare with the result produced by simulator. In this way, we found a bug in cache line eviction. For random access, since the result is hard to compute by hand, we only see if a large amount of random accesses will break the program. The simulator has passed this stress test.
+
+To test the assembler, we simply wrote a disassembler and to see the results converted from each side match. We also manually encoded the benchmark program exchange sort to see if the assembler works.
+ 
+To test the pipeline, we designed some small programs with data dependencies and branch hazards. We run the simulator step by step to see if it can handle the hazard correctly. In this way, we found some bug in implementing branch instructions.
+
+\section{Performance evaluation}
+\subsection{Benchmark}
+We designed the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD for performance evaluation. 
+
+The exchange sort uses the bubble sort algorithm (Algorithm 1). Core part is two level of \texttt{for} loop. We implement the \texttt{if} condition with \texttt{bgez} instruction and the \texttt{for} loop condition with \texttt{beq} instruction.
+
+\begin{algorithm}[h]
+\SetAlgoLined
+ integer array A; l = length of A\;
+ \For{ i from 0 to l - 2}{
+	\For{ j from i + 1 to l - 1} {
+    	\eIf{A[i] > A[j]}{
+        	swap A[i] and A[j]\;
+        }{continue;}
+    }
+ }
+\caption{Exchange sort}
+\end{algorithm}
+
+Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The \texttt{for} loops are also implemented in \texttt{beq} instruction. 
+
+\begin{algorithm}[h]
+\SetAlgoLined
+ left matrix L, right matrix R \;
+ a = number of rows in L, b = number of columns in L\;  
+ c = number of columns in R\;
+ Create result matrix res of size a*c, initialized with 0s\;
+ \For{ i from 0 to a - 1}{
+	\For{ j from 0 to c - 1}{
+    	\For{ k from 0 to b - 1}{
+        	res[i][j] += L[i][k]*R[k][j]\;
+        }
+    }
+ }
+ return res\;
+ \caption{Matrix multiplication}
+\end{algorithm}
+
+Matrix multiplication with SIMD is a multiplication of two 2 by 2 matrix. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the matrix and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment result, we can see SIMD saves CPU cycles. 
+
+\begin{algorithm}[h]
+\SetAlgoLined
+ left matrix L, right matrix R\;
+ Flatten L into a vector v1 of size 8 by rows\;
+ Flatten R into a vector v2 of size 8 by columns\;
+ Create result matrix res of size 4, initialized with 0s\; 
+ Create vector v3 with size 8\;
+ \For{ i from 0 to 7}{
+	v3[i] = v1[i] * v2[i]\;
+ }
+  \For{ i from 0 to 3}{
+	\For{ j from 0 to 3}{    	
+        	res[i][j] = v3[(i*2+j)*2] + v3[(i*2+j)*2 + 1]\;
+    }
+ }
+ return res\;
+ \caption{2 by 2 Matrix multiplication with SIMD}
+\end{algorithm}
+
+\subsection{Experiment result}
+We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L0 cache is 5 cycle and L1 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
+\begin{table}[!ht]
+\caption{Cache Configurations}
+\label{tab:conf}
+\centering
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+ & level & index size & ways & line size & policy \\ \hline
+ 1 & 1& 4 & 1& 8& -\\
+\hline
+ 2 & 1& 4 & 1& 16 & -\\
+\hline
+ 3 & 1& 4 & 4& 8& LRU\\
+\hline
+ 4 & 1& 4 & 4& 8& Rand\\
+\hline
+ 5 & 1& 4 & 4& 16& LRU\\
+\hline
+ 6 & 1& 4 & 4& 32& LRU\\
+\hline
+ 7 & 2 & 4,16 & 1,2& 8,16& LRU\\
+\hline
+ 8 & 2 & 4,16 & 2,2& 8,16& LRU\\
+\hline
+ 9 & 2 & 4,16 & 1,2& 16,16& LRU\\
+\hline
+ 10 & 2 & 4,16 & 2,2& 16,32& LRU\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table*}[!ht]
+\caption{Evaluation result}
+\label{tab:res}
+\centering
+\begin{tabular}{|c|c|c|c|}
+\hline
+ & Exchange Sort & Matrix Multiplication & Matrix Multiplication with SIMD \\
+ \hline
+baseline & 72451 & 22223 & 10414 \\
+\hline
+cache configure 1& 55696 & 14608& 6624 \\
+\hline
+cache configure 2 & 28796 & 7308 & 4824\\
+\hline
+cache configure 3 & 7496& 5308& 4924\\
+\hline
+cache configure 4 & 30596& 11408& 4824\\
+\hline
+cache configure 5& 6296& 3108 & 2824 \\
+\hline
+cache configure 6 & 5796 & 2408 & 1824 \\
+\hline
+cache configure 7 & 16416 & 5708 & 4004\\
+\hline
+cache configure 8 & 11336 & 5208 & 3724\\
+\hline
+cache configure 9 & 11036 & 4248 & 3644 \\
+\hline
+cache configure 10 & 6036 & 2848 & 2244 \\
+\hline
+pipeline &70847 & 21692&10178 \\
+\hline
+pipeline + cache configure 1 & 47592 & 15077 & 7788\\
+\hline 
+pipeline + cache configure 2 & 18492 & 7077 & 4688\\
+\hline
+pipeline + cache configure 3 & 5792 & 4677 & 4688\\
+\hline
+pipeline + cache configure 4 & 28092 & 10977 & 4588\\
+\hline
+pipeline + cache configure 5 & 4692 & 2477 & 2588\\
+\hline 
+pipeline + cache configure 6 & \textbf{4192}& \textbf{1877} & \textbf{1588}\\
+\hline
+pipeline + cache configure 7 & 13512& 5277& 4048\\
+\hline
+pipeline + cache configure 8 & 8452& 4477& 3508\\
+\hline
+pipeline + cache configure 9 & 7692& 3677& 3428\\
+\hline
+pipeline + cache configure 10 & 4432& 2297& 2008\\
+\hline
+\end{tabular}
+\end{table*}
+
+From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L1 cache does not help much compared with expanding the L0 capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
+
+\section{Summary}
+We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
+
+For the experiment result, we learned that pipeline has to work with cache to provide better performance and memory is usually the bottle neck of the program. A good cache will help boosting the performance a lot. 
+
+During the implementation of the simulator, we learned that having a good design at first is extremely important. For example, before adapting the signal and slot model and using simulator as a mediator, we used the callback function and let classes directly talk to each other. After many functions were added, the interaction between them became too complicated to maintain. But usually it is hard to have a good design at the beginning, so redesign early is also very helpful. 
+
+We also learned testing is hard and manually test is not practical and efficient. The memory is relatively easy to test because we can treat it like a black box. But cache and CPU is hard to use blackbox test. Manually writing test is time-consuming and makes it less efficient in debugging.
+
+\begin{table*}[p]
 \caption{Instruction List}
 \label{tab:il}
 \centering
@@ -146,284 +424,5 @@ Type & Instruction & Encoding & Format & Description \\
  & cltub & 1101001 & cltub \$1,\$2,\$3 &vr[\$3] = (vr[\$1] < vr[\$2]) (element wise, unsigned value) \\ \hline
 \end{tabular}
 \end{table*}
-
-
-\section{Simulator}
-\subsection{Overview}
-The simulator follows the classic Model View Control (MVC) design. A simplified UML of the simulator is shown in Figure \ref{fig:uml} which gives an overview of the architecture. A \texttt{simulator} class sits in the middle acting as a coordinator for the rest classes. The model part consists of a \texttt{CPU} class and a \texttt{MemSys} class. The \texttt{CPU} class handles most of the instruction executions. It also contains a \texttt{FPU} and a \texttt{VU} for dealing with floating point and vector operations. The \texttt{MemSys} controls all the memory accesses. It has a \texttt{Cache} and a \texttt{Memory} as components. \texttt{Cache} and \texttt{Memory} are both inherited from the \texttt{Storage} class which makes memory hierarchies easy to implement. Three view classes \texttt{CPUView}, \texttt{CacheView} and \texttt{MemoryView} display the CPU, cache and memory status. The model-view communications use QT's signal and slot model instead of callback handles. This makes adding new interactions easier. Besides, \texttt{Simulator} also includes a \texttt{ConfigDialog} class which can change the system setting during runtime. We will introduce each part in detail in the next few sections. 
-
-\begin{figure*}
-\centering
-\includegraphics[width = 0.8\linewidth,keepaspectratio]{uml_simulator}
-\caption{Overview of simulator architecture}
-\label{fig:uml}
-\end{figure*}
-
-\subsection{Memory and cache system}
-We use a hierarchical structure to build the memory-cache system. First, we define an abstract class called \texttt{Storage}. Both \texttt{Cache} and \texttt{Memory} inherits from this base class. The \texttt{Storage} class contains an integer field \texttt{cycle} defining the number of cycles it needs to execute an instruction and a pointer \texttt{nextLevel} that references to the next level of storage object, if any. It also supports 3 methods \texttt{load}, \texttt{store} and \texttt{dump}. The \texttt{load} method takes a 32-bit integer address, a pointer to the buffer for storing loaded values and the length of the memory blocks to be read as the arguments. It copies the content in the memory starting at the address into the buffer of the same size. The \texttt{store} method takes the same three arguments as the \texttt{load} method. Instead of loading the blocks into the buffer, it takes the content from the buffer and writes them into the blocks from the starting address. The \texttt{dump} method converts and concatenates the content in the storage into a string for debugging.  
-
-\begin{figure*}
-\centering
-\includegraphics[width = 0.8\linewidth,keepaspectratio]{Cache_and_Memory.png}
-\caption{Schematic of memory and cache implementation}
-\label{fig:cache_vs_memory}
-\end{figure*}
-
-\subsubsection{Memory}
-The \texttt{Memory} class inherits from the \texttt{Storage} class, it implements the methods inherited from the \texttt{Storage} class straight forwardly. The data is stored in an byte array so it is byte addressable. The pointer to the next level is set to be a null pointer. 
-
-\subsubsection{Cache}
-An overview of the cache memory hierarchy is shown in Figure \ref{fig:cache_vs_memory}. The \texttt{Cache} class we implemented supports multiple-way associativity with write back/through and LRU/Random policies. The \texttt{Cache} class also inherits from the \texttt{Storage} class. It consists of multiple cache lines as the basic building block.
-
-\paragraph{Cache line}
- The cache line is defined using the struct \texttt{Cacheline}. It has a boolean field called \texttt{valid} that indicates if this cache line is empty or not, a boolean field \texttt{dirty} that indicates if the content in the cache line is newer than that in the lower level storage. The \texttt{lru} field indicates its priority in the LRU replacing mechanism. It also contains a pointer \texttt{data} referencing to an array of bytes that served as the data blocks.
-
-The cache consists of a two-dimensional array of \texttt{Cacheline}. The rows correspond to indices of memory blocks and the columns correspond to the ways associated to the same index. The total size of cache is the number of rows times the number of columns. The size of the cache, number of ways and number of index can be set at the initialization stage.
-
-\paragraph{Cache functions}
-The \texttt{inCache} method takes an address and return the cache line position if the address exists in the cache or null if not. Since the memory address starts from 0, it calculates the block index as (address / cache line size) and tag value as (address $\%$ cache line size). The block index corresponds to the index in the cache array. Then it iterates all the ways of cache lines attached to that index to see if any tag matches the tag of this address. If there is any match, it returns the position of the cache line, otherwise null. 
-
-The \texttt{evict} method takes a requested address and return an clean cache line position corresponding to that address. It looks up in the cache line array and search for any empty lines of that address, which means that the valid flag is false. If such line exists, it returns its position. If all lines are occupied, which means all valid flags is true, it evicts a line according to the replace policies. We have implemented two replace policies: (1) random eviction (2) LRU eviction. Under the former scenario, a random number between $[0, \mathrm{number\ of\ ways} - 1]$ is generated. If the dirty bit of this cache line is true, which means it contains newer value than the lower level of storage, it will be evicted to the lower level of storage. Then the cache line is emptied and the position of it is returned. The LRU is implemented as follows. Each cache line at a specific index is assigned a LRU number. When a line at this index is updated, its LRU number is set to 0, all others are incremented by 1. Then higher number means the less recently used. 
-
-The \texttt{load} method allows us to read a block starting at a specific address in memory. It first checks if the address exists in the current cache level by calling the \texttt{inCache} method. If the returned position is null, there is a cache miss. It will call the the next level of storage's \texttt{load} method, which could be another cache or the memory. The data will be passed along the hierarchical call chain. The newly loaded data have to be written into the cache. An empty cache line is created by calling the \texttt{evict} method. If the returned position is not null, there is a cache hit. The data in the current cache line is loaded and passed up. 
-
-The \texttt{store} method allows us to write an array of data blocks into a specific address in memory. First, it also checks if the cache line corresponding to the requested address exists in the cache by calling the \texttt{inCache} method. If yes, it reports a cache hit and copies the data blocks into the current level of cache. Two write policies are implemented: (1) write back (2) write through. In the former scenario, we just set the dirty flag of the cache line to be true, update the LRU numbers and done. In the latter scenario, we still need to call the \texttt{store} method in the next level of storage to pass the data down. If the address doesn't have a corresponding cache line in the cache, we have a cache miss. The \texttt{load} method is called to bring the data blocks from next level into the cache. Then it's treated as in the cache hit case. 
-% multiple-way associative cache with write allocate, LRU 
- 
-\subsubsection{Memory system}
-The \texttt{MemSys} acts as a mediator between the cache-memory hierarchy and the CPU. Both \texttt{Memory} and \texttt{Cache} are encapsulated in it. The \texttt{MemSys} class exposes four method \texttt{loadWord}, \texttt{loadByte}, \texttt{storeWord}, \texttt{storeByte} for CPU fetching instructions or issuing load/store instruciton. It also keeps a \texttt{countdown} integer for CPU clocking. Each time CPU issues an request, it calculates the required cycles to complete that request and only return the result after that cycle has passed. Internally, \texttt{MemSys} uses a string \texttt{request} keeping the current serving request, if a different request comes in (possible under the pipeline mode), it will not response until it finishes its current serving request. That means this memory system has only one port and only allows a single access at a time. 
-
-The \texttt{MemSys} is also responsible for communication between the \texttt{Simulator} class. Whenever the \texttt{Memory} or \texttt{Cache} changes its internal status, it will emit a notifying signal to the \texttt{Simulator}, and \texttt{Simulator} will in turn call the update methods in the corresponding view. \texttt{Simulator} can talk to the \texttt{MemSys} to change its configuration. When a user modifies the memory system configuration in the \texttt{ConfigDialog} class, the \texttt{Simulator} will notify \texttt{MemSys} through signaling and \texttt{MemSys} will initialize a new setting of cache-memory hierarchy by calling the \texttt{init} method.
-
-\texttt{MemSys} provides one layer of indirection. It hides the implementation of the cache and memory and makes the interfaces between other classes easier to maintain. 
-
-\subsection{CPU}
-The \texttt{CPU} class is where most of the simulations happens. This class keeps a \texttt{clk} field for clock cycle, a \texttt{pc} field for the program counter, and also the register files and pipeline states. It maintains a pointer to the \texttt{MemSys} for memory access and pointers to a \texttt{FPU} and a \texttt{VU} for special instructions. Besides, it can communicate with \texttt{Simulator} to notify the update of CPU status and get the commands from user interface.
-
-\subsubsection{Pipeline}
-The \texttt{CPU} class uses a standard 5-stage MIPS pipeline. Every instruction can be completed in 5 cycles: instruction fetch cycle (ifc), instruction decode cycle (idc), execution cycle (exc), memory access cycle (mem) and write-back cycle (wbc). There are five methods \texttt{ifc}, \texttt{idc}, \texttt{exc}, \texttt{mem} and \texttt{wbc} implementing these cycles. The pipeline \texttt{pipe} is implemented as a array of length 5. Each position in the array corresponds to a execution stage (see Figure \ref{fig:pip}). Elements in the array are the structure \texttt{Instruction}. \texttt{Instruction} keeps information about the instruction being executed. It resembles the registers between pipeline stages in hardware. Some key fields are \texttt{opcode} for keeping instruction code, \texttt{rd1}, \texttt{rd2}, \texttt{rd3}, \texttt{imm} for storing operands, \texttt{stage} for indicating execution stage and \texttt{aluoutput}, \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd} for keeping execution cycle result. The execution of the instruction is simulated by passing the structure through the \texttt{pipe} array and filling its fields in different stages. 
-
-\begin{figure}
-\centering
-\includegraphics[width = 0.8\linewidth,keepaspectratio]{pipeline}
-\caption{Pipeline structure}
-\label{fig:pip}
-\end{figure}
-
-\paragraph{ifc}
-Fetch instructions from \texttt{MemSys} by calling \texttt{loadWord} method and create a \texttt{Instruction} instance. If in a pipelined execution mode, examine the instruction at \texttt{mem} stage to see if it is a branch. If it is a branch and it is taken, change the \texttt{pc} accordingly. Otherwise increase the \texttt{pc} by 4. If the next stage in \texttt{pipe} is empty, change its \texttt{stage} to 1 and pass the structure to the next stage.  
-
-\paragraph{idc}
-Decode the instruction. First extract the 7 bits to get the instruction opcode, and then decode the rest operands according to the format (Table \ref{tab:if}). After decoding, load operands from register files. If under the pipelining mode, we need to resolve potential data hazards. In the 5-stage pipeline setting, we only need consider read after write (RAW) hazard since the write back cycle is at the last stage and only one instruction can write at a time. Examine every instruction in the pipeline after idc stage and see if its destination register is one of the operands we need to read. If the instruction has finished its execution, we can forward the result in \texttt{aluoutput} (or \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd}) to the operand we need. Otherwise, we need to stall the pipeline, and wait for the operand to be ready. When the operands are ready, we can pass the instruction to the next stage.
-
-\paragraph{exc}
-Execute the instruction according to its opcode. If it only needs integer computation, we can finished the execution within the \texttt{CPU} class, otherwise, we need to forward the instruction to \texttt{FPU} or \texttt{VU} for special handling. In \texttt{CPU}, we can do data transfer, arithmetic and logical, control and cache instruction execution. If it is data transfer, we compute the memory address and store it in \texttt{aluoutput}. If it is arithmetic and logical, we save the computation result in \texttt{aluoutput}. And if it is control, we calculate the new \texttt{pc} address and put it in \texttt{aluoutput}. If it is floating point, we forward the instruction to \texttt{FPU} and wait for the result to store in \texttt{fpuoutput}. Similarly, SIMD instruction will be forwarded to \texttt{VU} and result saved in \texttt{vuoutput}. After computation, the instruction is passed to the mem stage.
-
-\paragraph{mem}
-This stage is only for data transfer instructions. If it is a load instruction, we load memory use the address stored in \texttt{aluoutput} and put it into \texttt{lmd}. If it is a store instruction, we store the value in operand to the address in \texttt{aluoutput}. Other type of instructions can directly pass this stage if the next stage is empty.
-
-\paragraph{wbc}
-Write \texttt{aluoutput} (or \texttt{fpuoutput}, \texttt{vuoutput}, \texttt{lmd}) to destination registers and destroy the \texttt{Instruction} structure.
-
-The \texttt{step} method calls each stage function in reverse order (from \texttt{wbc} to \texttt{ifc}) and increase the \texttt{clk} by 1 afterwards. This completes one step of simulation. To simulating the whole program, we can call \texttt{step} until there are no more instructions. 
-
-\subsubsection{FPU}
-\texttt{FPU} handles floating point operations. It can simulate multi-cycle floating point calculations. Internally, it has a \texttt{cycle} and \texttt{countdown} field. Like \texttt{MemSys}, it will only response request from \texttt{CPU} after certain number of cycles. Since it is separated from \texttt{CPU}, for future extension, the pipeline can support multi-issue easily. 
-
-\subsubsection{VU}
-\texttt{VU} deals with vector operations. It also support multi-cycle calculation. Internally, vectors are saved as an array of bytes and computations are element wise. The separation of \texttt{VU} is also for future implementation of multi-issue.
-
-\subsection{Assembler }
-The assembler takes the instructions in assembly language and encode them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is written in binary format into a file. 
-
-\subsection{User interface and use guide}
-The graphical interface is implemented in QT. A screenshot of the GUI is shown in Figure \ref{fig:gui}. The main window is the \texttt{Simulator} class. It can be roughly divided into three parts. 
-
-The left panel is for displaying CPU status which is implemented by \texttt{CPUView} class. Clock cycle, program counter, register files and pipeline can be seen here. There are also several buttons controlling the simulation. Pipeline \texttt{on}/\texttt{off} button can turn on/off the pipeline. \texttt{step} can simulate one clock cycle. \texttt{run} button executes the program at the speed of 100 millisecond one cycle. In this mode, you can see the changes in CPU or memory system easily. You can also stop the simulation whenever you want. \texttt{exe} button runs the program at full speed. Usually you can only see the final status of the program. \texttt{reset} button can clear the pipeline and register files and set the clock and pc to 0. 
-
-The middle panel is for visualizing cache. It has tabs for switching between different level of caches and on the top, there is an \texttt{on}/\texttt{off} button for turning on/off cache. When the cache is turned off, the tab panel will become invisible. This part is implemented by \texttt{CacheView}. 
-
-Finally, the right part is \texttt{MemoryView} where you can observe memory data and also change the display format. At the scroll area, you can press the address button and add or remove a breakpoint to the program. If the button is pressed down (turn blue), it means it is a breakpoint. 
-
-You can change the memory system configuration using the \texttt{configs} menu. After click the menu, a dialog (Figure \ref{fig:conf}) will show up. New cache and memory configurations can be set here. This dialog is a class of \texttt{ConfigDialog} and is a component of \texttt{Simulator}. The \texttt{Memory System} also provides options to dump the memory data into a file or clear the memory. The \texttt{Program} provides a way to load program direct into memory. 
-
-\begin{figure*}
-\centering
-\includegraphics[width = 0.8\linewidth,keepaspectratio]{gui}
-\caption{GUI screen shot}
-\label{fig:gui}
-\end{figure*}
-
-\begin{figure}
-\centering
-\includegraphics[width = 0.8\linewidth,keepaspectratio]{config}
-\caption{Configuration Dialog}
-\label{fig:conf}
-\end{figure}
-
-\subsection{Testing}
-We tested our simulator mainly through GUI. To test the memory system, we wrote a program generating sequential or random memory accessing instructions. Then we use a small drive program to read in these instructions and directly call the interface provided by \texttt{MemSys}. For sequence access, we precomputed the final cache-memory state manually and compare with the result produced by simulator. In this way, we found a bug in cache line eviction. For random access, since the result is hard to compute by hand, we only see if a large amount of random accesses will break the program. The simulator has passed this stress test.
-
-To test the assembler, we simply wrote a disassembler and to see the results converted from each side match. We also manually encoded the benchmark program exchange sort to see if the assembler works.
- 
-To test the pipeline, we designed some small programs with data dependencies and branch hazards. We run the simulator step by step to see if it can handle the hazard correctly. In this way, we found some bug in implementing branch instructions.
-
-\section{Performance evaluation}
-\subsection{Benchmark}
-We designed the following benchmark programs: (1) Exchange sort (2) Matrix multiplication (3) Matrix multiplication with SIMD for performance evaluation. 
-
-The exchange sort uses the bubble sort algorithm (Algorithm 1). Core part is two level of \texttt{for} loop. We implement the \texttt{if} condition with \texttt{bgez} instruction and the \texttt{for} loop condition with \texttt{beq} instruction.
-
-\begin{algorithm}[]
-\SetAlgoLined
- l = length of A\;
- \For{ i from 0 to l - 2}{
-	\For{ j from i + 1 to l - 1} {
-    	\eIf{A[i] > A[j]}{
-        	swap A[i] and A[j]\;
-        }{continue;}
-    }
- }
-\caption{Exchange sort (integer array A)}
-\end{algorithm}
-
-Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The \texttt{for} loops are also implemented in \texttt{beq} instruction. 
-
-\begin{algorithm}[]
-\SetAlgoLined
- a = number of rows in L\;
- b = number of columns in L\;
- c = number of columns in R\;
- Create result matrix res of size a*c, initialized with 0s\;
- \For{ i from 0 to a - 1}{
-	\For{ j from 0 to c - 1}{
-    	\For{ k from 0 to b - 1}{
-        	res[i][j] += L[i][k]*R[k][j]\;
-        }
-    }
- }
- return res\;
- \caption{Matrix multiplication (left matrix L, right matrix R)}
-\end{algorithm}
-
-Matrix multiplication with SIMD is a multiplication of two 2 by 2 matrix. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the matrix and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment result, we can see SIMD saves CPU cycles. 
-
-\begin{algorithm}[]
-\SetAlgoLined
- Create result matrix res of size 4, initialized with 0s\;
- Flatten L into a vector v1 of size 8 by rows\;
- Flatten R into a vector v2 of size 8 by columns\;
-Create vector v3 with size 8\;
- \For{ i from 0 to 7}{
-	v3[i] = v1[i] * v2[i]\;
- }
-  \For{ i from 0 to 3}{
-	\For{ j from 0 to 3}{    	
-        	res[i][j] = v3[(i*2+j)*2] + v3[(i*2+j)*2 + 1]\;
-    }
- }
- return res\;
- \caption{2 by 2 Matrix multiplication with SIMD(left matrix L, right matrix R)}
-\end{algorithm}
-
-\subsection{Experiment result}
-We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L0 cache is 5 cycle and L1 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
-
-From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is directed map. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L1 cache does not help much compared with expanding the L0 capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
-
-\begin{table}
-\caption{Cache Configurations}
-\label{tab:conf}
-\centering
-\begin{tabular}{|c|c|c|c|c|c|}
-\hline
- & level & index size & ways & line size & policy \\ \hline
- 1 & 1& 4 & 1& 8& -\\
-\hline
- 2 & 1& 4 & 1& 16 & -\\
-\hline
- 3 & 1& 4 & 4& 8& LRU\\
-\hline
- 4 & 1& 4 & 4& 8& Rand\\
-\hline
- 5 & 1& 4 & 4& 16& LRU\\
-\hline
- 6 & 1& 4 & 4& 32& LRU\\
-\hline
- 7 & 2 & 4,16 & 1,2& 8,16& LRU\\
-\hline
- 8 & 2 & 4,16 & 2,2& 8,16& LRU\\
-\hline
- 9 & 2 & 4,16 & 1,2& 16,16& LRU\\
-\hline
- 10 & 2 & 4,16 & 2,2& 16,32& LRU\\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{table*}
-\caption{Evaluation result}
-\label{tab:res}
-\centering
-\begin{tabular}{|c|c|c|c|}
-\hline
- & Exchange Sort & Matrix Multiplication & Matrix Multiplication with SIMD \\
- \hline
-baseline & 72451 & 22223 & 10414 \\
-\hline
-cache configure 1& 55696 & 14608& 6624 \\
-\hline
-cache configure 2 & 28796 & 7308 & 4824\\
-\hline
-cache configure 3 & 7496& 5308& 4924\\
-\hline
-cache configure 4 & 30596& 11408& 4824\\
-\hline
-cache configure 5& 6296& 3108 & 2824 \\
-\hline
-cache configure 6 & 5796 & 2408 & 1824 \\
-\hline
-cache configure 7 & 16416 & 5708 & 4004\\
-\hline
-cache configure 8 & 11336 & 5208 & 3724\\
-\hline
-cache configure 9 & 11036 & 4248 & 3644 \\
-\hline
-cache configure 10 & 6036 & 2848 & 2244 \\
-\hline
-pipeline &70847 & 21692&10178 \\
-\hline
-pipeline + cache configure 1 & 47592 & 15077 & 7788\\
-\hline 
-pipeline + cache configure 2 & 18492 & 7077 & 4688\\
-\hline
-pipeline + cache configure 3 & 5792 & 4677 & 4688\\
-\hline
-pipeline + cache configure 4 & 28092 & 10977 & 4588\\
-\hline
-pipeline + cache configure 5 & 4692 & 2477 & 2588\\
-\hline 
-pipeline + cache configure 6 & \textbf{4192}& \textbf{1877} & \textbf{1588}\\
-\hline
-pipeline + cache configure 7 & 13512& 5277& 4048\\
-\hline
-pipeline + cache configure 8 & 8452& 4477& 3508\\
-\hline
-pipeline + cache configure 9 & 7692& 3677& 3428\\
-\hline
-pipeline + cache configure 10 & 4432& 2297& 2008\\
-\hline
-\end{tabular}
-\end{table*}
-
-
-\section{Summary}
-We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
-
-For the experiment result, we learned that pipeline has to work with cache to provide better performance and memory is usually the bottle neck of the program. A good cache will help boost the performance a lot. 
-
-During the implementation of the simulator, we learned that having a good design at first is extremely important. For example, before adapting the signal and slot model and using simulator as a mediator, we used the callback function and let classes directly talk to each other. After many functions were added, the interaction between them became to0 complicated to maintain. But usually it is hard to have a good design at the beginning, so redesign early is also very helpful. 
-
-We also learned testing is hard and manually test is not practical and efficient. The memory is relatively easy to test because we can treat it like a black box. But cache and CPU is hard to use blackbox test. Manually writing test is time-consuming and makes it less efficient in debugging.
 
 \end{document}
