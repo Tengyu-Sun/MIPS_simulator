@@ -215,11 +215,11 @@ The exchange sort uses the bubble sort algorithm (Algorithm 1). Core part is two
 \caption{Exchange sort}
 \end{algorithm}
 
-Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The \texttt{for} loops are also implemented in \texttt{beq} instruction. 
+Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The \texttt{for} loops are also implemented in \texttt{beq} instruction. In the experiment, we will multiply a 4 by 8 matrix with a 8 by 4 matrix.
 
 \begin{algorithm}[h]
 \SetAlgoLined
- left matrix L, right matrix R \;
+ left matrix L ($4 \times 8$), right matrix R ($8 \times 4$)\;
  a = number of rows in L, b = number of columns in L\;  
  c = number of columns in R\;
  Create result matrix res of size a*c, initialized with 0s\;
@@ -234,7 +234,7 @@ Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The
  \caption{Matrix multiplication}
 \end{algorithm}
 
-Matrix multiplication with SIMD is a multiplication of two 2 by 2 matrix. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the matrix and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment result, we can see SIMD saves CPU cycles. 
+Matrix multiplication with SIMD uses the same size matrix as above. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the vector and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment results, we can see SIMD saves CPU cycles. 
 
 \begin{algorithm}[h]
 \SetAlgoLined
@@ -243,20 +243,20 @@ Matrix multiplication with SIMD is a multiplication of two 2 by 2 matrix. Since 
  Flatten R into a vector v2 of size 8 by columns\;
  Create result matrix res of size 4, initialized with 0s\; 
  Create vector v3 with size 8\;
- \For{ i from 0 to 7}{
-	v3[i] = v1[i] * v2[i]\;
- }
   \For{ i from 0 to 3}{
-	\For{ j from 0 to 3}{    	
-        	res[i][j] = v3[(i*2+j)*2] + v3[(i*2+j)*2 + 1]\;
+	\For{ j from 0 to 3}{
+	v1 =  L[i][], v2 = R[][j]\;	
+	v3 = v1 * v2\;
+	res[i][j]  =  sum(v3)\;
+	
     }
  }
  return res\;
- \caption{2 by 2 Matrix multiplication with SIMD}
+ \caption{Matrix multiplication with SIMD}
 \end{algorithm}
 
 \subsection{Experiment result}
-We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L0 cache is 5 cycle and L1 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
+We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L1 cache is 5 cycle and L2 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
 \begin{table}[!ht]
 \caption{Cache Configurations}
 \label{tab:conf}
@@ -342,7 +342,7 @@ pipeline + cache configure 10 & 4432& 2297& 2008\\
 \end{tabular}
 \end{table*}
 
-From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L1 cache does not help much compared with expanding the L0 capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
+From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. (1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 1 and 7 running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L2 cache does not help much compared with expanding the number capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
 
 \section{Summary}
 We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
@@ -408,8 +408,8 @@ Type & Instruction & Encoding & Format & Description \\
  & wfti & 0100110 & wfti \$1,\$2 & convert floating point fpr[\$1] to integer and store in gpr[\$2]\\ \hline
  Cache & pref & 0110000 & pref \$1,\$0,im & load mem[\$1+im ... \$1+im+3] into cache (\$0 is not relevant but required) \\ \hline
  \multirow{15}{*}{SIMD} & move & 1101010 & move \$1,\$2 & vr[\$2] = vr[\$1] \\ \cline{2-5}
- & copys & 1101011 & copys \$1,\$2,n & store n-th byte in vr[\$1] to gpr[\$2] as signed value \\ \cline{2-5}  
- & copyu & 1101100 & copyu \$1,\$2,n & store n-th byte in vr[\$1] to gpr[\$2] as unsigned value\\ \cline{2-5}
+ & sum & 1101011 & sum \$1,\$2 & compute sum of bytes in vr[\$1] and store to gpr[\$2] \\ \cline{2-5}  
+ & copy & 1101100 & copy \$1,\$2,n & copy n-th byte in vr[\$1] to gpr[\$2] as unsigned value\\ \cline{2-5}
  & insertb & 1101101 & insertb \$1,\$2,n & store lower 8 bits of gpr[\$1] to the n-th byte in vr[\$2] \\ \cline{2-5}
  & fillb & 1101110 & fiilb \$1,\$2 & fill lower 8 bits of gpr[\$1] to all bytes in vr[\$2] \\ \cline{2-5}
  & vaddb & 1100000 & vaddb \$1,\$2,\$3 & vr[\$1] = vr[\$2] + vr[\$3] \\ \cline{2-5}

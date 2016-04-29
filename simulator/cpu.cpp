@@ -410,14 +410,20 @@ void CPU::exc() {
           if (pipe[2]->opcode == 10) {
             pipe[2]->dst = 32 + pipe[2]->rd2;
             pipe[2]->vuoutput = pipe[2]->vA;
-          } else if (pipe[2]->opcode == 11 || pipe[2]->opcode == 12) {
+          } else if (pipe[2]->opcode == 12) {
             pipe[2]->dst = pipe[2]->rd2;
             int n = 7 - pipe[2]->imm;
             uint32_t tmp = (pipe[2]->vA>>(8*n)) & 0xff;
-            if (pipe[2]->opcode == 11 && (tmp>>7 == 1)) {
-              tmp |= 0xffffff00;
-            }
             pipe[2]->aluoutput = tmp;
+          } else if (pipe[2]->opcode == 11) {
+            pipe[2]->dst = pipe[2]->rd2;
+            uint64_t tmp = pipe[2]->vA;
+            uint32_t sum = 0;
+            for (int i = 0; i < 8; ++i) {
+              sum += (tmp & 0xff);
+              tmp >>= 8;
+            }
+            pipe[2]->aluoutput = sum;
           } else if (pipe[2]->opcode == 13) {
             pipe[2]->dst = 32 + pipe[2]->rd2;
             uint64_t tmp = pipe[2]->A & 0xff;
