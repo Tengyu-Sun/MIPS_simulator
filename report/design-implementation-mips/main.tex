@@ -183,15 +183,15 @@ You can change system configurations using the \texttt{configs} menu. After clic
 \end{figure*}
 
 \subsection{Assembler }
-The assembler takes the instructions in assembly language and encodes them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which use the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is written in binary format into a file. 
+The assembler takes the instructions in assembly language and encodes them into 32-bit integers. The assembler executes in two passes. In the first pass, it strips all the comments that starts with $\#$ symbol and stores all labels into a label map, which uses the line number as the value. In the second pass, it replaces the labels in other clauses with the relative line numbers and encodes the instructions according to a preloaded map of opcodes. The result is written in binary format into a file. 
 
 
 \subsection{Testing}
-We tested our simulator mainly through GUI. To test the memory system, we wrote a program generating sequential or random memory accessing instructions. Then we use a small drive program to read in these instructions and directly call the interface provided by \texttt{MemSys}. For sequence access, we precomputed the final cache-memory state manually and compare with the result produced by simulator. In this way, we found a bug in cache line eviction. For random access, since the result is hard to compute by hand, we only see if a large amount of random accesses will break the program. The simulator has passed this stress test.
+We tested our simulator mainly through GUI. To test the memory system, we wrote a program generating sequential or random memory accessing instructions. Then we use a small driver program to read in these instructions and directly call the interfaces provided by \texttt{MemSys}. For sequence access, we precomputed the final cache-memory state manually and compared with the result produced by simulator. In this way, we found a bug in cache line eviction. For random access, since the result is hard to compute by hand, we only see if a large amount of random accesses will break the program. The simulator has passed this stress test.
 
 To test the assembler, we simply wrote a disassembler and to see the results converted from each side match. We also manually encoded the benchmark program exchange sort to see if the assembler works.
  
-To test the pipeline, we designed some small programs with data dependencies and branch hazards. We run the simulator step by step to see if it can handle the hazard correctly. In this way, we found some bug in implementing branch instructions.
+To test the pipeline, we designed some small programs with data dependencies and branch hazards. We run the simulator step by step to see if it can handle the hazard correctly. In this way, we found some bugs in implementing branching instructions.
 
 \section{Performance evaluation}
 \subsection{Benchmark}
@@ -231,7 +231,7 @@ Matrix multiplication uses a three level of \texttt{for} loop (Algorithm 2). The
  \caption{Matrix multiplication}
 \end{algorithm}
 
-Matrix multiplication with SIMD uses the same size matrix as above. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the vector and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment results, we can see SIMD saves CPU cycles. 
+Matrix multiplication with SIMD uses the same size matrix as above. Since the architecture supports 8-byte vector multiplication, we can preload rows and columns of the matrix into the vector and do the multiplication in one step. The result matrix can be calculated using the formula in Algorithm 3. From experiment results, we can see SIMD saves many CPU cycles. 
 
 \begin{algorithm}[h]
 \SetAlgoLined
@@ -253,7 +253,7 @@ Matrix multiplication with SIMD uses the same size matrix as above. Since the ar
 \end{algorithm}
 
 \subsection{Experiment result}
-We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L1 cache is 5 cycle and L2 cache is 20 cycle. Simulation results are shown in Table \ref{tab:res}. 
+We tested our three benchmarks under 10 cache configurations and with or without pipeline being turned on and measured their performance in terms of total CPU cycles being used. Configuration details can be found in Table \ref{tab:conf}. Memory cycle is assumed to be 100. L1 cache is 5 cycles and L2 cache is 20 cycles. Simulation results are shown in Table \ref{tab:res}. 
 \begin{table}[!ht]
 \caption{Cache Configurations}
 \label{tab:conf}
@@ -340,18 +340,18 @@ pipeline + cache configure 10 & 4432& 15420& 5800\\
 \end{tabular}
 \end{table*}
 
-From the table, we can see that overall cache configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. 
+From the table, we can see that overall configuration 6 with pipeline achieves the best performance and SIMD is better than using loop for matrix multiplication. Further comparing different results, we can find the following interesting conclusions. 
 
-(1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 2  running the matrix multiplication program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct-mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L2 cache does not help much compared with expanding the number capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
+(1) pipeline itself does not provide much improvement. Without cache, pipeline can only provide about 2\% cycles reduction. But with cache, it can provide over 10\% boost. (2) pipeline may lower the performance if the cache configuration is not right. We observed that cycle numbers increased for cache configuration 2 running the matrix multiplication with SIMD program. The increase of cycle numbers may be due to that two instructions in the pipeline need to access the same cache line but with different memory address. This only happens when cache is direct mapped. (3) cache makes a huge difference for performance. With a bigger and more associative cache, performance can boost over 500\%, (for example comparing configuration 1 and 3). (4) finding the right cache configuration is difficult. Generally more associative and bigger cache line size will help. Adding L2 cache does not help much compared with expanding the L1 capacity. (5) LRU is much better than random when the number of ways is large. Comparing configuration 3 and 4, LRU has a huge advantage. (6) program instruction types also play a big role. Programs with more branching and memory access have more potential to be optimized. 
 
 \section{Summary}
 We gained lots of experience in designing and implementing a standalone system from the scratch. A couple of lessons have been learned:
 
 For the experiment result, we learned that pipeline has to work with cache to provide better performance and memory is usually the bottle neck of the program. A good cache will help boosting the performance a lot. 
 
-During the implementation of the simulator, we learned that having a good design at first is extremely important. For example, before adapting the signal and slot model and using simulator as a mediator, we used the callback function and let classes directly talk to each other. After many functions were added, the interaction between them became too complicated to maintain. But usually it is hard to have a good design at the beginning, so redesign early is also very helpful. 
+During the implementation of the simulator, we learned that having a good design at first is extremely important. For example, before adapting the signal and slot model and using simulator as a mediator, we used the callback functions and let classes directly talk to each other. After many functions were added, the interaction between them became too complicated to maintain. But usually it is hard to have a good design at the beginning, so redesign early is also very helpful. 
 
-We also learned testing is hard and manually test is not practical and efficient. The memory is relatively easy to test because we can treat it like a black box. But cache and CPU is hard to use blackbox test. Manually writing test is time-consuming and makes it less efficient in debugging.
+We also learned testing is hard and manually written test is not practical and efficient. The memory is relatively easy to test because we can treat it like a black box. But cache and CPU is hard to use blackbox test. Writing test manually is time-consuming and makes it less efficient in debugging.
 
 \begin{table*}[p]
 \caption{Instruction List}
