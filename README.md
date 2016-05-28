@@ -1,18 +1,17 @@
-Implementation of a MIPS simulator consisting of Assembler, pipelined CPU, hierarchical memory system.
-Current status:(done)
-1. Memory system
+Implementation of a MIPS simulator consisting of Assembler, pipelined CPU, hierarchical memory system that support a subset of the MIPS ISA. 
+1. Memory system (C++)
     (a)Tunable multi-way associative cache with hierarchical structure
-	(b)Random eviction
-	(c)Write back, allocate policy
-2. CPU
-	(a)Basic pipline
-	(b)Full ISA support
-3. Assembler
-	2-pass, translate assembly language into binary machine code
+	(b)Random / LRU eviction
+	(c)Write back / through, allocate policy
+2. CPU (C++)
+	(a) Five stages pipline
+	(b) Full ISA support (see the report form instruction details)i
+3. Assembler / disassembler
+	(a)A 2-pass Assembler to translate assembly language into binary machine code
+	(b)A dissemlber to translate binary machine code into assembly language
+4. Benchmark programs: (Assembly)
+	(a) Exchange sort
+	(b) Matrix multiplication
+	(c) Vectorized matrix multiplication
+5. User interface (Qt,C++)
 
-Todo:
-1. LRU cacheline eviction
-2. Fully functional pipeline
-3. Benchmark programs (exchange sorting, matrix multiplication, etc)
-4. Branch prediction?
-	
