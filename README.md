@@ -1,8 +1,8 @@
-Implementation of a MIPS simulator consisting of Assembler, pipelined CPU, hierarchical memory system that support a subset of the MIPS ISA. 
-1. Memory system (C++)
-    (a)Tunable multi-way associative cache with hierarchical structure
-	(b)Random / LRU eviction
-	(c)Write back / through, allocate policy
+Implementation of a MIPS simulator consisting of an assembler / dissambler, a pipelined CPU, a hierarchical memory system that support a subset of the MIPS ISA.<br /> 
+1. Memory system (C++) <br />
+    (a)Tunable multi-way associative cache with hierarchical structure. <br />
+	(b)Random / LRU eviction. <br />
+	(c)Write back / through, allocate policy <br />
 2. CPU (C++)
 	(a) Five stages pipline
 	(b) Full ISA support (see the report form instruction details)i
