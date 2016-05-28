@@ -1,6 +1,6 @@
 #Design and Implementation of a RISC simulator 
-
-## It consists of an assembler / dissambler, a pipelined CPU, a hierarchical memory system, etc:  
+##Wei Hong, Tengyu Sun
+### It consists of an assembler / dissambler, a pipelined CPU, a hierarchical memory system, etc:  
 1. Memory system (C++)   
     (a)Tunable multi-way associative cache with hierarchical structure.   
 	(b)Random / LRU eviction.   
